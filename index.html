@@ -9,7 +9,7 @@
     body { background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; }
     
     .navbar { background: #1e293b; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
-    .logo { font-size: 22px; font-weight: bold; color: #38bdf8; }
+    .logo { font-size: 22px; font-weight: bold; color: #38bdf8; cursor: pointer; }
     
     .main-container { display: flex; flex: 1; padding: 20px; gap: 20px; max-width: 1100px; margin: 0 auto; width: 100%; }
     .sidebar { width: 280px; background: #1e293b; padding: 20px; border-radius: 10px; height: fit-content; border: 1px solid #334155; }
@@ -25,18 +25,18 @@
     button { background: #38bdf8; color: #0f172a; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     button:hover { opacity: 0.9; }
     
-    .code-block { background: #0f172a; color: #38bdf8; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; margin: 10px 0; border-left: 3px solid #38bdf8; white-space: pre-wrap; position: relative; }
+    .code-block { background: #0f172a; color: #38bdf8; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; margin: 10px 0; border-left: 3px solid #38bdf8; white-space: pre-wrap; position: relative; overflow-x: auto; }
     
-    .actions { display: flex; justify-content: space-between; color: #94a3b8; font-size: 14px; margin-top: 12px; align-items: center; border-top: 1px solid #334155; padding-top: 10px; }
+    .actions { display: flex; justify-content: space-between; color: #94a3b8; font-size: 14px; margin-top: 12px; align-items: center; border-top: 1px solid #334155; padding-top: 10px; flex-wrap: wrap; gap: 10px; }
     .action-btn { cursor: pointer; transition: 0.2s; user-select: none; }
     .action-btn:hover { color: #38bdf8; }
 
     .filter-btn { display: block; width: 100%; text-align: left; background: #0f172a; color: #cbd5e1; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #334155; font-size: 0.85rem; cursor: pointer; }
     .filter-btn:hover, .filter-btn.active { border-color: #38bdf8; color: #38bdf8; background: #1e293b; }
 
-    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
-    .modal-content { background-color: #1e293b; padding: 20px; border: 1px solid #38bdf8; border-radius: 8px; width: 80%; max-width: 500px; color: #fff; position: relative; }
-    .close-btn { position: absolute; right: 15px; top: 10px; color: #aaa; font-size: 20px; cursor: pointer; }
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
+    .modal-content { background-color: #1e293b; padding: 25px; border: 1px solid #38bdf8; border-radius: 10px; width: 100%; max-width: 750px; color: #fff; position: relative; max-height: 90vh; overflow-y: auto; }
+    .close-btn { position: absolute; right: 15px; top: 10px; color: #aaa; font-size: 24px; cursor: pointer; }
 
     .category-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8; }
     .pin-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(243, 156, 18, 0.1); color: #f39c12; border: 1px solid #f39c12; }
@@ -48,7 +48,7 @@
 <body>
 
   <div class="navbar">
-    <div class="logo">Voorhees CS Hub</div>
+    <div class="logo" onclick="window.location.href=window.location.pathname">Voorhees CS Hub</div>
     <div style="font-size: 0.85rem; color: #94a3b8;">Department Resource Sharing Platform</div>
   </div>
 
@@ -84,7 +84,7 @@
 
     <div class="view-section">
 
-      <!-- Upload Form with PIN Protection Notice -->
+      <!-- Upload Form -->
       <div class="card" style="border-color: #38bdf8;">
         <h3 style="margin-bottom: 5px; color: #38bdf8; font-size: 1.1rem;">➕ Share CS Question / Study Material</h3>
         <p style="font-size: 12px; color: #f39c12; margin-bottom: 12px;">🔒 Security: You will be asked to set a 4-digit PIN while publishing to protect deletion.</p>
@@ -128,11 +128,12 @@
     </div>
   </div>
 
+  <!-- General Info Modal / Detail View Modal -->
   <div id="infoModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
       <h3 id="modalTitle" style="color: #38bdf8; margin-bottom: 10px;">Modal Title</h3>
-      <p id="modalBody" style="line-height: 1.5; font-size: 14px; color: #cbd5e1;"></p>
+      <div id="modalBody" style="line-height: 1.5; font-size: 14px; color: #cbd5e1;"></div>
     </div>
   </div>
 
@@ -165,6 +166,14 @@
         const res = await fetch(API_BASE);
         allPosts = await res.json();
         localStorage.setItem('cached_posts', JSON.stringify(allPosts));
+        
+        // URL check for direct post link
+        const urlParams = new URLSearchParams(window.location.search);
+        const postIdFromUrl = urlParams.get('post');
+        if (postIdFromUrl) {
+          openFullPostPage(postIdFromUrl);
+        }
+
         filterPosts();
       } catch (err) {
         const cached = localStorage.getItem('cached_posts');
@@ -194,17 +203,12 @@
     }
 
     function handleKeySearch(event) {
-      if (event.key === 'Enter') {
-        executeSearch();
-      }
+      if (event.key === 'Enter') executeSearch();
     }
 
     function executeSearch() {
       const query = document.getElementById('searchInput').value.toLowerCase().trim();
-      if (!query) {
-        filterPosts();
-        return;
-      }
+      if (!query) { filterPosts(); return; }
       const searchResults = allPosts.filter(post => {
         const contentMatch = post.content ? post.content.toLowerCase().includes(query) : false;
         const codeMatch = post.codeSnippet ? post.codeSnippet.toLowerCase().includes(query) : false;
@@ -215,10 +219,7 @@
     }
 
     function checkSearchEarse() {
-      const query = document.getElementById('searchInput').value.trim();
-      if (query === '') {
-        filterPosts();
-      }
+      if (document.getElementById('searchInput').value.trim() === '') filterPosts();
     }
 
     function clearSearch() {
@@ -259,6 +260,57 @@
       renderPosts(bookmarkedPosts);
     }
 
+    // FUNCTION TO OPEN POST IN DEDICATED FULL SCREEN VIEW
+    function openFullPostPage(postId) {
+      const post = allPosts.find(p => p._id === postId);
+      if (!post) return alert("Post not found!");
+
+      let attachmentHTML = '';
+      if (post.filePath) {
+        const isBase64 = post.filePath.startsWith('data:');
+        const fileUrl = isBase64 ? post.filePath : `${RENDER_BASE}/${post.filePath.replace(/\\/g, '/')}`;
+        if (isBase64 || post.filePath.match(/\.(jpg|jpeg|png|gif)$/i)) {
+          attachmentHTML = `<div style="margin-top:15px; text-align:center;"><img src="${fileUrl}" alt="Attachment" style="max-width:100%; border-radius:8px;"></div>`;
+        } else {
+          attachmentHTML = `<div style="margin-top:15px;"><a href="${fileUrl}" target="_blank" style="background:#38bdf8; color:#0f172a; padding:8px 15px; border-radius:6px; text-decoration:none; font-weight:bold; inline-block;">📎 Open / Download Attachment File</a></div>`;
+        }
+      }
+
+      const cleanedContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '') : '';
+      const shareUrl = `${window.location.origin}${window.location.pathname}?post=${post._id}`;
+
+      const detailHTML = `
+        <div style="background:#0f172a; padding:15px; border-radius:8px; border:1px solid #334155; margin-bottom:15px;">
+          <p style="color:#38bdf8; font-weight:bold; font-size:1rem;">👤 Author: ${post.author || 'CS Student'}</p>
+          <p style="color:#94a3b8; font-size:0.8rem;">📅 Posted on: ${new Date(post.createdAt).toLocaleString()}</p>
+        </div>
+
+        <h4 style="color:#fff; margin-bottom:10px;">Question / Resource Details:</h4>
+        <p style="font-size:15px; line-height:1.6; white-space:pre-wrap; background:#0f172a; padding:15px; border-radius:8px; border:1px solid #334155;">${cleanedContent}</p>
+
+        ${(post.codeSnippet && post.codeSnippet.trim() !== '') ? `
+          <h4 style="color:#2ecc71; margin-top:15px; margin-bottom:5px;">Verified Solution / Code:</h4>
+          <div class="code-block" style="max-height:300px; overflow-y:auto;">
+            <button class="copy-btn" onclick="copyCode(this, 'modalCodeSnippet')">Copy Code</button>
+            <span id="modalCodeSnippet">${post.codeSnippet}</span>
+          </div>
+        ` : ''}
+
+        ${post.resourceLink ? `<div style="margin-top:15px;"><a href="${post.resourceLink}" target="_blank" style="color:#38bdf8; text-decoration:none; font-size:14px; font-weight:bold;">🔗 Open External Reference Drive / Resource Link</a></div>` : ''}
+        
+        ${attachmentHTML}
+
+        <div style="margin-top:20px; padding-top:15px; border-top:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+          <button onclick="navigator.clipboard.writeText('${shareUrl}'); alert('Direct Link Copied! Send it to your friends.');" style="background:#334155; color:#38bdf8;">🔗 Share Direct Link</button>
+          <button onclick="closeModal()" style="background:#f43f5e; color:#fff;">Close View</button>
+        </div>
+      `;
+
+      document.getElementById('modalTitle').innerText = "📖 Dedicated Material View";
+      document.getElementById('modalBody').innerHTML = detailHTML;
+      document.getElementById('infoModal').style.display = 'flex';
+    }
+
     function renderPosts(postsToDisplay) {
       const container = document.getElementById('feedList');
       container.innerHTML = '';
@@ -275,7 +327,7 @@
           const fileUrl = isBase64 ? post.filePath : `${RENDER_BASE}/${post.filePath.replace(/\\/g, '/')}`;
           
           if (isBase64 || post.filePath.match(/\.(jpg|jpeg|png|gif)$/i)) {
-            attachmentHTML = `<div style="margin-top:10px;"><img src="${fileUrl}" alt="Attachment" style="max-width:100%; max-height:300px; border-radius:6px;"></div>`;
+            attachmentHTML = `<div style="margin-top:10px;"><img src="${fileUrl}" alt="Attachment" style="max-width:100%; max-height:250px; border-radius:6px;"></div>`;
           } else {
             attachmentHTML = `<div style="margin-top:8px;"><a href="${fileUrl}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold;">📎 Download Attachment File</a></div>`;
           }
@@ -315,16 +367,16 @@
             ${attachmentHTML}
             
             <div class="actions">
+              <span class="action-btn" onclick="openFullPostPage('${post._id}')" style="color:#38bdf8; font-weight:bold;">👁️ View Details</span>
               <span class="action-btn" onclick="likePost('${post._id}')">❤️ ${post.likes || 0} Helpful</span>
               <span class="action-btn" onclick="toggleBookmark('${post._id}')">${isSaved ? '⭐ Saved' : '☆ Save Note'}</span>
-              <span class="action-btn" onclick="deletePost('${post._id}', '${(post.content || '').replace(/'/g, "\\'")}')" style="color:#f43f5e;">🔒 Delete Post</span>
+              <span class="action-btn" onclick="deletePost('${post._id}', '${(post.content || '').replace(/'/g, "\\'")}')" style="color:#f43f5e;">🔒 Delete</span>
             </div>
           </div>
         `;
       });
     }
 
-    // PUBLISH WITH PIN PROTECTION
     async function publishPost() {
       const author = document.getElementById('authorName').value.trim();
       const semester = document.getElementById('postSemester').value;
@@ -338,7 +390,6 @@
       if (!author) return alert("Please enter your Name or Roll Number!");
       if (!content) return alert("Please enter the question or topic description!");
 
-      // 4-Digit Security PIN Prompt
       const userPin = prompt("🔑 Set a 4-Digit Security PIN (e.g., 1234) to protect your post from unauthorized deletion:");
       if (!userPin || userPin.length < 4 || isNaN(userPin)) {
         return alert("⚠️ Post creation cancelled! You must enter a valid 4-digit numeric PIN.");
@@ -347,7 +398,6 @@
       btn.disabled = true;
       btn.innerText = "Publishing Content...";
 
-      // Securely tag PIN in DB string
       const fullContent = `[${semester}] [${category}] [PIN:${userPin}] ${content}`;
 
       const formData = new FormData();
@@ -384,7 +434,6 @@
       loadFeed();
     }
 
-    // DELETE WITH PIN AUTHENTICATION
     async function deletePost(id, rawContent) {
       const pinMatch = rawContent.match(/\[PIN:(\d{4})\]/);
       const correctPin = pinMatch ? pinMatch[1] : null;
