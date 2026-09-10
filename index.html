@@ -45,7 +45,6 @@
     .category-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8; }
     .pin-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(243, 156, 18, 0.1); color: #f39c12; border: 1px solid #f39c12; }
     
-    /* NEW: Staff Badge & Comments Section UI */
     .staff-badge { display: inline-block; background: #38bdf8; color: #0f172a; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: 5px; }
     .comment-section { margin-top: 15px; padding-top: 12px; border-top: 1px dashed #334155; display: none; }
     .comment-item { background: #0f172a; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; border-left: 2px solid #38bdf8; font-size: 13px; }
@@ -76,10 +75,11 @@
 
       <p style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">ACADEMIC FILTERS</p>
       <button class="filter-btn active" onclick="applyFilter('all', this)">🌐 All Materials Feed</button>
-      <button class="filter-btn" onclick="applyFilter('🔥 High Priority Exam Questions', this)">🔥 High Priority Questions</button>
       <button class="filter-btn" onclick="applyFilter('Semester 1 & 2', this)">📘 1st Year (Sem 1 & 2)</button>
       <button class="filter-btn" onclick="applyFilter('Semester 3 & 4', this)">📗 2nd Year (Sem 3 & 4)</button>
       <button class="filter-btn" onclick="applyFilter('Semester 5 & 6', this)">📙 3rd Year (Sem 5 & 6)</button>
+      <button class="filter-btn" onclick="applyFilter('Important Exam Questions', this)">📚 Important Questions</button>
+      <button class="filter-btn" onclick="applyFilter('Practicals & Viva', this)">🧪 Practicals & Viva</button>
       <button class="filter-btn" onclick="showSavedBookmarks(this)">⭐ Saved / Bookmarked Notes</button>
 
       <hr style="border: 0.5px solid #334155; margin: 15px 0;">
@@ -119,10 +119,11 @@
             </select>
 
             <select id="postCategory" style="flex: 1;">
-              <option value="🔥 High Priority Exam Questions">🔥 High Priority Exam Question</option>
-              <option value="📝 Question with Solution">📝 Question & Solution</option>
-              <option value="❓ Doubt / Need Help">❓ Doubt / Request Solution</option>
-              <option value="💻 Lab Code & Algorithm">💻 Lab Program / Code</option>
+              <option value="Important Exam Questions">📚 Important Exam Questions</option>
+              <option value="Question with Solution">📝 Question & Solution</option>
+              <option value="Practicals & Viva">🧪 Practicals & Viva</option>
+              <option value="Doubt / Need Help">❓ Doubt / Request Solution</option>
+              <option value="Lab Code & Algorithm">💻 Lab Program / Code</option>
             </select>
           </div>
 
@@ -173,7 +174,7 @@
     let allPosts = [];
     let currentSemFilter = 'all';
     let savedBookmarks = JSON.parse(localStorage.getItem('saved_bookmarks') || '[]');
-    let currentPage = 'upload'; // 'upload' or 'library'
+    let currentPage = 'upload';
 
     function updateOnlineStatus() {
       const badge = document.getElementById('networkBadge');
@@ -285,13 +286,11 @@
       solBox.style.display = solBox.style.display === 'block' ? 'none' : 'block';
     }
 
-    /* NEW: Toggle Comments Section */
     function toggleComments(postId) {
       const box = document.getElementById(`comments-${postId}`);
       if(box) box.style.display = box.style.display === 'block' ? 'none' : 'block';
     }
 
-    /* NEW: Add Comment/Doubt locally */
     function addComment(postId) {
       const input = document.getElementById(`comment-input-${postId}`);
       const text = input.value.trim();
@@ -448,7 +447,6 @@
               <span class="action-btn" onclick="deletePost('${post._id}', '${(post.content || '').replace(/'/g, "\\'")}')" style="color:#f43f5e;">🔒 Delete</span>
             </div>
 
-            <!-- COMMENTS SECTION -->
             <div id="comments-${post._id}" class="comment-section">
               <p style="font-size: 12px; color: #38bdf8; font-weight: bold; margin-bottom: 8px;">💬 Ask Doubt / Discussion</p>
               <div id="comment-list-${post._id}"></div>
