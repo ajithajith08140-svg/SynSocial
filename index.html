@@ -44,7 +44,13 @@
 
     .category-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8; }
     .pin-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(243, 156, 18, 0.1); color: #f39c12; border: 1px solid #f39c12; }
-
+    
+    /* NEW: Staff Badge & Comments Section UI */
+    .staff-badge { display: inline-block; background: #38bdf8; color: #0f172a; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: 5px; }
+    .comment-section { margin-top: 15px; padding-top: 12px; border-top: 1px dashed #334155; display: none; }
+    .comment-item { background: #0f172a; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; border-left: 2px solid #38bdf8; font-size: 13px; }
+    .comment-author { color: #38bdf8; font-weight: bold; font-size: 12px; margin-bottom: 2px; }
+    
     .solution-box { margin-top: 10px; padding: 10px; background: #0f172a; border-radius: 6px; border-left: 3px solid #2ecc71; font-size: 13px; display: none; }
     .copy-btn { position: absolute; right: 8px; top: 8px; background: #334155; color: #fff; border: none; padding: 3px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; }
   </style>
@@ -98,6 +104,12 @@
           
           <input type="text" id="authorName" placeholder="Your Name / Student Roll No..." required />
           
+          <div style="margin-bottom: 10px;">
+            <label style="font-size: 12px; color: #cbd5e1; cursor: pointer;">
+              <input type="checkbox" id="isStaffCheck" style="width: auto; margin-right: 5px;"> 🎖️ Post as Verified Staff / Faculty
+            </label>
+          </div>
+
           <div style="display: flex; gap: 10px;">
             <select id="postSemester" style="flex: 1;">
               <option value="Semester 1 & 2">📘 1st Year (Sem 1 & 2)</option>
@@ -273,6 +285,27 @@
       solBox.style.display = solBox.style.display === 'block' ? 'none' : 'block';
     }
 
+    /* NEW: Toggle Comments Section */
+    function toggleComments(postId) {
+      const box = document.getElementById(`comments-${postId}`);
+      if(box) box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    }
+
+    /* NEW: Add Comment/Doubt locally */
+    function addComment(postId) {
+      const input = document.getElementById(`comment-input-${postId}`);
+      const text = input.value.trim();
+      if (!text) return alert("Please enter a doubt or reply!");
+      
+      const commentList = document.getElementById(`comment-list-${postId}`);
+      const newComment = document.createElement('div');
+      newComment.className = 'comment-item';
+      newComment.innerHTML = `<div class="comment-author">You (Student)</div><div>${text}</div>`;
+      
+      commentList.appendChild(newComment);
+      input.value = '';
+    }
+
     function copyCode(btn, elementId) {
       const text = document.getElementById(elementId).innerText;
       navigator.clipboard.writeText(text);
@@ -316,12 +349,12 @@
         }
       }
 
-      const cleanedContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '') : '';
+      const cleanedContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '').replace(/\[STAFF\]/g, '') : '';
       const shareUrl = `${window.location.origin}${window.location.pathname}?post=${post._id}`;
 
       const detailHTML = `
         <div style="background:#0f172a; padding:15px; border-radius:8px; border:1px solid #334155; margin-bottom:15px;">
-          <p style="color:#38bdf8; font-weight:bold; font-size:1rem;">👤 Author: ${post.author || 'CS Student'}</p>
+          <p style="color:#38bdf8; font-weight:bold; font-size:1rem;">👤 Author: ${post.author || 'CS Student'} ${post.content && post.content.includes('[STAFF]') ? '<span class="staff-badge">✔ Staff</span>' : ''}</p>
           <p style="color:#94a3b8; font-size:0.8rem;">📅 Posted on: ${new Date(post.createdAt).toLocaleString()}</p>
         </div>
 
@@ -373,7 +406,8 @@
           }
         }
 
-        const cleanedDisplayContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '') : '';
+        const isStaff = post.content && post.content.includes('[STAFF]');
+        const cleanedDisplayContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '').replace(/\[STAFF\]/g, '') : '';
         const solId = `sol-${post._id}`;
         const codeId = `code-${post._id}`;
         const isSaved = savedBookmarks.includes(post._id);
@@ -386,7 +420,7 @@
             </div>
 
             <div style="display:flex; justify-content:space-between; color:#94a3b8; font-size:13px; margin-top:5px;">
-              <strong>👤 ${post.author || 'CS Student'}</strong> 
+              <strong>👤 ${post.author || 'CS Student'} ${isStaff ? '<span class="staff-badge">✔ Staff</span>' : ''}</strong> 
               <span>${new Date(post.createdAt).toLocaleDateString()}</span>
             </div>
             
@@ -409,8 +443,19 @@
             <div class="actions">
               <span class="action-btn" onclick="openFullPostPage('${post._id}')" style="color:#38bdf8; font-weight:bold;">👁️ View Details</span>
               <span class="action-btn" onclick="likePost('${post._id}')">❤️ ${post.likes || 0} Helpful</span>
+              <span class="action-btn" onclick="toggleComments('${post._id}')">💬 Doubts / Discuss</span>
               <span class="action-btn" onclick="toggleBookmark('${post._id}')">${isSaved ? '⭐ Saved' : '☆ Save Note'}</span>
               <span class="action-btn" onclick="deletePost('${post._id}', '${(post.content || '').replace(/'/g, "\\'")}')" style="color:#f43f5e;">🔒 Delete</span>
+            </div>
+
+            <!-- COMMENTS SECTION -->
+            <div id="comments-${post._id}" class="comment-section">
+              <p style="font-size: 12px; color: #38bdf8; font-weight: bold; margin-bottom: 8px;">💬 Ask Doubt / Discussion</p>
+              <div id="comment-list-${post._id}"></div>
+              <div style="display: flex; gap: 6px; margin-top: 8px;">
+                <input type="text" id="comment-input-${post._id}" placeholder="Type your doubt or answer here..." style="margin-bottom:0; font-size:12px;">
+                <button onclick="addComment('${post._id}')" style="padding:6px 12px; font-size:12px;">Send</button>
+              </div>
             </div>
           </div>
         `;
@@ -426,6 +471,7 @@
       const resourceLink = document.getElementById('resourceLink').value;
       const fileInput = document.getElementById('mediaInput');
       const btn = document.getElementById('publishBtn');
+      const isStaff = document.getElementById('isStaffCheck').checked;
 
       if (!author) return alert("Please enter your Name or Roll Number!");
       if (!content) return alert("Please enter the question or topic description!");
@@ -438,7 +484,10 @@
       btn.disabled = true;
       btn.innerText = "Publishing Content...";
 
-      const fullContent = `[${semester}] [${category}] [PIN:${userPin}] ${content}`;
+      let fullContent = `[${semester}] [${category}] [PIN:${userPin}] ${content}`;
+      if (isStaff) {
+        fullContent = `[STAFF] ` + fullContent;
+      }
 
       const formData = new FormData();
       formData.append('author', author);
@@ -454,7 +503,6 @@
         const response = await fetch(API_BASE, { method: 'POST', body: formData });
         if (!response.ok) throw new Error('Upload failed');
 
-        // Show Upload Success Box instead of dumping below
         document.getElementById('uploadSuccessBox').style.display = 'block';
         await loadFeed();
       } catch (err) {
@@ -470,6 +518,7 @@
       document.getElementById('codeContent').value = '';
       document.getElementById('resourceLink').value = '';
       document.getElementById('mediaInput').value = '';
+      document.getElementById('isStaffCheck').checked = false;
       document.getElementById('uploadSuccessBox').style.display = 'none';
     }
 
