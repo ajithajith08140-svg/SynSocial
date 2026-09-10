@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SynSocial - Advanced CS Academic & Multi-Page Resolution Hub</title>
+  <title>Voorhees CS - Academic Resource Hub</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
     body { background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; }
@@ -11,60 +11,50 @@
     .navbar { background: #1e293b; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
     .logo { font-size: 22px; font-weight: bold; color: #38bdf8; }
     
-    /* Navigation Bar Tabs (Multi-Page Navigation) */
-    .nav-links { display: flex; gap: 10px; }
-    .nav-tab { color: #cbd5e1; background: #0f172a; font-weight: bold; padding: 8px 16px; border-radius: 6px; cursor: pointer; border: 1px solid #334155; transition: 0.2s; }
-    .nav-tab:hover, .nav-tab.active { color: #38bdf8; border-color: #38bdf8; background: #1e293b; }
-
-    .main-container { display: flex; flex: 1; padding: 20px; gap: 20px; max-width: 1050px; margin: 0 auto; width: 100%; }
-    .sidebar { width: 270px; background: #1e293b; padding: 20px; border-radius: 10px; height: fit-content; border: 1px solid #334155; }
+    .main-container { display: flex; flex: 1; padding: 20px; gap: 20px; max-width: 1100px; margin: 0 auto; width: 100%; }
+    .sidebar { width: 280px; background: #1e293b; padding: 20px; border-radius: 10px; height: fit-content; border: 1px solid #334155; }
     
     .view-section { flex: 1; }
     .card { background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #334155; position: relative; }
     
     textarea, input, select { width: 100%; background: #0f172a; border: 1px solid #334155; color: #fff; padding: 10px; border-radius: 6px; margin-bottom: 10px; outline: none; }
     
+    /* Dedicated Search Box Layout */
+    .search-wrapper {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
     .search-box {
-      width: 100%;
+      flex: 1;
       background: #0f172a;
       border: 1px solid #38bdf8;
       color: #fff;
-      padding: 8px 12px;
+      padding: 10px 14px;
       border-radius: 6px;
-      margin-bottom: 15px;
       font-size: 14px;
+      margin-bottom: 0;
     }
 
-    button { background: #38bdf8; color: #0f172a; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    button { background: #38bdf8; color: #0f172a; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    button:hover { opacity: 0.9; }
     
-    .code-block { background: #0f172a; color: #38bdf8; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; margin: 10px 0; border-left: 3px solid #38bdf8; white-space: pre-wrap; }
-    .actions { display: flex; justify-content: space-between; color: #94a3b8; font-size: 14px; margin-top: 10px; align-items: center; }
-    .action-btn { cursor: pointer; transition: 0.2s; }
-    .action-btn:hover { opacity: 0.8; }
+    .code-block { background: #0f172a; color: #38bdf8; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; margin: 10px 0; border-left: 3px solid #38bdf8; white-space: pre-wrap; position: relative; }
+    
+    .actions { display: flex; justify-content: space-between; color: #94a3b8; font-size: 14px; margin-top: 12px; align-items: center; border-top: 1px solid #334155; padding-top: 10px; }
+    .action-btn { cursor: pointer; transition: 0.2s; user-select: none; }
+    .action-btn:hover { color: #38bdf8; }
 
-    /* Page View Visibility Controller */
-    .page-view { display: none; }
-    .page-view.active-page { display: block; }
-
-    /* Interactive Sidebar & Filter Items */
-    .clickable-item {
-      padding: 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .clickable-item:hover {
-      background: #334155;
-    }
+    /* Filter & Sidebar Buttons */
     .filter-btn {
       display: block;
       width: 100%;
       text-align: left;
       background: #0f172a;
       color: #cbd5e1;
-      padding: 8px 12px;
+      padding: 10px 12px;
       border-radius: 6px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       border: 1px solid #334155;
       font-size: 0.85rem;
       cursor: pointer;
@@ -72,6 +62,7 @@
     .filter-btn:hover, .filter-btn.active {
       border-color: #38bdf8;
       color: #38bdf8;
+      background: #1e293b;
     }
 
     /* Modal Styling */
@@ -84,9 +75,7 @@
       width: 80%; max-width: 500px; color: #fff; position: relative;
     }
     .close-btn { position: absolute; right: 15px; top: 10px; color: #aaa; font-size: 20px; cursor: pointer; }
-    .close-btn:hover { color: #fff; }
 
-    /* Custom Badges */
     .category-badge {
       display: inline-block;
       padding: 3px 8px;
@@ -94,11 +83,9 @@
       font-weight: bold;
       border-radius: 4px;
       margin-bottom: 8px;
-      margin-right: 5px;
+      background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8;
     }
-    .badge-exam { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; }
 
-    /* Solution Box */
     .solution-box {
       margin-top: 10px;
       padding: 10px;
@@ -108,101 +95,94 @@
       font-size: 13px;
       display: none;
     }
+
+    .copy-btn {
+      position: absolute; right: 8px; top: 8px; background: #334155; color: #fff; border: none; padding: 3px 8px; font-size: 11px; border-radius: 4px; cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Multi-Page Navigation Bar -->
+  <!-- Top Navbar -->
   <div class="navbar">
-    <div class="logo">SynSocial</div>
-    <div class="nav-links">
-      <div class="nav-tab active" onclick="switchPage('homePage', this)">🏠 Feed Home</div>
-      <div class="nav-tab" onclick="switchPage('questionPage', this)">📝 Question Bank</div>
-      <div class="nav-tab" onclick="switchPage('uploadPage', this)">➕ Upload Material</div>
-    </div>
+    <div class="logo">Voorhees CS Hub</div>
+    <div style="font-size: 0.85rem; color: #94a3b8;">Department Resource Sharing Platform</div>
   </div>
 
   <div class="main-container">
+    
+    <!-- Sidebar / Filters Section -->
     <div class="sidebar">
-      <img src="logo.jpeg" alt="College Logo" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">
+      <img src="logo.jpeg" alt="College Logo" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px auto; display: block;">
       
-      <h3 style="color: #ffffff; font-size: 1.1rem; margin-bottom: 2px; text-align: center;">Voorhees College</h3>
-      <p style="color: #38bdf8; font-size: 0.85rem; margin-bottom: 15px; text-align: center;">Dept. of Computer Science</p>
+      <h3 style="color: #ffffff; font-size: 1rem; margin-bottom: 2px; text-align: center;">Voorhees College</h3>
+      <p style="color: #38bdf8; font-size: 0.8rem; margin-bottom: 15px; text-align: center;">Dept. of Computer Science</p>
       
       <hr style="border: 0.5px solid #334155; margin-bottom: 15px;">
 
-      <!-- Academic Semester Filters -->
-      <p style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">EXAM PREP FILTERS</p>
-      <button class="filter-btn active" onclick="filterBySem('all')">🌐 All Posts & Materials</button>
-      <button class="filter-btn" onclick="filterBySem('🔥 High Priority Exam Questions')">🔥 High Priority Exam Topics</button>
-      <button class="filter-btn" onclick="filterBySem('Semester 1 & 2')">📘 1st Year (Sem 1 & 2)</button>
-      <button class="filter-btn" onclick="filterBySem('Semester 3 & 4')">📗 2nd Year (Sem 3 & 4)</button>
-      <button class="filter-btn" onclick="filterBySem('Semester 5 & 6')">📙 3rd Year (Sem 5 & 6)</button>
+      <p style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">ACADEMIC FILTERS</p>
+      <button class="filter-btn active" onclick="applyFilter('all', this)">🌐 All Materials Feed</button>
+      <button class="filter-btn" onclick="applyFilter('🔥 High Priority Exam Questions', this)">🔥 High Priority Questions</button>
+      <button class="filter-btn" onclick="applyFilter('Semester 1 & 2', this)">📘 1st Year (Sem 1 & 2)</button>
+      <button class="filter-btn" onclick="applyFilter('Semester 3 & 4', this)">📗 2nd Year (Sem 3 & 4)</button>
+      <button class="filter-btn" onclick="applyFilter('Semester 5 & 6', this)">📙 3rd Year (Sem 5 & 6)</button>
+      <button class="filter-btn" onclick="showSavedBookmarks(this)">⭐ Saved / Bookmarked Notes</button>
 
       <hr style="border: 0.5px solid #334155; margin: 15px 0;">
 
-      <div class="quote-card clickable-item" onclick="openModal('Daily Tech Thought', document.getElementById('quoteText').innerText)" style="padding: 12px; background: #0f172a; border-radius: 6px; border-left: 3px solid #f39c12; text-align: left;">
-          <p style="font-size: 0.75rem; color: #f39c12; font-weight: bold; margin-bottom: 5px;">💡 TECH THOUGHT 🔗</p>
-          <p id="quoteText" style="font-size: 0.85rem; color: #dcdde1; font-style: italic; transition: opacity 0.4s ease-in-out;">
-              Loading thought...
-          </p>
+      <div class="quote-card" onclick="openModal('Daily Tech Thought', document.getElementById('quoteText').innerText)" style="padding: 10px; background: #0f172a; border-radius: 6px; border-left: 3px solid #f39c12; cursor: pointer;">
+          <p style="font-size: 0.7rem; color: #f39c12; font-weight: bold; margin-bottom: 3px;">💡 TECH THOUGHT</p>
+          <p id="quoteText" style="font-size: 0.8rem; color: #dcdde1; font-style: italic;">Loading thought...</p>
       </div>
 
-      <!-- Network Status Badge -->
       <div id="networkBadge" style="margin-top: 15px; padding: 8px; background: rgba(46, 204, 113, 0.1); border-radius: 5px; text-align: center;">
-          <p id="statusText" style="color: #2ecc71; font-size: 0.8rem; margin: 0;">🌐 Campus Cloud Sync: Live</p>
+          <p id="statusText" style="color: #2ecc71; font-size: 0.75rem; margin: 0;">🌐 Cloud Sync: Live</p>
       </div>
     </div>
 
+    <!-- Main View Area -->
     <div class="view-section">
-      <input type="text" id="searchInput" class="search-box" oninput="searchPosts()" placeholder="🔍 Search exam questions, solutions, algorithms, semesters...">
 
-      <!-- PAGE 1: HOME FEED -->
-      <div id="homePage" class="page-view active-page">
-        <h2 style="margin-bottom:15px; color:#38bdf8;">🏠 Student Resource Activity Feed</h2>
-        <div id="feedListHome"><p style="color: #94a3b8;">Loading CS posts from Cloud DB...</p></div>
-      </div>
+      <!-- Upload Form Collapsible Card -->
+      <div class="card" style="border-color: #38bdf8;">
+        <h3 style="margin-bottom: 12px; color: #38bdf8; font-size: 1.1rem;">➕ Share CS Question / Study Material</h3>
+        <input type="text" id="authorName" placeholder="Your Name / Student Roll No..." required />
+        
+        <div style="display: flex; gap: 10px;">
+          <select id="postSemester" style="flex: 1;">
+            <option value="Semester 1 & 2">📘 1st Year (Sem 1 & 2)</option>
+            <option value="Semester 3 & 4">📗 2nd Year (Sem 3 & 4)</option>
+            <option value="Semester 5 & 6">📙 3rd Year (Sem 5 & 6)</option>
+            <option value="General CS">💻 General CS / Lab</option>
+          </select>
 
-      <!-- PAGE 2: QUESTION BANK -->
-      <div id="questionPage" class="page-view">
-        <h2 style="margin-bottom:15px; color:#f39c12;">📝 CS Department Question Bank & Solutions</h2>
-        <div id="feedListQuestions"><p style="color:#94a3b8;">Loading model questions...</p></div>
-      </div>
-
-      <!-- PAGE 3: UPLOAD MATERIAL PAGE -->
-      <div id="uploadPage" class="page-view">
-        <div class="card">
-          <h3 style="margin-bottom: 10px; color: #38bdf8;">Share CS Academic Query, Exam Question or Solution</h3>
-          <input type="text" id="authorName" placeholder="Your Name / Student Roll No..." required />
-          
-          <div style="display: flex; gap: 10px;">
-            <!-- Semester Category -->
-            <select id="postSemester" style="flex: 1;">
-              <option value="Semester 1 & 2">📘 1st Year (Sem 1 & 2)</option>
-              <option value="Semester 3 & 4">📗 2nd Year (Sem 3 & 4)</option>
-              <option value="Semester 5 & 6">📙 3rd Year (Sem 5 & 6)</option>
-              <option value="General CS">💻 General CS / Lab</option>
-            </select>
-
-            <!-- Type Category -->
-            <select id="postCategory" style="flex: 1;">
-              <option value="🔥 High Priority Exam Questions">🔥 High Priority Exam Question</option>
-              <option value="📝 Question with Solution">📝 Question & Solution</option>
-              <option value="❓ Doubt / Need Help">❓ Doubt / Request Solution</option>
-              <option value="💻 Lab Code & Algorithm">💻 Lab Program / Code</option>
-            </select>
-          </div>
-
-          <textarea id="postContent" placeholder="Enter question description, university exam topic, or doubt details..."></textarea>
-          <textarea id="codeContent" placeholder="// Enter code solution or step-by-step answer here (optional)..." style="height: 70px; font-family: monospace;"></textarea>
-          <input type="url" id="resourceLink" placeholder="Paste Reference Drive / GitHub Link (optional)...">
-          
-          <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px;">Attach Question Paper Image / PDF Document (optional):</label>
-          <input type="file" id="mediaInput" accept="image/*,.pdf,.doc,.docx" />
-          
-          <button id="publishBtn" onclick="publishPost()">Publish Academic Content</button>
+          <select id="postCategory" style="flex: 1;">
+            <option value="🔥 High Priority Exam Questions">🔥 High Priority Exam Question</option>
+            <option value="📝 Question with Solution">📝 Question & Solution</option>
+            <option value="❓ Doubt / Need Help">❓ Doubt / Request Solution</option>
+            <option value="💻 Lab Code & Algorithm">💻 Lab Program / Code</option>
+          </select>
         </div>
+
+        <textarea id="postContent" placeholder="Enter question description or exam topic details..."></textarea>
+        <textarea id="codeContent" placeholder="// Enter step-by-step code answer or solution (optional)..." style="height: 60px; font-family: monospace;"></textarea>
+        <input type="url" id="resourceLink" placeholder="Paste Reference Drive / GitHub Link (optional)...">
+        
+        <label style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 5px;">Attach Question Paper / Image / PDF (optional):</label>
+        <input type="file" id="mediaInput" accept="image/*,.pdf,.doc,.docx" />
+        
+        <button id="publishBtn" onclick="publishPost()" style="width: 100%; margin-top: 5px;">Publish Academic Resource</button>
       </div>
+
+      <!-- Search System -->
+      <div class="search-wrapper">
+        <input type="text" id="searchInput" class="search-box" onkeyup="handleKeySearch(event)" oninput="checkSearchEarse()" placeholder="🔍 Type search keyword (e.g., C++, Java, Sem 3)...">
+        <button onclick="executeSearch()" style="background: #38bdf8;">Search</button>
+        <button onclick="clearSearch()" style="background: #334155; color: #cbd5e1;">Clear</button>
+      </div>
+
+      <!-- Resource Feed -->
+      <div id="feedList"><p style="color: #94a3b8;">Loading CS posts from Cloud DB...</p></div>
 
     </div>
   </div>
@@ -221,24 +201,16 @@
     const RENDER_BASE = "https://synsocial.onrender.com";
     let allPosts = [];
     let currentSemFilter = 'all';
+    let savedBookmarks = JSON.parse(localStorage.getItem('saved_bookmarks') || '[]');
 
-    // Multi-Page Switcher Function
-    function switchPage(pageId, element) {
-      document.querySelectorAll('.page-view').forEach(page => page.classList.remove('active-page'));
-      document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-      
-      document.getElementById(pageId).classList.add('active-page');
-      if (element) element.classList.add('active');
-    }
-
-    // Online/Offline Status Indicator
+    // Online Status Manager
     function updateOnlineStatus() {
       const badge = document.getElementById('networkBadge');
       const text = document.getElementById('statusText');
       if (navigator.onLine) {
         badge.style.background = "rgba(46, 204, 113, 0.1)";
         text.style.color = "#2ecc71";
-        text.innerText = "🌐 Campus Cloud Sync: Live (Online)";
+        text.innerText = "🌐 Cloud Sync: Live (Online)";
       } else {
         badge.style.background = "rgba(243, 156, 18, 0.1)";
         text.style.color = "#f39c12";
@@ -249,74 +221,118 @@
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
 
-    // Modal Control
-    function openModal(title, text) {
-      document.getElementById('modalTitle').innerText = title;
-      document.getElementById('modalBody').innerText = text;
-      document.getElementById('infoModal').style.display = 'flex';
-    }
-    function closeModal() {
-      document.getElementById('infoModal').style.display = 'none';
-    }
-
-    // Load Feed & Render
+    // Load Main Feed
     async function loadFeed() {
       try {
         const res = await fetch(API_BASE);
         allPosts = await res.json();
         localStorage.setItem('cached_posts', JSON.stringify(allPosts));
-        filterBySem(currentSemFilter);
+        filterPosts();
       } catch (err) {
         const cached = localStorage.getItem('cached_posts');
         if (cached) {
           allPosts = JSON.parse(cached);
-          filterBySem(currentSemFilter);
+          filterPosts();
         } else {
-          document.getElementById('feedListHome').innerHTML = `<p style="color:#f43f5e;">Failed to connect to cloud database.</p>`;
+          document.getElementById('feedList').innerHTML = `<p style="color:#f43f5e;">Failed to connect to cloud database.</p>`;
         }
       }
     }
 
-    function filterBySem(filterVal) {
-      currentSemFilter = filterVal;
-
-      let filtered = allPosts;
-      if (filterVal !== 'all') {
-        filtered = allPosts.filter(p => p.content.includes(filterVal));
-      }
-
-      renderAllPages(filtered);
-    }
-
-    // FIXED SOLUTION TOGGLE FUNCTION
-    function toggleSolution(uniqueTargetId) {
-      const solBox = document.getElementById(uniqueTargetId);
-      if (!solBox) return;
+    function applyFilter(filterVal, btnElement) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if(btnElement) btnElement.classList.add('active');
       
-      if (solBox.style.display === 'block') {
-        solBox.style.display = 'none';
-      } else {
-        solBox.style.display = 'block';
+      currentSemFilter = filterVal;
+      filterPosts();
+    }
+
+    function filterPosts() {
+      let filtered = allPosts;
+      if (currentSemFilter !== 'all') {
+        filtered = allPosts.filter(p => p.content && p.content.includes(currentSemFilter));
+      }
+      renderPosts(filtered);
+    }
+
+    // SEARCH LOGIC: Triggers ONLY on explicit search or key press (Enter)
+    function handleKeySearch(event) {
+      if (event.key === 'Enter') {
+        executeSearch();
       }
     }
 
-    function renderAllPages(postsToDisplay) {
-      const homeList = document.getElementById('feedListHome');
-      const questionList = document.getElementById('feedListQuestions');
-
-      homeList.innerHTML = '';
-      questionList.innerHTML = '';
-
-      // Filter Questions for Question Bank Page
-      const questionPosts = postsToDisplay.filter(p => p.content.includes("Question") || p.content.includes("Exam") || p.content.includes("Doubt"));
-
-      renderPosts(postsToDisplay, homeList, 'home');
-      renderPosts(questionPosts.length > 0 ? questionPosts : postsToDisplay, questionList, 'qbank');
+    function executeSearch() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (!query) {
+        filterPosts();
+        return;
+      }
+      const searchResults = allPosts.filter(post => {
+        const contentMatch = post.content ? post.content.toLowerCase().includes(query) : false;
+        const codeMatch = post.codeSnippet ? post.codeSnippet.toLowerCase().includes(query) : false;
+        const authorMatch = post.author ? post.author.toLowerCase().includes(query) : false;
+        return contentMatch || codeMatch || authorMatch;
+      });
+      renderPosts(searchResults);
     }
 
-    function renderPosts(postsToDisplay, container, pagePrefix) {
+    // Auto-reset when user erases text completely
+    function checkSearchEarse() {
+      const query = document.getElementById('searchInput').value.trim();
+      if (query === '') {
+        filterPosts(); // Restore default list when input cleared
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      filterPosts();
+    }
+
+    // TOGGLE SOLUTION BOX
+    function toggleSolution(solId) {
+      const solBox = document.getElementById(solId);
+      if (!solBox) return;
+      solBox.style.display = solBox.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // COPY CODE TO CLIPBOARD
+    function copyCode(btn, elementId) {
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text);
+      btn.innerText = "Copied! ✓";
+      setTimeout(() => btn.innerText = "Copy Code", 2000);
+    }
+
+    // BOOKMARK SYSTEM
+    function toggleBookmark(postId) {
+      if (savedBookmarks.includes(postId)) {
+        savedBookmarks = savedBookmarks.filter(id => id !== postId);
+        alert("Removed from Saved Items!");
+      } else {
+        savedBookmarks.push(postId);
+        alert("Saved to Bookmarks!");
+      }
+      localStorage.setItem('saved_bookmarks', JSON.stringify(savedBookmarks));
+      filterPosts();
+    }
+
+    function showSavedBookmarks(btnElement) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if(btnElement) btnElement.classList.add('active');
+
+      const bookmarkedPosts = allPosts.filter(p => savedBookmarks.includes(p._id));
+      renderPosts(bookmarkedPosts);
+    }
+
+    // RENDER FUNCTION
+    function renderPosts(postsToDisplay) {
+      const container = document.getElementById('feedList');
+      container.innerHTML = '';
+
       if (!postsToDisplay || postsToDisplay.length === 0) {
-        container.innerHTML = `<p style="color:#94a3b8;">No matching exam resources or questions found.</p>`;
+        container.innerHTML = `<p style="color:#94a3b8; text-align:center; padding: 20px;">No matching study resources found.</p>`;
         return;
       }
 
@@ -329,60 +345,53 @@
           if (isBase64 || post.filePath.match(/\.(jpg|jpeg|png|gif)$/i)) {
             attachmentHTML = `<div style="margin-top:10px;"><img src="${fileUrl}" alt="Attachment" style="max-width:100%; max-height:300px; border-radius:6px;"></div>`;
           } else {
-            attachmentHTML = `<div style="margin-top:8px;"><a href="${fileUrl}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold;">📎 Download Question Paper / Notes</a></div>`;
+            attachmentHTML = `<div style="margin-top:8px;"><a href="${fileUrl}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold;">📎 Download Attachment File</a></div>`;
           }
         }
 
-        // Clean PIN tag from UI Display
         const cleanedDisplayContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '') : '';
-        
-        // Unique ID for solution box per page section
-        const solId = `sol-${pagePrefix}-${post._id}`;
+        const solId = `sol-${post._id}`;
+        const codeId = `code-${post._id}`;
+        const isSaved = savedBookmarks.includes(post._id);
 
         container.innerHTML += `
           <div class="card">
             <div>
-              <span class="category-badge badge-exam">🎓 CS Academic Hub</span>
+              <span class="category-badge">🎓 CS Academic Material</span>
             </div>
 
             <div style="display:flex; justify-content:space-between; color:#94a3b8; font-size:13px; margin-top:5px;">
-              <strong>👤 ${post.author || 'CS Student'}</strong> <span>${new Date(post.createdAt).toLocaleTimeString()}</span>
+              <strong>👤 ${post.author || 'CS Student'}</strong> 
+              <span>${new Date(post.createdAt).toLocaleDateString()}</span>
             </div>
             
-            <p style="margin-top:10px;">${cleanedDisplayContent}</p>
+            <p style="margin-top:10px; line-height: 1.5;">${cleanedDisplayContent}</p>
             
             ${(post.codeSnippet && post.codeSnippet.trim() !== '') ? `
-              <button onclick="toggleSolution('${solId}')" style="margin-top:8px; padding:5px 10px; font-size:12px; background:#334155; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; cursor:pointer;">💡 View / Hide Verified Answer Solution</button>
+              <button onclick="toggleSolution('${solId}')" style="margin-top:10px; padding:6px 12px; font-size:12px; background:#334155; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; cursor:pointer;">💡 View / Hide Answer Solution</button>
               <div id="${solId}" class="solution-box">
-                <strong>Verified Answer / Solution:</strong>
-                <div class="code-block">${post.codeSnippet}</div>
+                <strong>Verified Answer / Code Solution:</strong>
+                <div class="code-block">
+                  <button class="copy-btn" onclick="copyCode(this, '${codeId}')">Copy Code</button>
+                  <span id="${codeId}">${post.codeSnippet}</span>
+                </div>
               </div>
             ` : ''}
 
-            ${post.resourceLink ? `<div style="margin-top:8px;"><a href="${post.resourceLink}" target="_blank" style="color:#38bdf8; text-decoration:none;">🔗 Open Reference Link</a></div>` : ''}
+            ${post.resourceLink ? `<div style="margin-top:8px;"><a href="${post.resourceLink}" target="_blank" style="color:#38bdf8; text-decoration:none;">🔗 Open External Reference Link</a></div>` : ''}
             ${attachmentHTML}
             
             <div class="actions">
               <span class="action-btn" onclick="likePost('${post._id}')">❤️ ${post.likes || 0} Helpful</span>
-              <span class="action-btn" onclick="deletePost('${post._id}', '${(post.content || '').replace(/'/g, "\\'")}')" style="color:#f43f5e;">🔒 Delete Post</span>
+              <span class="action-btn" onclick="toggleBookmark('${post._id}')">${isSaved ? '⭐ Saved' : '☆ Save Note'}</span>
+              <span class="action-btn" onclick="deletePost('${post._id}', '${(post.content || '').replace(/'/g, "\\'")}')" style="color:#f43f5e;">🔒 Delete</span>
             </div>
           </div>
         `;
       });
     }
 
-    function searchPosts() {
-      const query = document.getElementById('searchInput').value.toLowerCase().trim();
-      const filteredPosts = allPosts.filter(post => {
-        const contentMatch = post.content ? post.content.toLowerCase().includes(query) : false;
-        const codeMatch = post.codeSnippet ? post.codeSnippet.toLowerCase().includes(query) : false;
-        const authorMatch = post.author ? post.author.toLowerCase().includes(query) : false;
-        return contentMatch || codeMatch || authorMatch;
-      });
-      renderAllPages(filteredPosts);
-    }
-
-    // Publish Post with Security PIN
+    // PUBLISH POST
     async function publishPost() {
       const author = document.getElementById('authorName').value.trim();
       const semester = document.getElementById('postSemester').value;
@@ -396,8 +405,7 @@
       if (!author) return alert("Please enter your Name or Roll Number!");
       if (!content) return alert("Please enter the question or topic description!");
 
-      // Security PIN Prompt
-      const userPin = prompt("Set a 4-Digit Security PIN (e.g., 1234) to protect your post from unauthorized deletion:");
+      const userPin = prompt("Set a 4-Digit Security PIN (e.g., 1234) to protect your post:");
       if (!userPin || userPin.length < 4 || isNaN(userPin)) {
         return alert("Post creation cancelled! You must enter a valid 4-digit numeric PIN.");
       }
@@ -405,7 +413,6 @@
       btn.disabled = true;
       btn.innerText = "Publishing Content...";
 
-      // Securely embed PIN in the post string
       const fullContent = `[${semester}] [${category}] [PIN:${userPin}] ${content}`;
 
       const formData = new FormData();
@@ -428,15 +435,12 @@
         fileInput.value = '';
         
         await loadFeed();
-        alert("Published successfully! Remember your 4-digit PIN for deletion.");
-        
-        // Auto-switch back to Home Page
-        switchPage('homePage', document.querySelectorAll('.nav-tab')[0]);
+        alert("Published successfully!");
       } catch (err) {
-        alert("The server is slow or offline. Please try again later!");
+        alert("Server error, please try again.");
       } finally {
         btn.disabled = false;
-        btn.innerText = "Publish Academic Content";
+        btn.innerText = "Publish Academic Resource";
       }
     }
 
@@ -445,56 +449,48 @@
       loadFeed();
     }
 
-    // Delete Post with PIN Verification
     async function deletePost(id, rawContent) {
-      // Extract PIN from content string
       const pinMatch = rawContent.match(/\[PIN:(\d{4})\]/);
       const correctPin = pinMatch ? pinMatch[1] : null;
 
-      const enteredPin = prompt("🔒 Enter your 4-Digit Security PIN (or Master Admin PIN) to delete this post:");
-
+      const enteredPin = prompt("🔒 Enter your 4-Digit Security PIN to delete this post:");
       if (!enteredPin) return;
 
-      // Validate PIN or Master Admin PIN (9999)
       if (enteredPin === correctPin || enteredPin === "9999") {
-        if (confirm("Are you sure you want to delete this resource permanently?")) {
+        if (confirm("Are you sure you want to delete this resource?")) {
           await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
-          alert("Post deleted successfully!");
+          alert("Post deleted!");
           loadFeed();
         }
       } else {
-        alert("❌ Invalid PIN! Only the author or Admin (PIN: 9999) can delete this post.");
+        alert("❌ Invalid PIN!");
       }
     }
 
+    // Modal Helpers
+    function openModal(title, text) {
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalBody').innerText = text;
+      document.getElementById('infoModal').style.display = 'flex';
+    }
+    function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
+
     loadFeed();
 
-    // Tech Quote Fetcher
+    // Daily Quotes
     async function fetchDynamicQuote() {
       const quoteElement = document.getElementById('quoteText');
       if (!quoteElement) return;
 
-      quoteElement.style.opacity = 0;
-
-      setTimeout(async () => {
-        try {
-          const res = await fetch('https://dummyjson.com/quotes/random');
-          const data = await res.json();
-          quoteElement.innerText = `"${data.quote}" — ${data.author}`;
-        } catch (err) {
-          const backupQuotes = [
-            { quote: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
-            { quote: "Programs must be written for people to read.", author: "Harold Abelson" },
-            { quote: "First, solve the problem. Then, write the code.", author: "John Johnson" }
-          ];
-          const q = backupQuotes[Math.floor(Math.random() * backupQuotes.length)];
-          quoteElement.innerText = `"${q.quote}" — ${q.author}`;
-        }
-        quoteElement.style.opacity = 1;
-      }, 400);
+      try {
+        const res = await fetch('https://dummyjson.com/quotes/random');
+        const data = await res.json();
+        quoteElement.innerText = `"${data.quote}" — ${data.author}`;
+      } catch (err) {
+        quoteElement.innerText = '"First, solve the problem. Then, write the code." — John Johnson';
+      }
     }
     fetchDynamicQuote();
-    setInterval(fetchDynamicQuote, 20000);
   </script>
 </body>
 </html>
