@@ -87,7 +87,7 @@
         <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px;">Attach Document/Image File (optional):</label>
         <input type="file" id="mediaInput" accept="image/*,.pdf,.doc,.docx" />
         
-        <button onclick="publishPost()">Publish to Backend DB</button>
+        <button id="publishBtn" onclick="publishPost()">Publish to Backend DB</button>
       </div>
 
       <div id="feedList">
@@ -112,7 +112,7 @@
       }
     }
 
-    // 2. Render Function (Supports both Base64 and standard file URL)
+    // 2. Render Function (Handles both Cloud File Uploads & Base64)
     function renderPosts(postsToDisplay) {
       const feedContainer = document.getElementById('feedList');
       feedContainer.innerHTML = '';
@@ -125,14 +125,13 @@
       postsToDisplay.forEach(post => {
         let attachmentHTML = '';
         if (post.filePath) {
-          // Check if Base64 string or regular path
           const isBase64 = post.filePath.startsWith('data:');
           const fileUrl = isBase64 ? post.filePath : `${RENDER_BASE}/${post.filePath.replace(/\\/g, '/')}`;
           
           if (isBase64 || post.filePath.match(/\.(jpg|jpeg|png|gif)$/i)) {
             attachmentHTML = `<div style="margin-top:10px;"><img src="${fileUrl}" alt="Attachment" style="max-width:100%; max-height:300px; border-radius:6px;"></div>`;
           } else {
-            attachmentHTML = `<div style="margin-top:8px;"><a href="${fileUrl}" target="_blank" style="color:#38bdf8; text-decoration:none;">📎 Download Attached Document</a></div>`;
+            attachmentHTML = `<div style="margin-top:8px;"><a href="${fileUrl}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold;">📎 Open/Download Attached Document</a></div>`;
           }
         }
 
@@ -170,47 +169,50 @@
       renderPosts(filteredPosts);
     }
 
-    // 4. Create Post (Base64 Conversion for Permanent Mobile/Cloud Image Storage)
+    // 4. Create Post (Compatible with Multer backend)
     async function publishPost() {
       const content = document.getElementById('postContent').value;
       const codeSnippet = document.getElementById('codeContent').value;
       const resourceLink = document.getElementById('resourceLink').value;
       const fileInput = document.getElementById('mediaInput');
+      const btn = document.getElementById('publishBtn');
 
       if (!content.trim()) return alert("Content text-a type pannunga!");
 
-      if (fileInput.files[0]) {
-        const reader = new FileReader();
-        reader.readAsDataURL(fileInput.files[0]);
-        reader.onload = async function () {
-          await sendPostData(content, codeSnippet, resourceLink, reader.result);
-        };
-      } else {
-        await sendPostData(content, codeSnippet, resourceLink, "");
-      }
-    }
+      btn.disabled = true;
+      btn.innerText = "Publishing...";
 
-    async function sendPostData(content, codeSnippet, resourceLink, filePath) {
+      const formData = new FormData();
+      formData.append('author', 'Rayeesa');
+      formData.append('content', content);
+      formData.append('codeSnippet', codeSnippet);
+      formData.append('resourceLink', resourceLink);
+      
+      if (fileInput.files[0]) {
+        formData.append('file', fileInput.files[0]);
+      }
+
       try {
-        await fetch(API_BASE, {
+        const response = await fetch(API_BASE, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            author: 'Rayeesa',
-            content: content,
-            codeSnippet: codeSnippet,
-            resourceLink: resourceLink,
-            filePath: filePath
-          })
+          body: formData
         });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
 
         document.getElementById('postContent').value = '';
         document.getElementById('codeContent').value = '';
         document.getElementById('resourceLink').value = '';
-        document.getElementById('mediaInput').value = '';
-        loadFeed();
+        fileInput.value = '';
+        
+        await loadFeed();
       } catch (err) {
-        alert("Error publishing post!");
+        alert("Server response slow-a irukku. Please wait 10 seconds and try again!");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Publish to Backend DB";
       }
     }
 
