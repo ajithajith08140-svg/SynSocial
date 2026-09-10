@@ -288,10 +288,16 @@
       renderAllPages(filtered);
     }
 
-    function toggleSolution(id) {
-      const solBox = document.getElementById(`sol-${id}`);
+    // FIXED SOLUTION TOGGLE FUNCTION
+    function toggleSolution(uniqueTargetId) {
+      const solBox = document.getElementById(uniqueTargetId);
       if (!solBox) return;
-      solBox.style.display = solBox.style.display === 'block' ? 'none' : 'block';
+      
+      if (solBox.style.display === 'block') {
+        solBox.style.display = 'none';
+      } else {
+        solBox.style.display = 'block';
+      }
     }
 
     function renderAllPages(postsToDisplay) {
@@ -304,11 +310,11 @@
       // Filter Questions for Question Bank Page
       const questionPosts = postsToDisplay.filter(p => p.content.includes("Question") || p.content.includes("Exam") || p.content.includes("Doubt"));
 
-      renderPosts(postsToDisplay, homeList);
-      renderPosts(questionPosts.length > 0 ? questionPosts : postsToDisplay, questionList);
+      renderPosts(postsToDisplay, homeList, 'home');
+      renderPosts(questionPosts.length > 0 ? questionPosts : postsToDisplay, questionList, 'qbank');
     }
 
-    function renderPosts(postsToDisplay, container) {
+    function renderPosts(postsToDisplay, container, pagePrefix) {
       if (!postsToDisplay || postsToDisplay.length === 0) {
         container.innerHTML = `<p style="color:#94a3b8;">No matching exam resources or questions found.</p>`;
         return;
@@ -329,6 +335,9 @@
 
         // Clean PIN tag from UI Display
         const cleanedDisplayContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '') : '';
+        
+        // Unique ID for solution box per page section
+        const solId = `sol-${pagePrefix}-${post._id}`;
 
         container.innerHTML += `
           <div class="card">
@@ -342,9 +351,9 @@
             
             <p style="margin-top:10px;">${cleanedDisplayContent}</p>
             
-            ${post.codeSnippet ? `
-              <button onclick="toggleSolution('${post._id}')" style="margin-top:8px; padding:5px 10px; font-size:12px; background:#334155; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px;">💡 View / Hide Verified Answer Solution</button>
-              <div id="sol-${post._id}" class="solution-box">
+            ${(post.codeSnippet && post.codeSnippet.trim() !== '') ? `
+              <button onclick="toggleSolution('${solId}')" style="margin-top:8px; padding:5px 10px; font-size:12px; background:#334155; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; cursor:pointer;">💡 View / Hide Verified Answer Solution</button>
+              <div id="${solId}" class="solution-box">
                 <strong>Verified Answer / Solution:</strong>
                 <div class="code-block">${post.codeSnippet}</div>
               </div>
