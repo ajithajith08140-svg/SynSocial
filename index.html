@@ -80,6 +80,7 @@
 
       <div class="card">
         <h3 style="margin-bottom: 10px;">Create Academic Post & Share Resources</h3>
+        <input type="text" id="authorName" placeholder="Your Name / Student ID..." required />
         <textarea id="postContent" placeholder="Enter study updates or doubts..."></textarea>
         <textarea id="codeContent" placeholder="Enter code snippet (optional)..." style="height: 60px; font-family: monospace;"></textarea>
         <input type="url" id="resourceLink" placeholder="Paste Study Material / Drive Link (optional)...">
@@ -98,7 +99,7 @@
 
   <script>
     const API_BASE = "https://synsocial.onrender.com/api/posts";
-    const RENDER_BASE = "https://synsocial.onrender.com"; // Cloud Backend Base URL
+    const RENDER_BASE = "https://synsocial.onrender.com";
     let allPosts = [];
 
     // 1. Fetch Posts
@@ -112,7 +113,7 @@
       }
     }
 
-    // 2. Render Function (Handles both Cloud File Uploads & Base64)
+    // 2. Render Function
     function renderPosts(postsToDisplay) {
       const feedContainer = document.getElementById('feedList');
       feedContainer.innerHTML = '';
@@ -138,7 +139,7 @@
         feedContainer.innerHTML += `
           <div class="card">
             <div style="display:flex; justify-content:space-between; color:#94a3b8; font-size:13px;">
-              <strong>${post.author || 'Rayeesa'}</strong> <span>${new Date(post.createdAt).toLocaleTimeString()}</span>
+              <strong>👤 ${post.author || 'Anonymous Student'}</strong> <span>${new Date(post.createdAt).toLocaleTimeString()}</span>
             </div>
             <p style="margin-top:10px;">${post.content}</p>
             
@@ -155,35 +156,35 @@
       });
     }
 
-    // 3. Instant Search Logic
+    // 3. Search Logic
     function searchPosts() {
       const query = document.getElementById('searchInput').value.toLowerCase().trim();
-      
       const filteredPosts = allPosts.filter(post => {
         const contentMatch = post.content ? post.content.toLowerCase().includes(query) : false;
         const codeMatch = post.codeSnippet ? post.codeSnippet.toLowerCase().includes(query) : false;
         const authorMatch = post.author ? post.author.toLowerCase().includes(query) : false;
         return contentMatch || codeMatch || authorMatch;
       });
-
       renderPosts(filteredPosts);
     }
 
-    // 4. Create Post (Compatible with Multer backend)
+    // 4. Create Post (Dynamic Author Name)
     async function publishPost() {
-      const content = document.getElementById('postContent').value;
+      const author = document.getElementById('authorName').value.trim();
+      const content = document.getElementById('postContent').value.trim();
       const codeSnippet = document.getElementById('codeContent').value;
       const resourceLink = document.getElementById('resourceLink').value;
       const fileInput = document.getElementById('mediaInput');
       const btn = document.getElementById('publishBtn');
 
-      if (!content.trim()) return alert("Content text-a type pannunga!");
+      if (!author) return alert("Unga name-a enter pannunga!");
+      if (!content) return alert("Content text-a type pannunga!");
 
       btn.disabled = true;
       btn.innerText = "Publishing...";
 
       const formData = new FormData();
-      formData.append('author', 'Rayeesa');
+      formData.append('author', author);
       formData.append('content', content);
       formData.append('codeSnippet', codeSnippet);
       formData.append('resourceLink', resourceLink);
@@ -198,9 +199,7 @@
           body: formData
         });
 
-        if (!response.ok) {
-          throw new Error('Upload failed');
-        }
+        if (!response.ok) throw new Error('Upload failed');
 
         document.getElementById('postContent').value = '';
         document.getElementById('codeContent').value = '';
@@ -209,7 +208,7 @@
         
         await loadFeed();
       } catch (err) {
-        alert("Server response slow-a irukku. Please wait 10 seconds and try again!");
+        alert("Server response slow-a irukku. Please try again!");
       } finally {
         btn.disabled = false;
         btn.innerText = "Publish to Backend DB";
@@ -223,7 +222,7 @@
     }
 
     async function deletePost(id) {
-      if (confirm("Warning: This action will permanently delete this post. Do you want to proceed?")) {
+      if (confirm("Are you sure you want to delete this post?")) {
         await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
         loadFeed();
       }
@@ -231,7 +230,7 @@
 
     loadFeed();
 
-    // 6. Dynamic Quote Fetching API
+    // 6. Quotes API
     async function fetchRandomQuote() {
       const quoteElement = document.getElementById('quoteText');
       try {
