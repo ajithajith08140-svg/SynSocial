@@ -248,8 +248,8 @@
       const fileInput = document.getElementById('mediaInput');
       const btn = document.getElementById('publishBtn');
 
-      if (!author) return alert("Enter your Name or Roll Number!");
-      if (!content) return alert("Enter post details!");
+      if (!author) return alert("Please enter your Name or Roll Number!");
+      if (!content) return alert("Please enter the post details!");
 
       btn.disabled = true;
       btn.innerText = "Publishing...";
@@ -275,7 +275,7 @@
         
         await loadFeed();
       } catch (err) {
-        alert("Server slow-a irukku or offline. Try again!");
+        alert("The server is slow or offline. Please try again later!");
       } finally {
         btn.disabled = false;
         btn.innerText = "Publish CS Post";
@@ -288,7 +288,7 @@
     }
 
     async function deletePost(id) {
-      if (confirm("Delete this CS post permanently?")) {
+      if (confirm("Are you sure you want to delete this CS post permanently?")) {
         await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
         loadFeed();
       }
@@ -296,9 +296,7 @@
 
     loadFeed();
 
-    // ===================================================
-    // UPDATED: Dynamic Unlimited Quotes (20 Seconds Extended Timing)
-    // ===================================================
+    // Unlimited Quotes Generator with 20 seconds extended timing
     let usedQuoteIndices = new Set();
 
     async function fetchDynamicQuote() {
@@ -309,13 +307,11 @@
 
       setTimeout(async () => {
         try {
-          // Live Dynamic API call (Always new random quote)
           const res = await fetch('https://dummyjson.com/quotes/random');
           const data = await res.json();
 
           quoteElement.innerText = `"${data.quote}" — ${data.author}`;
         } catch (err) {
-          // Backup random quotes array
           const backupQuotes = [
             { quote: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
             { quote: "Programs must be written for people to read.", author: "Harold Abelson" },
@@ -342,10 +338,8 @@
       }, 400);
     }
 
-    // First call
     fetchDynamicQuote();
 
-    // Updates every 20 seconds
     setInterval(fetchDynamicQuote, 20000);
   </script>
 </body>
