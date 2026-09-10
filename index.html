@@ -19,22 +19,8 @@
     
     textarea, input, select { width: 100%; background: #0f172a; border: 1px solid #334155; color: #fff; padding: 10px; border-radius: 6px; margin-bottom: 10px; outline: none; }
     
-    /* Dedicated Search Box Layout */
-    .search-wrapper {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 15px;
-    }
-    .search-box {
-      flex: 1;
-      background: #0f172a;
-      border: 1px solid #38bdf8;
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 6px;
-      font-size: 14px;
-      margin-bottom: 0;
-    }
+    .search-wrapper { display: flex; gap: 8px; margin-bottom: 15px; }
+    .search-box { flex: 1; background: #0f172a; border: 1px solid #38bdf8; color: #fff; padding: 10px 14px; border-radius: 6px; font-size: 14px; margin-bottom: 0; }
 
     button { background: #38bdf8; color: #0f172a; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     button:hover { opacity: 0.9; }
@@ -45,65 +31,22 @@
     .action-btn { cursor: pointer; transition: 0.2s; user-select: none; }
     .action-btn:hover { color: #38bdf8; }
 
-    /* Filter & Sidebar Buttons */
-    .filter-btn {
-      display: block;
-      width: 100%;
-      text-align: left;
-      background: #0f172a;
-      color: #cbd5e1;
-      padding: 10px 12px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      border: 1px solid #334155;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-    .filter-btn:hover, .filter-btn.active {
-      border-color: #38bdf8;
-      color: #38bdf8;
-      background: #1e293b;
-    }
+    .filter-btn { display: block; width: 100%; text-align: left; background: #0f172a; color: #cbd5e1; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #334155; font-size: 0.85rem; cursor: pointer; }
+    .filter-btn:hover, .filter-btn.active { border-color: #38bdf8; color: #38bdf8; background: #1e293b; }
 
-    /* Modal Styling */
-    .modal {
-      display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center;
-    }
-    .modal-content {
-      background-color: #1e293b; padding: 20px; border: 1px solid #38bdf8; border-radius: 8px;
-      width: 80%; max-width: 500px; color: #fff; position: relative;
-    }
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; }
+    .modal-content { background-color: #1e293b; padding: 20px; border: 1px solid #38bdf8; border-radius: 8px; width: 80%; max-width: 500px; color: #fff; position: relative; }
     .close-btn { position: absolute; right: 15px; top: 10px; color: #aaa; font-size: 20px; cursor: pointer; }
 
-    .category-badge {
-      display: inline-block;
-      padding: 3px 8px;
-      font-size: 11px;
-      font-weight: bold;
-      border-radius: 4px;
-      margin-bottom: 8px;
-      background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8;
-    }
+    .category-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8; }
+    .pin-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(243, 156, 18, 0.1); color: #f39c12; border: 1px solid #f39c12; }
 
-    .solution-box {
-      margin-top: 10px;
-      padding: 10px;
-      background: #0f172a;
-      border-radius: 6px;
-      border-left: 3px solid #2ecc71;
-      font-size: 13px;
-      display: none;
-    }
-
-    .copy-btn {
-      position: absolute; right: 8px; top: 8px; background: #334155; color: #fff; border: none; padding: 3px 8px; font-size: 11px; border-radius: 4px; cursor: pointer;
-    }
+    .solution-box { margin-top: 10px; padding: 10px; background: #0f172a; border-radius: 6px; border-left: 3px solid #2ecc71; font-size: 13px; display: none; }
+    .copy-btn { position: absolute; right: 8px; top: 8px; background: #334155; color: #fff; border: none; padding: 3px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <!-- Top Navbar -->
   <div class="navbar">
     <div class="logo">Voorhees CS Hub</div>
     <div style="font-size: 0.85rem; color: #94a3b8;">Department Resource Sharing Platform</div>
@@ -111,7 +54,6 @@
 
   <div class="main-container">
     
-    <!-- Sidebar / Filters Section -->
     <div class="sidebar">
       <img src="logo.jpeg" alt="College Logo" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px auto; display: block;">
       
@@ -140,12 +82,13 @@
       </div>
     </div>
 
-    <!-- Main View Area -->
     <div class="view-section">
 
-      <!-- Upload Form Collapsible Card -->
+      <!-- Upload Form with PIN Protection Notice -->
       <div class="card" style="border-color: #38bdf8;">
-        <h3 style="margin-bottom: 12px; color: #38bdf8; font-size: 1.1rem;">➕ Share CS Question / Study Material</h3>
+        <h3 style="margin-bottom: 5px; color: #38bdf8; font-size: 1.1rem;">➕ Share CS Question / Study Material</h3>
+        <p style="font-size: 12px; color: #f39c12; margin-bottom: 12px;">🔒 Security: You will be asked to set a 4-digit PIN while publishing to protect deletion.</p>
+        
         <input type="text" id="authorName" placeholder="Your Name / Student Roll No..." required />
         
         <div style="display: flex; gap: 10px;">
@@ -174,20 +117,17 @@
         <button id="publishBtn" onclick="publishPost()" style="width: 100%; margin-top: 5px;">Publish Academic Resource</button>
       </div>
 
-      <!-- Search System -->
       <div class="search-wrapper">
         <input type="text" id="searchInput" class="search-box" onkeyup="handleKeySearch(event)" oninput="checkSearchEarse()" placeholder="🔍 Type search keyword (e.g., C++, Java, Sem 3)...">
         <button onclick="executeSearch()" style="background: #38bdf8;">Search</button>
         <button onclick="clearSearch()" style="background: #334155; color: #cbd5e1;">Clear</button>
       </div>
 
-      <!-- Resource Feed -->
       <div id="feedList"><p style="color: #94a3b8;">Loading CS posts from Cloud DB...</p></div>
 
     </div>
   </div>
 
-  <!-- Dynamic Modal Popup -->
   <div id="infoModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -203,7 +143,6 @@
     let currentSemFilter = 'all';
     let savedBookmarks = JSON.parse(localStorage.getItem('saved_bookmarks') || '[]');
 
-    // Online Status Manager
     function updateOnlineStatus() {
       const badge = document.getElementById('networkBadge');
       const text = document.getElementById('statusText');
@@ -221,7 +160,6 @@
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
 
-    // Load Main Feed
     async function loadFeed() {
       try {
         const res = await fetch(API_BASE);
@@ -255,7 +193,6 @@
       renderPosts(filtered);
     }
 
-    // SEARCH LOGIC: Triggers ONLY on explicit search or key press (Enter)
     function handleKeySearch(event) {
       if (event.key === 'Enter') {
         executeSearch();
@@ -277,11 +214,10 @@
       renderPosts(searchResults);
     }
 
-    // Auto-reset when user erases text completely
     function checkSearchEarse() {
       const query = document.getElementById('searchInput').value.trim();
       if (query === '') {
-        filterPosts(); // Restore default list when input cleared
+        filterPosts();
       }
     }
 
@@ -290,14 +226,12 @@
       filterPosts();
     }
 
-    // TOGGLE SOLUTION BOX
     function toggleSolution(solId) {
       const solBox = document.getElementById(solId);
       if (!solBox) return;
       solBox.style.display = solBox.style.display === 'block' ? 'none' : 'block';
     }
 
-    // COPY CODE TO CLIPBOARD
     function copyCode(btn, elementId) {
       const text = document.getElementById(elementId).innerText;
       navigator.clipboard.writeText(text);
@@ -305,7 +239,6 @@
       setTimeout(() => btn.innerText = "Copy Code", 2000);
     }
 
-    // BOOKMARK SYSTEM
     function toggleBookmark(postId) {
       if (savedBookmarks.includes(postId)) {
         savedBookmarks = savedBookmarks.filter(id => id !== postId);
@@ -326,7 +259,6 @@
       renderPosts(bookmarkedPosts);
     }
 
-    // RENDER FUNCTION
     function renderPosts(postsToDisplay) {
       const container = document.getElementById('feedList');
       container.innerHTML = '';
@@ -358,6 +290,7 @@
           <div class="card">
             <div>
               <span class="category-badge">🎓 CS Academic Material</span>
+              <span class="pin-badge">🔒 PIN Protected</span>
             </div>
 
             <div style="display:flex; justify-content:space-between; color:#94a3b8; font-size:13px; margin-top:5px;">
@@ -384,14 +317,14 @@
             <div class="actions">
               <span class="action-btn" onclick="likePost('${post._id}')">❤️ ${post.likes || 0} Helpful</span>
               <span class="action-btn" onclick="toggleBookmark('${post._id}')">${isSaved ? '⭐ Saved' : '☆ Save Note'}</span>
-              <span class="action-btn" onclick="deletePost('${post._id}', '${(post.content || '').replace(/'/g, "\\'")}')" style="color:#f43f5e;">🔒 Delete</span>
+              <span class="action-btn" onclick="deletePost('${post._id}', '${(post.content || '').replace(/'/g, "\\'")}')" style="color:#f43f5e;">🔒 Delete Post</span>
             </div>
           </div>
         `;
       });
     }
 
-    // PUBLISH POST
+    // PUBLISH WITH PIN PROTECTION
     async function publishPost() {
       const author = document.getElementById('authorName').value.trim();
       const semester = document.getElementById('postSemester').value;
@@ -405,14 +338,16 @@
       if (!author) return alert("Please enter your Name or Roll Number!");
       if (!content) return alert("Please enter the question or topic description!");
 
-      const userPin = prompt("Set a 4-Digit Security PIN (e.g., 1234) to protect your post:");
+      // 4-Digit Security PIN Prompt
+      const userPin = prompt("🔑 Set a 4-Digit Security PIN (e.g., 1234) to protect your post from unauthorized deletion:");
       if (!userPin || userPin.length < 4 || isNaN(userPin)) {
-        return alert("Post creation cancelled! You must enter a valid 4-digit numeric PIN.");
+        return alert("⚠️ Post creation cancelled! You must enter a valid 4-digit numeric PIN.");
       }
 
       btn.disabled = true;
       btn.innerText = "Publishing Content...";
 
+      // Securely tag PIN in DB string
       const fullContent = `[${semester}] [${category}] [PIN:${userPin}] ${content}`;
 
       const formData = new FormData();
@@ -435,7 +370,7 @@
         fileInput.value = '';
         
         await loadFeed();
-        alert("Published successfully!");
+        alert(`✅ Resource Published! Remember your PIN (${userPin}) if you need to delete it later.`);
       } catch (err) {
         alert("Server error, please try again.");
       } finally {
@@ -449,25 +384,25 @@
       loadFeed();
     }
 
+    // DELETE WITH PIN AUTHENTICATION
     async function deletePost(id, rawContent) {
       const pinMatch = rawContent.match(/\[PIN:(\d{4})\]/);
       const correctPin = pinMatch ? pinMatch[1] : null;
 
-      const enteredPin = prompt("🔒 Enter your 4-Digit Security PIN to delete this post:");
+      const enteredPin = prompt("🔒 Enter your 4-Digit Security PIN (or Master Admin PIN: 9999) to delete this post:");
       if (!enteredPin) return;
 
       if (enteredPin === correctPin || enteredPin === "9999") {
-        if (confirm("Are you sure you want to delete this resource?")) {
+        if (confirm("Are you sure you want to delete this resource permanently?")) {
           await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
-          alert("Post deleted!");
+          alert("✅ Post deleted successfully!");
           loadFeed();
         }
       } else {
-        alert("❌ Invalid PIN!");
+        alert("❌ Invalid PIN! Only the original author or Admin can delete this post.");
       }
     }
 
-    // Modal Helpers
     function openModal(title, text) {
       document.getElementById('modalTitle').innerText = title;
       document.getElementById('modalBody').innerText = text;
@@ -477,7 +412,6 @@
 
     loadFeed();
 
-    // Daily Quotes
     async function fetchDynamicQuote() {
       const quoteElement = document.getElementById('quoteText');
       if (!quoteElement) return;
