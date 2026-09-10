@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Resource Hub</title>
+  <title>Campus Connect - Student Resource Hub</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
     body { background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; }
@@ -59,7 +59,7 @@
 <body>
 
   <div class="navbar">
-    <div class="logo" onclick="switchPage('upload')">College Hub</div>
+    <div class="logo" onclick="switchPage('upload')">Campus Connect</div>
     <div>
       <button class="nav-btn" id="toggleViewBtn" onclick="togglePageView()">📚 View Campus Library Page</button>
     </div>
@@ -68,13 +68,28 @@
   <div class="main-container">
     
     <div class="sidebar">
-      <img src="logo.png" alt="College Logo" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px auto; display: block;" onerror="this.style.display='none'">
+      <!-- 1. Network Status Banner Moved to Top -->
+      <div id="networkBadge" style="margin-bottom: 12px; padding: 8px; background: rgba(46, 204, 113, 0.1); border-radius: 5px; text-align: center;">
+          <p id="statusText" style="color: #2ecc71; font-size: 0.75rem; margin: 0;">🌐 Cloud Sync: Live</p>
+      </div>
+
+      <!-- 2. Thought For Today Moved to Top -->
+      <div class="quote-card" onclick="openModal('Daily Inspiration Thought', document.getElementById('quoteText').innerText)" style="padding: 10px; background: #0f172a; border-radius: 6px; border-left: 3px solid #f39c12; cursor: pointer; margin-bottom: 15px;">
+          <p style="font-size: 0.7rem; color: #f39c12; font-weight: bold; margin-bottom: 3px;">💡 THOUGHT FOR TODAY</p>
+          <p id="quoteText" style="font-size: 0.8rem; color: #dcdde1; font-style: italic;">Loading thought...</p>
+      </div>
+
+      <hr style="border: 0.5px solid #334155; margin-bottom: 15px;">
+
+      <!-- 3. Logo & Title -->
+      <img src="logo.png" alt="Campus Logo" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px auto; display: block;" onerror="this.style.display='none'">
       
-      <h3 style="color: #ffffff; font-size: 1rem; margin-bottom: 2px; text-align: center;">UniHub Central</h3>
+      <h3 style="color: #ffffff; font-size: 1rem; margin-bottom: 2px; text-align: center;">Campus Connect</h3>
       <p style="color: #38bdf8; font-size: 0.8rem; margin-bottom: 15px; text-align: center;">All Departments Student Hub</p>
       
       <hr style="border: 0.5px solid #334155; margin-bottom: 15px;">
 
+      <!-- 4. Department Filters -->
       <p style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">DEPARTMENT FILTERS</p>
       <button class="filter-btn active" onclick="applyDeptFilter('all', this)">🌐 All Departments Feed</button>
       <button class="filter-btn" onclick="applyDeptFilter('Computer Science / BCA', this)">💻 Computer Science / BCA</button>
@@ -84,17 +99,6 @@
       <button class="filter-btn" onclick="applyDeptFilter('Placements & Career', this)">💼 Placements & Career</button>
       <button class="filter-btn" onclick="applyDeptFilter('College Events & Circulars', this)">📢 Events & General News</button>
       <button class="filter-btn" onclick="showSavedBookmarks(this)">⭐ Saved Notes</button>
-
-      <hr style="border: 0.5px solid #334155; margin: 15px 0;">
-
-      <div class="quote-card" onclick="openModal('Daily Inspiration Thought', document.getElementById('quoteText').innerText)" style="padding: 10px; background: #0f172a; border-radius: 6px; border-left: 3px solid #f39c12; cursor: pointer;">
-          <p style="font-size: 0.7rem; color: #f39c12; font-weight: bold; margin-bottom: 3px;">💡 THOUGHT FOR TODAY</p>
-          <p id="quoteText" style="font-size: 0.8rem; color: #dcdde1; font-style: italic;">Loading thought...</p>
-      </div>
-
-      <div id="networkBadge" style="margin-top: 15px; padding: 8px; background: rgba(46, 204, 113, 0.1); border-radius: 5px; text-align: center;">
-          <p id="statusText" style="color: #2ecc71; font-size: 0.75rem; margin: 0;">🌐 Cloud Sync: Live</p>
-      </div>
     </div>
 
     <div class="view-section">
@@ -454,7 +458,7 @@
         container.innerHTML += `
           <div class="card">
             <div>
-              <span class="category-badge">🎓 Voorhees Hub</span>
+              <span class="category-badge">🎓 Campus Hub</span>
               <span class="pin-badge">🔒 PIN Protected</span>
               ${isOfflineCreated ? '<span class="offline-badge">💾 Local Saved</span>' : ''}
             </div>
@@ -554,7 +558,7 @@
         existingOffline.unshift(localPost);
         localStorage.setItem('offline_posts', JSON.stringify(existingOffline));
 
-        document.getElementById('successMessageText').innerText = "Saved locally in Offline Mode! Internet vandhadhum auto-sync aagum.";
+        document.getElementById('successMessageText').innerText = "Saved locally in Offline Mode! Will auto-sync when online.";
         document.getElementById('uploadSuccessBox').style.display = 'block';
         btn.disabled = false;
         btn.innerText = "Publish Material for Students";
