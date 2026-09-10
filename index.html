@@ -44,6 +44,7 @@
 
     .category-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8; }
     .pin-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(243, 156, 18, 0.1); color: #f39c12; border: 1px solid #f39c12; }
+    .offline-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; }
     
     .staff-badge { display: inline-block; background: #38bdf8; color: #0f172a; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: 5px; }
     .comment-section { margin-top: 15px; padding-top: 12px; border-top: 1px dashed #334155; display: none; }
@@ -66,7 +67,7 @@
   <div class="main-container">
     
     <div class="sidebar">
-      <img src="logo.jpeg" alt="College Logo" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px auto; display: block;">
+      <img src="logo.jpeg" alt="College Logo" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px auto; display: block;" onerror="this.style.display='none'">
       
       <h3 style="color: #ffffff; font-size: 1rem; margin-bottom: 2px; text-align: center;">Voorhees College</h3>
       <p style="color: #38bdf8; font-size: 0.8rem; margin-bottom: 15px; text-align: center;">Dept. of Computer Science</p>
@@ -96,7 +97,7 @@
 
     <div class="view-section">
 
-      <!-- PAGE 1: UPLOAD PAGE ONLY -->
+      <!-- PAGE 1: UPLOAD PAGE -->
       <div id="uploadPageSection">
         <div class="card" style="border-color: #38bdf8;">
           <h3 style="margin-bottom: 5px; color: #38bdf8; font-size: 1.1rem;">➕ Upload CS Question / Study Material</h3>
@@ -137,16 +138,15 @@
           <button id="publishBtn" onclick="publishPost()" style="width: 100%; margin-top: 5px;">Publish Academic Resource</button>
         </div>
 
-        <!-- SUCCESS ALERT SCREEN AFTER UPLOAD -->
         <div id="uploadSuccessBox" class="success-box">
           <h3 style="color:#2ecc71; margin-bottom:8px;">✅ Document Uploaded Successfully!</h3>
-          <p style="font-size:14px; color:#cbd5e1; margin-bottom:15px;">Your study material is now saved in the department cloud server.</p>
+          <p id="successMessageText" style="font-size:14px; color:#cbd5e1; margin-bottom:15px;">Your study material is saved.</p>
           <button onclick="switchPage('library')" style="background:#2ecc71; color:#0f172a; margin-right:10px;">📖 Go to Resource Library Page</button>
           <button onclick="resetUploadForm()" style="background:#334155; color:#fff;">➕ Upload Another File</button>
         </div>
       </div>
 
-      <!-- PAGE 2: SEPARATE RESOURCE LIBRARY PAGE -->
+      <!-- PAGE 2: RESOURCE LIBRARY PAGE -->
       <div id="libraryPageSection" style="display: none;">
         <div class="search-wrapper">
           <input type="text" id="searchInput" class="search-box" onkeyup="handleKeySearch(event)" oninput="checkSearchEarse()" placeholder="🔍 Type search keyword (e.g., C++, Java, Sem 3)...">
@@ -154,7 +154,7 @@
           <button onclick="clearSearch()" style="background: #334155; color: #cbd5e1;">Clear</button>
         </div>
 
-        <div id="feedList"><p style="color: #94a3b8;">Loading CS posts from Cloud DB...</p></div>
+        <div id="feedList"><p style="color: #94a3b8;">Loading CS posts...</p></div>
       </div>
 
     </div>
@@ -183,15 +183,16 @@
         badge.style.background = "rgba(46, 204, 113, 0.1)";
         text.style.color = "#2ecc71";
         text.innerText = "🌐 Cloud Sync: Live (Online)";
+        syncOfflinePostsToServer(); // Internet vandhadhum auto-sync aagum!
       } else {
         badge.style.background = "rgba(243, 156, 18, 0.1)";
         text.style.color = "#f39c12";
-        text.innerText = "⚠️ Offline Mode (Cached Data)";
+        text.innerText = "⚠️ Offline Mode (Local Storage)";
+        loadOfflineFeed();
       }
     }
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
-    updateOnlineStatus();
 
     function togglePageView() {
       if (currentPage === 'upload') {
@@ -219,24 +220,62 @@
       }
     }
 
+    // AUTOMATIC OFFLINE TO ONLINE SYNC FUNCTION
+    async function syncOfflinePostsToServer() {
+      const localOnlyPosts = JSON.parse(localStorage.getItem('offline_posts') || '[]');
+      if (localOnlyPosts.length > 0) {
+        console.log("Syncing offline posts to server...");
+        for (let post of localOnlyPosts) {
+          try {
+            const formData = new FormData();
+            formData.append('author', post.author);
+            formData.append('content', post.content);
+            formData.append('codeSnippet', post.codeSnippet || '');
+            formData.append('resourceLink', post.resourceLink || '');
+
+            await fetch(API_BASE, { method: 'POST', body: formData });
+          } catch(e) {
+            console.error("Failed syncing single post:", e);
+          }
+        }
+        // Cleared sync offline posts once updated to cloud
+        localStorage.removeItem('offline_posts');
+      }
+      loadFeed();
+    }
+
     async function loadFeed() {
+      if (!navigator.onLine) {
+        loadOfflineFeed();
+        return;
+      }
       try {
         const res = await fetch(API_BASE);
-        allPosts = await res.json();
-        localStorage.setItem('cached_posts', JSON.stringify(allPosts));
+        const serverPosts = await res.json();
+        
+        const localOnlyPosts = JSON.parse(localStorage.getItem('offline_posts') || '[]');
+        allPosts = [...localOnlyPosts, ...serverPosts];
+        
+        localStorage.setItem('cached_posts', JSON.stringify(serverPosts));
         
         const urlParams = new URLSearchParams(window.location.search);
         const postIdFromUrl = urlParams.get('post');
         if (postIdFromUrl) {
           switchPage('library');
           openFullPostPage(postIdFromUrl);
+        } else {
+          filterPosts();
         }
       } catch (err) {
-        const cached = localStorage.getItem('cached_posts');
-        if (cached) {
-          allPosts = JSON.parse(cached);
-        }
+        loadOfflineFeed();
       }
+    }
+
+    function loadOfflineFeed() {
+      const cached = JSON.parse(localStorage.getItem('cached_posts') || '[]');
+      const localOnly = JSON.parse(localStorage.getItem('offline_posts') || '[]');
+      allPosts = [...localOnly, ...cached];
+      filterPosts();
     }
 
     function applyFilter(filterVal, btnElement) {
@@ -406,6 +445,7 @@
         }
 
         const isStaff = post.content && post.content.includes('[STAFF]');
+        const isOfflineCreated = post.isOfflinePost;
         const cleanedDisplayContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '').replace(/\[STAFF\]/g, '') : '';
         const solId = `sol-${post._id}`;
         const codeId = `code-${post._id}`;
@@ -416,6 +456,7 @@
             <div>
               <span class="category-badge">🎓 CS Academic Material</span>
               <span class="pin-badge">🔒 PIN Protected</span>
+              ${isOfflineCreated ? '<span class="offline-badge">💾 Local Saved</span>' : ''}
             </div>
 
             <div style="display:flex; justify-content:space-between; color:#94a3b8; font-size:13px; margin-top:5px;">
@@ -487,6 +528,40 @@
         fullContent = `[STAFF] ` + fullContent;
       }
 
+      let fileDataBase64 = null;
+      if (fileInput.files[0]) {
+        fileDataBase64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(fileInput.files[0]);
+        });
+      }
+
+      if (!navigator.onLine) {
+        const localPost = {
+          _id: "off_" + Date.now(),
+          author: author,
+          content: fullContent,
+          codeSnippet: codeSnippet,
+          resourceLink: resourceLink,
+          filePath: fileDataBase64,
+          createdAt: new Date().toISOString(),
+          likes: 0,
+          isOfflinePost: true
+        };
+
+        const existingOffline = JSON.parse(localStorage.getItem('offline_posts') || '[]');
+        existingOffline.unshift(localPost);
+        localStorage.setItem('offline_posts', JSON.stringify(existingOffline));
+
+        document.getElementById('successMessageText').innerText = "Saved locally in Offline Mode! Internet vandhadhum auto-sync aagum.";
+        document.getElementById('uploadSuccessBox').style.display = 'block';
+        btn.disabled = false;
+        btn.innerText = "Publish Academic Resource";
+        loadOfflineFeed();
+        return;
+      }
+
       const formData = new FormData();
       formData.append('author', author);
       formData.append('content', fullContent);
@@ -501,10 +576,27 @@
         const response = await fetch(API_BASE, { method: 'POST', body: formData });
         if (!response.ok) throw new Error('Upload failed');
 
+        document.getElementById('successMessageText').innerText = "Your study material is now saved in the department cloud server.";
         document.getElementById('uploadSuccessBox').style.display = 'block';
         await loadFeed();
       } catch (err) {
-        alert("Server error, please try again.");
+        alert("Server error. Saving locally instead...");
+        const localPost = {
+          _id: "off_" + Date.now(),
+          author: author,
+          content: fullContent,
+          codeSnippet: codeSnippet,
+          resourceLink: resourceLink,
+          filePath: fileDataBase64,
+          createdAt: new Date().toISOString(),
+          likes: 0,
+          isOfflinePost: true
+        };
+        const existingOffline = JSON.parse(localStorage.getItem('offline_posts') || '[]');
+        existingOffline.unshift(localPost);
+        localStorage.setItem('offline_posts', JSON.stringify(existingOffline));
+        document.getElementById('uploadSuccessBox').style.display = 'block';
+        loadOfflineFeed();
       } finally {
         btn.disabled = false;
         btn.innerText = "Publish Academic Resource";
@@ -521,6 +613,14 @@
     }
 
     async function likePost(id) {
+      if (!navigator.onLine || id.startsWith('off_')) {
+        const post = allPosts.find(p => p._id === id);
+        if (post) {
+          post.likes = (post.likes || 0) + 1;
+          renderPosts(allPosts);
+        }
+        return;
+      }
       await fetch(`${API_BASE}/${id}/like`, { method: 'PUT' });
       loadFeed();
     }
@@ -534,10 +634,22 @@
 
       if (enteredPin === correctPin || enteredPin === "9999") {
         if (confirm("Are you sure you want to delete this resource permanently?")) {
-          await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
-          alert("✅ Post deleted successfully!");
-          await loadFeed();
-          filterPosts();
+          if (id.startsWith('off_')) {
+            let offlinePosts = JSON.parse(localStorage.getItem('offline_posts') || '[]');
+            offlinePosts = offlinePosts.filter(p => p._id !== id);
+            localStorage.setItem('offline_posts', JSON.stringify(offlinePosts));
+            alert("✅ Local post deleted!");
+            loadOfflineFeed();
+            return;
+          }
+
+          if (navigator.onLine) {
+            await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+            alert("✅ Post deleted successfully!");
+            await loadFeed();
+          } else {
+            alert("⚠️ Internet connection required to delete server posts.");
+          }
         }
       } else {
         alert("❌ Invalid PIN! Only the original author or Admin can delete this post.");
@@ -551,11 +663,16 @@
     }
     function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
 
-    loadFeed();
+    updateOnlineStatus();
 
     async function fetchDynamicQuote() {
       const quoteElement = document.getElementById('quoteText');
       if (!quoteElement) return;
+
+      if (!navigator.onLine) {
+        quoteElement.innerText = '"First, solve the problem. Then, write the code." — John Johnson';
+        return;
+      }
 
       try {
         const res = await fetch('https://dummyjson.com/quotes/random');
