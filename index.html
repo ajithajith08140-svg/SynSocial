@@ -112,7 +112,7 @@
       }
     }
 
-    // 2. Render Function
+    // 2. Render Function (Supports both Base64 and standard file URL)
     function renderPosts(postsToDisplay) {
       const feedContainer = document.getElementById('feedList');
       feedContainer.innerHTML = '';
@@ -125,10 +125,11 @@
       postsToDisplay.forEach(post => {
         let attachmentHTML = '';
         if (post.filePath) {
-          // Localhost matri Cloud Render URL-a point panrom:
-          const fileUrl = `${RENDER_BASE}/${post.filePath.replace(/\\/g, '/')}`;
+          // Check if Base64 string or regular path
+          const isBase64 = post.filePath.startsWith('data:');
+          const fileUrl = isBase64 ? post.filePath : `${RENDER_BASE}/${post.filePath.replace(/\\/g, '/')}`;
           
-          if (post.filePath.match(/\.(jpg|jpeg|png|gif)$/i)) {
+          if (isBase64 || post.filePath.match(/\.(jpg|jpeg|png|gif)$/i)) {
             attachmentHTML = `<div style="margin-top:10px;"><img src="${fileUrl}" alt="Attachment" style="max-width:100%; max-height:300px; border-radius:6px;"></div>`;
           } else {
             attachmentHTML = `<div style="margin-top:8px;"><a href="${fileUrl}" target="_blank" style="color:#38bdf8; text-decoration:none;">📎 Download Attached Document</a></div>`;
@@ -169,7 +170,7 @@
       renderPosts(filteredPosts);
     }
 
-    // 4. Create Post
+    // 4. Create Post (Base64 Conversion for Permanent Mobile/Cloud Image Storage)
     async function publishPost() {
       const content = document.getElementById('postContent').value;
       const codeSnippet = document.getElementById('codeContent').value;
@@ -178,29 +179,38 @@
 
       if (!content.trim()) return alert("Content text-a type pannunga!");
 
-      const formData = new FormData();
-      formData.append('author', 'Rayeesa');
-      formData.append('content', content);
-      formData.append('codeSnippet', codeSnippet);
-      formData.append('resourceLink', resourceLink);
-      
       if (fileInput.files[0]) {
-        formData.append('file', fileInput.files[0]);
+        const reader = new FileReader();
+        reader.readAsDataURL(fileInput.files[0]);
+        reader.onload = async function () {
+          await sendPostData(content, codeSnippet, resourceLink, reader.result);
+        };
+      } else {
+        await sendPostData(content, codeSnippet, resourceLink, "");
       }
+    }
 
+    async function sendPostData(content, codeSnippet, resourceLink, filePath) {
       try {
         await fetch(API_BASE, {
           method: 'POST',
-          body: formData
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            author: 'Rayeesa',
+            content: content,
+            codeSnippet: codeSnippet,
+            resourceLink: resourceLink,
+            filePath: filePath
+          })
         });
 
         document.getElementById('postContent').value = '';
         document.getElementById('codeContent').value = '';
         document.getElementById('resourceLink').value = '';
-        fileInput.value = '';
+        document.getElementById('mediaInput').value = '';
         loadFeed();
       } catch (err) {
-        alert("Error publishing post with attachment!");
+        alert("Error publishing post!");
       }
     }
 
