@@ -6,7 +6,7 @@
   <title>Campus Connect - Student Resource Hub</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; }
+    body { background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
     
     .navbar { background: #1e293b; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
     .logo { font-size: 22px; font-weight: bold; color: #38bdf8; cursor: pointer; }
@@ -33,7 +33,7 @@
     .action-btn { cursor: pointer; transition: 0.2s; user-select: none; }
     .action-btn:hover { color: #38bdf8; }
 
-    .filter-btn { display: block; width: 100%; text-align: left; background: #0f172a; color: #cbd5e1; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #334155; font-size: 0.85rem; cursor: pointer; }
+    .filter-btn { display: block; width: 100%; text-align: left; background: #0f172a; color: #cbd5e1; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #334155; font-size: 0.8rem; cursor: pointer; }
     .filter-btn:hover, .filter-btn.active { border-color: #38bdf8; color: #38bdf8; background: #1e293b; }
 
     .success-box { display: none; background: rgba(46, 204, 113, 0.1); border: 1px solid #2ecc71; padding: 20px; border-radius: 8px; text-align: center; margin-top: 15px; }
@@ -43,7 +43,6 @@
     .close-btn { position: absolute; right: 15px; top: 10px; color: #aaa; font-size: 24px; cursor: pointer; }
 
     .category-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8; }
-    .dept-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(155, 89, 182, 0.1); color: #9b59b6; border: 1px solid #9b59b6; margin-left: 4px; }
     .pin-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(243, 156, 18, 0.1); color: #f39c12; border: 1px solid #f39c12; margin-left: 4px; }
     .offline-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; margin-left: 4px; }
     
@@ -54,13 +53,33 @@
     
     .solution-box { margin-top: 10px; padding: 10px; background: #0f172a; border-radius: 6px; border-left: 3px solid #2ecc71; font-size: 13px; display: none; }
     .copy-btn { position: absolute; right: 8px; top: 8px; background: #334155; color: #fff; border: none; padding: 3px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; }
+
+    /* Light Mode Styles */
+    body.light-mode { background-color: #f8fafc; color: #0f172a; }
+    body.light-mode .navbar, 
+    body.light-mode .sidebar, 
+    body.light-mode .card, 
+    body.light-mode .modal-content { background-color: #ffffff; border-color: #cbd5e1; color: #0f172a; }
+    body.light-mode textarea, 
+    body.light-mode input, 
+    body.light-mode select, 
+    body.light-mode .search-box, 
+    body.light-mode .code-block, 
+    body.light-mode .quote-card, 
+    body.light-mode .solution-box, 
+    body.light-mode .comment-item { background-color: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
+    body.light-mode .filter-btn { background-color: #f1f5f9; color: #334155; border-color: #cbd5e1; }
+    body.light-mode .filter-btn:hover, 
+    body.light-mode .filter-btn.active { background-color: #e2e8f0; color: #0284c7; border-color: #0284c7; }
+    body.light-mode h3, body.light-mode h4, body.light-mode p { color: #0f172a; }
   </style>
 </head>
 <body>
 
   <div class="navbar">
     <div class="logo" onclick="switchPage('upload')">Campus Connect</div>
-    <div>
+    <div style="display: flex; gap: 10px;">
+      <button class="nav-btn" id="themeToggleBtn" onclick="toggleTheme()">☀️ Light Mode</button>
       <button class="nav-btn" id="toggleViewBtn" onclick="togglePageView()">📚 View Campus Library Page</button>
     </div>
   </div>
@@ -68,15 +87,15 @@
   <div class="main-container">
     
     <div class="sidebar">
-      <!-- 1. Network Status Banner Moved to Top -->
+      <!-- 1. Network Status Banner -->
       <div id="networkBadge" style="margin-bottom: 12px; padding: 8px; background: rgba(46, 204, 113, 0.1); border-radius: 5px; text-align: center;">
           <p id="statusText" style="color: #2ecc71; font-size: 0.75rem; margin: 0;">🌐 Cloud Sync: Live</p>
       </div>
 
-      <!-- 2. Thought For Today Moved to Top -->
+      <!-- 2. Thought For Today -->
       <div class="quote-card" onclick="openModal('Daily Inspiration Thought', document.getElementById('quoteText').innerText)" style="padding: 10px; background: #0f172a; border-radius: 6px; border-left: 3px solid #f39c12; cursor: pointer; margin-bottom: 15px;">
           <p style="font-size: 0.7rem; color: #f39c12; font-weight: bold; margin-bottom: 3px;">💡 THOUGHT FOR TODAY</p>
-          <p id="quoteText" style="font-size: 0.8rem; color: #dcdde1; font-style: italic;">Loading thought...</p>
+          <p id="quoteText" style="font-size: 0.8rem; font-style: italic;">Loading thought...</p>
       </div>
 
       <hr style="border: 0.5px solid #334155; margin-bottom: 15px;">
@@ -84,20 +103,40 @@
       <!-- 3. Logo & Title -->
       <img src="logo.png" alt="Campus Logo" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px auto; display: block;" onerror="this.style.display='none'">
       
-      <h3 style="color: #ffffff; font-size: 1rem; margin-bottom: 2px; text-align: center;">Campus Connect</h3>
+      <h3 style="font-size: 1rem; margin-bottom: 2px; text-align: center;">Campus Connect</h3>
       <p style="color: #38bdf8; font-size: 0.8rem; margin-bottom: 15px; text-align: center;">All Departments Student Hub</p>
       
       <hr style="border: 0.5px solid #334155; margin-bottom: 15px;">
 
-      <!-- 4. Department Filters -->
+      <!-- Semester Filter Dropdown -->
+      <p style="font-size: 0.75rem; color: #2ecc71; font-weight: bold; margin-bottom: 5px;">🎓 FILTER BY SEMESTER</p>
+      <select id="sidebarSemFilter" onchange="applySemesterFilter()" style="font-size: 0.8rem; padding: 6px; margin-bottom: 15px;">
+        <option value="all">All Semesters</option>
+        <option value="Sem 1">Semester 1</option>
+        <option value="Sem 2">Semester 2</option>
+        <option value="Sem 3">Semester 3</option>
+        <option value="Sem 4">Semester 4</option>
+        <option value="Sem 5">Semester 5</option>
+        <option value="Sem 6">Semester 6</option>
+        <option value="Sem 7">Semester 7</option>
+        <option value="Sem 8">Semester 8</option>
+      </select>
+
+      <!-- Department Filters -->
       <p style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">DEPARTMENT FILTERS</p>
       <button class="filter-btn active" onclick="applyDeptFilter('all', this)">🌐 All Departments Feed</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Computer Science / BCA', this)">💻 Computer Science / BCA</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Commerce / BBA', this)">📊 Commerce / BBA</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Physics / Chemistry / Maths', this)">🔬 Science (Phy/Chem/Maths)</button>
-      <button class="filter-btn" onclick="applyDeptFilter('English / History / Arts', this)">📖 Arts (Eng/Hist/Tam)</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Placements & Career', this)">💼 Placements & Career</button>
-      <button class="filter-btn" onclick="applyDeptFilter('College Events & Circulars', this)">📢 Events & General News</button>
+      <button class="filter-btn" onclick="applyDeptFilter('Computer Science', this)">💻 Computer Science</button>
+      <button class="filter-btn" onclick="applyDeptFilter('BCA', this)">🖥️ BCA</button>
+      <button class="filter-btn" onclick="applyDeptFilter('Commerce (B.Com)', this)">📊 Commerce (B.Com)</button>
+      <button class="filter-btn" onclick="applyDeptFilter('Business Admin (BBA)', this)">💼 Business Admin (BBA)</button>
+      <button class="filter-btn" onclick="applyDeptFilter('Physics', this)">⚡ Physics</button>
+      <button class="filter-btn" onclick="applyDeptFilter('Chemistry', this)">🧪 Chemistry</button>
+      <button class="filter-btn" onclick="applyDeptFilter('Mathematics', this)">📐 Mathematics</button>
+      <button class="filter-btn" onclick="applyDeptFilter('English Literature', this)">📖 English Literature</button>
+      <button class="filter-btn" onclick="applyDeptFilter('Tamil', this)">✍️ Tamil</button>
+      <button class="filter-btn" onclick="applyDeptFilter('History', this)">🏛️ History</button>
+      <button class="filter-btn" onclick="applyDeptFilter('Placements & Career', this)">🎯 Placements & Career</button>
+      <button class="filter-btn" onclick="applyDeptFilter('College Events & Circulars', this)">📢 Events & News</button>
       <button class="filter-btn" onclick="showSavedBookmarks(this)">⭐ Saved Notes</button>
     </div>
 
@@ -112,34 +151,62 @@
           <input type="text" id="authorName" placeholder="Your Name / Student Roll No / Dept..." required />
           
           <div style="margin-bottom: 10px;">
-            <label style="font-size: 12px; color: #cbd5e1; cursor: pointer;">
+            <label style="font-size: 12px; cursor: pointer;">
               <input type="checkbox" id="isStaffCheck" style="width: auto; margin-right: 5px;"> 🎖️ Post as Verified Staff / Faculty / Admin
             </label>
           </div>
 
-          <div style="display: flex; gap: 10px;">
-            <select id="postDepartment" style="flex: 1;">
-              <option value="Computer Science / BCA">💻 Computer Science / BCA</option>
-              <option value="Commerce / BBA">📊 Commerce / BBA</option>
-              <option value="Physics / Chemistry / Maths">🔬 Science (Phy/Chem/Maths)</option>
-              <option value="English / History / Arts">📖 Arts (Eng/Hist/Tam)</option>
-              <option value="Placements & Career">💼 Placements & Career</option>
-              <option value="College Events & Circulars">📢 General Announcements</option>
+          <!-- Dropdowns for Department & Semester -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <select id="postDepartment" style="flex: 1; min-width: 180px;">
+              <option value="" disabled selected>-- Select Department --</option>
+              <option value="Computer Science">💻 Computer Science</option>
+              <option value="BCA">🖥️ BCA</option>
+              <option value="Commerce (B.Com)">📊 Commerce (B.Com)</option>
+              <option value="Business Admin (BBA)">💼 Business Admin (BBA)</option>
+              <option value="Physics">⚡ Physics</option>
+              <option value="Chemistry">🧪 Chemistry</option>
+              <option value="Mathematics">📐 Mathematics</option>
+              <option value="English Literature">📖 English Literature</option>
+              <option value="Tamil">✍️ Tamil</option>
+              <option value="History">🏛️ History</option>
+              <option value="Placements & Career">🎯 Placements & Career</option>
+              <option value="College Events & Circulars">📢 General Circulars</option>
             </select>
 
-            <select id="postCategory" style="flex: 1;">
-              <option value="Important Exam Questions">📚 Important Exam Questions</option>
-              <option value="Question with Solution">📝 Question & Solution / Notes</option>
-              <option value="Practicals & Lab / Assignment">🧪 Practicals & Lab / Assignment</option>
-              <option value="General News & Circular">📢 Circular / Notice</option>
+            <select id="postSemester" style="flex: 1; min-width: 150px;">
+              <option value="" disabled selected>-- Select Semester --</option>
+              <option value="Sem 1">Semester 1</option>
+              <option value="Sem 2">Semester 2</option>
+              <option value="Sem 3">Semester 3</option>
+              <option value="Sem 4">Semester 4</option>
+              <option value="Sem 5">Semester 5</option>
+              <option value="Sem 6">Semester 6</option>
+              <option value="Sem 7">Semester 7</option>
+              <option value="Sem 8">Semester 8</option>
+              <option value="General">General / All Semesters</option>
             </select>
           </div>
 
-          <textarea id="postContent" placeholder="Enter study topic details, question description, or event notice..."></textarea>
-          <textarea id="codeContent" placeholder="// Step-by-step notes / Code / Solution (optional)..." style="height: 60px; font-family: monospace;"></textarea>
+          <!-- Material Category & Subject Input -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <select id="postCategory" style="flex: 1; min-width: 180px;">
+              <option value="" disabled selected>-- Select Material Type --</option>
+              <option value="Lecture Notes / Study Material">📚 Lecture Notes / Study Material</option>
+              <option value="Previous Year Question Paper">📝 Previous Year Question Paper</option>
+              <option value="Question with Solution">💡 Question & Solution</option>
+              <option value="Practicals & Lab Assignment">🧪 Practicals & Lab Assignment</option>
+              <option value="General News & Notice">📢 Circular / Notice</option>
+            </select>
+
+            <input type="text" id="subjectDetails" placeholder="Subject Code & Name (e.g., CS3351 Data Structures)" style="flex: 1; min-width: 180px;">
+          </div>
+
+          <textarea id="postContent" placeholder="Enter topic title, unit description, or brief details..."></textarea>
+          <textarea id="codeContent" placeholder="// Step-by-step notes / Code / Solution details (optional)..." style="height: 60px; font-family: monospace;"></textarea>
           <input type="url" id="resourceLink" placeholder="Paste Reference Drive Link / Website URL (optional)...">
           
-          <label style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 5px;">Attach Notes / Image / PDF Document (optional):</label>
+          <label style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 5px;">Attach Document / Image / PDF File (optional):</label>
           <input type="file" id="mediaInput" accept="image/*,.pdf,.doc,.docx" />
           
           <button id="publishBtn" onclick="publishPost()" style="width: 100%; margin-top: 5px;">Publish Material for Students</button>
@@ -147,7 +214,7 @@
 
         <div id="uploadSuccessBox" class="success-box">
           <h3 style="color:#2ecc71; margin-bottom:8px;">✅ Published Successfully!</h3>
-          <p id="successMessageText" style="font-size:14px; color:#cbd5e1; margin-bottom:15px;">Your material is live for students.</p>
+          <p id="successMessageText" style="font-size:14px; margin-bottom:15px;">Your material is live for students.</p>
           <button onclick="switchPage('library')" style="background:#2ecc71; color:#0f172a; margin-right:10px;">📖 Go to Campus Library</button>
           <button onclick="resetUploadForm()" style="background:#334155; color:#fff;">➕ Post Another File</button>
         </div>
@@ -156,7 +223,7 @@
       <!-- PAGE 2: CAMPUS RESOURCE LIBRARY -->
       <div id="libraryPageSection" style="display: none;">
         <div class="search-wrapper">
-          <input type="text" id="searchInput" class="search-box" onkeyup="handleKeySearch(event)" oninput="checkSearchEarse()" placeholder="🔍 Search keywords (e.g., Accounts, Java, Physics, Commerce, Circular)...">
+          <input type="text" id="searchInput" class="search-box" onkeyup="handleKeySearch(event)" oninput="checkSearchEarse()" placeholder="🔍 Search keywords, Subject code (e.g., CS3351, Accounts, Java, Physics)...">
           <button onclick="executeSearch()" style="background: #38bdf8;">Search</button>
           <button onclick="clearSearch()" style="background: #334155; color: #cbd5e1;">Clear</button>
         </div>
@@ -171,7 +238,7 @@
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">&times;</span>
       <h3 id="modalTitle" style="color: #38bdf8; margin-bottom: 10px;">Modal Title</h3>
-      <div id="modalBody" style="line-height: 1.5; font-size: 14px; color: #cbd5e1;"></div>
+      <div id="modalBody" style="line-height: 1.5; font-size: 14px;"></div>
     </div>
   </div>
 
@@ -180,8 +247,34 @@
     const RENDER_BASE = "https://synsocial.onrender.com";
     let allPosts = [];
     let currentDeptFilter = 'all';
+    let currentSemFilter = 'all';
     let savedBookmarks = JSON.parse(localStorage.getItem('saved_bookmarks') || '[]');
     let currentPage = 'upload';
+
+    // Theme Toggle Function
+    function toggleTheme() {
+      const body = document.body;
+      const themeBtn = document.getElementById('themeToggleBtn');
+      
+      body.classList.toggle('light-mode');
+      
+      if (body.classList.contains('light-mode')) {
+        themeBtn.innerText = "🌙 Dark Mode";
+        localStorage.setItem('selected_theme', 'light');
+      } else {
+        themeBtn.innerText = "☀️ Light Mode";
+        localStorage.setItem('selected_theme', 'dark');
+      }
+    }
+
+    // Auto load saved theme
+    (function loadSavedTheme() {
+      const savedTheme = localStorage.getItem('selected_theme');
+      if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        document.getElementById('themeToggleBtn').innerText = "🌙 Dark Mode";
+      }
+    })();
 
     function updateOnlineStatus() {
       const badge = document.getElementById('networkBadge');
@@ -290,10 +383,18 @@
       switchPage('library');
     }
 
+    function applySemesterFilter() {
+      currentSemFilter = document.getElementById('sidebarSemFilter').value;
+      switchPage('library');
+    }
+
     function filterPosts() {
       let filtered = allPosts;
       if (currentDeptFilter !== 'all') {
-        filtered = allPosts.filter(p => p.content && p.content.includes(currentDeptFilter));
+        filtered = filtered.filter(p => p.content && p.content.includes(`[${currentDeptFilter}]`));
+      }
+      if (currentSemFilter !== 'all') {
+        filtered = filtered.filter(p => p.content && p.content.includes(`[${currentSemFilter}]`));
       }
       renderPosts(filtered);
     }
@@ -387,7 +488,7 @@
         if (isBase64 || post.filePath.match(/\.(jpg|jpeg|png|gif)$/i)) {
           attachmentHTML = `<div style="margin-top:15px; text-align:center;"><img src="${fileUrl}" alt="Attachment" style="max-width:100%; border-radius:8px;"></div>`;
         } else {
-          attachmentHTML = `<div style="margin-top:15px;"><a href="${fileUrl}" target="_blank" style="background:#38bdf8; color:#0f172a; padding:8px 15px; border-radius:6px; text-decoration:none; font-weight:bold; inline-block;">📎 Open / Download Attachment File</a></div>`;
+          attachmentHTML = `<div style="margin-top:15px;"><a href="${fileUrl}" target="_blank" style="background:#38bdf8; color:#0f172a; padding:8px 15px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-block;">📎 Open / Download Attachment File</a></div>`;
         }
       }
 
@@ -395,13 +496,13 @@
       const shareUrl = `${window.location.origin}${window.location.pathname}?post=${post._id}`;
 
       const detailHTML = `
-        <div style="background:#0f172a; padding:15px; border-radius:8px; border:1px solid #334155; margin-bottom:15px;">
+        <div style="padding:15px; border-radius:8px; border:1px solid #334155; margin-bottom:15px;">
           <p style="color:#38bdf8; font-weight:bold; font-size:1rem;">👤 Author: ${post.author || 'Student'} ${post.content && post.content.includes('[STAFF]') ? '<span class="staff-badge">✔ Staff</span>' : ''}</p>
           <p style="color:#94a3b8; font-size:0.8rem;">📅 Posted on: ${new Date(post.createdAt).toLocaleString()}</p>
         </div>
 
-        <h4 style="color:#fff; margin-bottom:10px;">Resource / Announcement Details:</h4>
-        <p style="font-size:15px; line-height:1.6; white-space:pre-wrap; background:#0f172a; padding:15px; border-radius:8px; border:1px solid #334155;">${cleanedContent}</p>
+        <h4 style="margin-bottom:10px;">Resource / Announcement Details:</h4>
+        <p style="font-size:15px; line-height:1.6; white-space:pre-wrap; padding:15px; border-radius:8px; border:1px solid #334155;">${cleanedContent}</p>
 
         ${(post.codeSnippet && post.codeSnippet.trim() !== '') ? `
           <h4 style="color:#2ecc71; margin-top:15px; margin-bottom:5px;">Verified Notes / Solution:</h4>
@@ -508,7 +609,9 @@
     async function publishPost() {
       const author = document.getElementById('authorName').value.trim();
       const department = document.getElementById('postDepartment').value;
+      const semester = document.getElementById('postSemester').value;
       const category = document.getElementById('postCategory').value;
+      const subjectDetails = document.getElementById('subjectDetails').value.trim();
       const content = document.getElementById('postContent').value.trim();
       const codeSnippet = document.getElementById('codeContent').value;
       const resourceLink = document.getElementById('resourceLink').value;
@@ -517,6 +620,9 @@
       const isStaff = document.getElementById('isStaffCheck').checked;
 
       if (!author) return alert("Please enter your Name or Department!");
+      if (!department) return alert("Please select a Department!");
+      if (!semester) return alert("Please select a Semester!");
+      if (!category) return alert("Please select a Material Type!");
       if (!content) return alert("Please enter details or description!");
 
       const userPin = prompt("🔑 Set a 4-Digit Security PIN (e.g., 1234) to protect your post from deletion:");
@@ -527,7 +633,7 @@
       btn.disabled = true;
       btn.innerText = "Publishing Material...";
 
-      let fullContent = `[${department}] [${category}] [PIN:${userPin}] ${content}`;
+      let fullContent = `[${department}] [${semester}] ${subjectDetails ? '[' + subjectDetails + ']' : ''} [${category}] [PIN:${userPin}] ${content}`;
       if (isStaff) {
         fullContent = `[STAFF] ` + fullContent;
       }
@@ -612,6 +718,10 @@
       document.getElementById('codeContent').value = '';
       document.getElementById('resourceLink').value = '';
       document.getElementById('mediaInput').value = '';
+      document.getElementById('postDepartment').value = '';
+      document.getElementById('postSemester').value = '';
+      document.getElementById('postCategory').value = '';
+      document.getElementById('subjectDetails').value = '';
       document.getElementById('isStaffCheck').checked = false;
       document.getElementById('uploadSuccessBox').style.display = 'none';
     }
