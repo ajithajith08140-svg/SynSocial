@@ -33,6 +33,32 @@
     .action-btn { cursor: pointer; transition: 0.2s; user-select: none; }
     .action-btn:hover { color: #38bdf8; }
 
+    .accordion-toggle {
+      width: 100%;
+      background: #0f172a;
+      color: #38bdf8;
+      border: 1px solid #38bdf8;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .accordion-toggle:hover { background: #1e293b; }
+    
+    .dept-container {
+      display: none;
+      max-height: 250px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+      padding-right: 4px;
+    }
+    .dept-container.show { display: block; }
+
     .filter-btn { display: block; width: 100%; text-align: left; background: #0f172a; color: #cbd5e1; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #334155; font-size: 0.8rem; cursor: pointer; }
     .filter-btn:hover, .filter-btn.active { border-color: #38bdf8; color: #38bdf8; background: #1e293b; }
 
@@ -44,7 +70,6 @@
 
     .category-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8; }
     .pin-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(243, 156, 18, 0.1); color: #f39c12; border: 1px solid #f39c12; margin-left: 4px; }
-    .offline-badge { display: inline-block; padding: 3px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 8px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; margin-left: 4px; }
     
     .staff-badge { display: inline-block; background: #38bdf8; color: #0f172a; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-left: 5px; }
     .comment-section { margin-top: 15px; padding-top: 12px; border-top: 1px dashed #334155; display: none; }
@@ -54,6 +79,13 @@
     .solution-box { margin-top: 10px; padding: 10px; background: #0f172a; border-radius: 6px; border-left: 3px solid #2ecc71; font-size: 13px; display: none; }
     .copy-btn { position: absolute; right: 8px; top: 8px; background: #334155; color: #fff; border: none; padding: 3px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; }
 
+    .doc-link-btn { display: inline-block; margin-top: 10px; padding: 8px 14px; background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid #2ecc71; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: bold; transition: 0.2s; }
+    .doc-link-btn:hover { background: #2ecc71; color: #0f172a; }
+
+    /* File Input Styling */
+    .file-input-container { margin-bottom: 12px; text-align: left; }
+    .file-input-label { display: block; font-size: 12px; color: #38bdf8; margin-bottom: 5px; font-weight: bold; }
+    
     /* Light Mode Styles */
     body.light-mode { background-color: #f8fafc; color: #0f172a; }
     body.light-mode .navbar, 
@@ -61,7 +93,6 @@
     body.light-mode .card, 
     body.light-mode .modal-content { background-color: #ffffff; border-color: #cbd5e1; color: #0f172a; }
     
-    /* Fixed Thought Box in Light Mode */
     body.light-mode .quote-card { background-color: #f1f5f9 !important; border-left-color: #f39c12; }
     body.light-mode .quote-card p { color: #0f172a !important; }
     
@@ -70,12 +101,12 @@
     body.light-mode select, 
     body.light-mode .search-box, 
     body.light-mode .code-block, 
+    body.light-mode .accordion-toggle,
     body.light-mode .solution-box, 
     body.light-mode .comment-item { background-color: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
     body.light-mode .filter-btn { background-color: #f1f5f9; color: #334155; border-color: #cbd5e1; }
     body.light-mode .filter-btn:hover, 
     body.light-mode .filter-btn.active { background-color: #e2e8f0; color: #0284c7; border-color: #0284c7; }
-    body.light-mode h3, body.light-mode h4, body.light-mode p { color: #0f172a; }
   </style>
 </head>
 <body>
@@ -91,28 +122,18 @@
   <div class="main-container">
     
     <div class="sidebar">
-      <!-- 1. Network Status Banner -->
-      <div id="networkBadge" style="margin-bottom: 12px; padding: 8px; background: rgba(46, 204, 113, 0.1); border-radius: 5px; text-align: center;">
-          <p id="statusText" style="color: #2ecc71; font-size: 0.75rem; margin: 0;">🌐 Cloud Sync: Live</p>
-      </div>
-
-      <!-- 2. Thought For Today -->
       <div class="quote-card" onclick="openModal('Daily Inspiration Thought', document.getElementById('quoteText').innerText)" style="padding: 10px; background: #0f172a; border-radius: 6px; border-left: 3px solid #f39c12; cursor: pointer; margin-bottom: 15px;">
           <p style="font-size: 0.7rem; color: #f39c12; font-weight: bold; margin-bottom: 3px;">💡 THOUGHT FOR TODAY</p>
-          <p id="quoteText" style="font-size: 0.8rem; font-style: italic;">Loading thought...</p>
+          <p id="quoteText" style="font-size: 0.8rem; font-style: italic; transition: opacity 0.3s ease;">Loading thought...</p>
       </div>
 
       <hr style="border: 0.5px solid #334155; margin-bottom: 15px;">
 
-      <!-- 3. Logo & Title -->
-      <img src="logo.png" alt="Campus Logo" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px auto; display: block;" onerror="this.style.display='none'">
-      
       <h3 style="font-size: 1rem; margin-bottom: 2px; text-align: center;">Campus Connect</h3>
       <p style="color: #38bdf8; font-size: 0.8rem; margin-bottom: 15px; text-align: center;">All Departments Student Hub</p>
       
       <hr style="border: 0.5px solid #334155; margin-bottom: 15px;">
 
-      <!-- Semester Filter Dropdown -->
       <p style="font-size: 0.75rem; color: #2ecc71; font-weight: bold; margin-bottom: 5px;">🎓 FILTER BY SEMESTER</p>
       <select id="sidebarSemFilter" onchange="applySemesterFilter()" style="font-size: 0.8rem; padding: 6px; margin-bottom: 15px;">
         <option value="all">All Semesters</option>
@@ -122,25 +143,31 @@
         <option value="Sem 4">Semester 4</option>
         <option value="Sem 5">Semester 5</option>
         <option value="Sem 6">Semester 6</option>
-        <option value="Sem 7">Semester 7</option>
-        <option value="Sem 8">Semester 8</option>
+
       </select>
 
-      <!-- Department Filters -->
-      <p style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">DEPARTMENT FILTERS</p>
+      <p style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">DEPARTMENT / COURSES</p>
+      
       <button class="filter-btn active" onclick="applyDeptFilter('all', this)">🌐 All Departments Feed</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Computer Science', this)">💻 Computer Science</button>
-      <button class="filter-btn" onclick="applyDeptFilter('BCA', this)">🖥️ BCA</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Commerce (B.Com)', this)">📊 Commerce (B.Com)</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Business Admin (BBA)', this)">💼 Business Admin (BBA)</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Physics', this)">⚡ Physics</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Chemistry', this)">🧪 Chemistry</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Mathematics', this)">📐 Mathematics</button>
-      <button class="filter-btn" onclick="applyDeptFilter('English Literature', this)">📖 English Literature</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Tamil', this)">✍️ Tamil</button>
-      <button class="filter-btn" onclick="applyDeptFilter('History', this)">🏛️ History</button>
-      <button class="filter-btn" onclick="applyDeptFilter('Placements & Career', this)">🎯 Placements & Career</button>
-      <button class="filter-btn" onclick="applyDeptFilter('College Events & Circulars', this)">📢 Events & News</button>
+      
+      <button class="accordion-toggle" onclick="toggleDeptAccordion()">
+        📚 Select Course / Dept <span id="accordionIcon">▼</span>
+      </button>
+
+      <div id="deptAccordion" class="dept-container">
+        <button class="filter-btn" onclick="applyDeptFilter('Computer Science', this)">💻 Computer Science</button>
+        <button class="filter-btn" onclick="applyDeptFilter('BCA', this)">🖥️ BCA</button>
+        <button class="filter-btn" onclick="applyDeptFilter('Commerce (B.Com)', this)">📊 Commerce (B.Com)</button>
+        <button class="filter-btn" onclick="applyDeptFilter('Business Admin (BBA)', this)">💼 Business Admin (BBA)</button>
+        <button class="filter-btn" onclick="applyDeptFilter('Physics', this)">⚡ Physics</button>
+        <button class="filter-btn" onclick="applyDeptFilter('Chemistry', this)">🧪 Chemistry</button>
+        <button class="filter-btn" onclick="applyDeptFilter('Mathematics', this)">📐 Mathematics</button>
+        <button class="filter-btn" onclick="applyDeptFilter('English Literature', this)">📖 English Literature</button>
+        <button class="filter-btn" onclick="applyDeptFilter('Tamil', this)">✍️ Tamil</button>
+        <button class="filter-btn" onclick="applyDeptFilter('History', this)">🏛️ History</button>
+        
+      </div>
+
       <button class="filter-btn" onclick="showSavedBookmarks(this)">⭐ Saved Notes</button>
     </div>
 
@@ -160,7 +187,6 @@
             </label>
           </div>
 
-          <!-- Dropdowns for Department & Semester -->
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <select id="postDepartment" style="flex: 1; min-width: 180px;">
               <option value="" disabled selected>-- Select Department --</option>
@@ -174,8 +200,7 @@
               <option value="English Literature">📖 English Literature</option>
               <option value="Tamil">✍️ Tamil</option>
               <option value="History">🏛️ History</option>
-              <option value="Placements & Career">🎯 Placements & Career</option>
-              <option value="College Events & Circulars">📢 General Circulars</option>
+             
             </select>
 
             <select id="postSemester" style="flex: 1; min-width: 150px;">
@@ -187,12 +212,10 @@
               <option value="Sem 5">Semester 5</option>
               <option value="Sem 6">Semester 6</option>
               <option value="Sem 7">Semester 7</option>
-              <option value="Sem 8">Semester 8</option>
-              <option value="General">General / All Semesters</option>
+              
             </select>
           </div>
 
-          <!-- Material Category & Subject Input -->
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <select id="postCategory" style="flex: 1; min-width: 180px;">
               <option value="" disabled selected>-- Select Material Type --</option>
@@ -206,12 +229,19 @@
             <input type="text" id="subjectDetails" placeholder="Subject Code & Name (e.g., CS3351 Data Structures)" style="flex: 1; min-width: 180px;">
           </div>
 
+          <!-- Document Link Field -->
+          <input type="url" id="documentLink" placeholder="📎 External Document Link / Drive URL (Optional)" />
+
+          <!-- Real Document Upload Field -->
+          <div class="file-input-container">
+            <label class="file-input-label">📁 Choose Document / File from Device (PDF, DOCX, Images...):</label>
+            <input type="file" id="fileAttachment" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.png,.jpg,.jpeg" style="padding: 6px; cursor: pointer;" />
+          </div>
+
           <textarea id="postContent" placeholder="Enter topic title, unit description, or brief details..."></textarea>
-          <textarea id="codeContent" placeholder="// Step-by-step notes / Code / Solution details (optional)..." style="height: 60px; font-family: monospace;"></textarea>
-          <input type="url" id="resourceLink" placeholder="Paste Reference Drive Link / Website URL (optional)...">
           
-          <label style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 5px;">Attach Document / Image / PDF File (optional):</label>
-          <input type="file" id="mediaInput" accept="image/*,.pdf,.doc,.docx" />
+          <!-- Code Snippet Input Area -->
+          <textarea id="codeContent" placeholder="// Step-by-step notes / Code Snippet / Solution details (optional)..." style="height: 80px; font-family: monospace;"></textarea>
           
           <button id="publishBtn" onclick="publishPost()" style="width: 100%; margin-top: 5px;">Publish Material for Students</button>
         </div>
@@ -227,7 +257,7 @@
       <!-- PAGE 2: CAMPUS RESOURCE LIBRARY -->
       <div id="libraryPageSection" style="display: none;">
         <div class="search-wrapper">
-          <input type="text" id="searchInput" class="search-box" onkeyup="handleKeySearch(event)" oninput="checkSearchEarse()" placeholder="🔍 Search keywords, Subject code (e.g., CS3351, Accounts, Java, Physics)...">
+          <input type="text" id="searchInput" class="search-box" onkeyup="handleKeySearch(event)" placeholder="🔍 Search keywords, Subject code (e.g., CS3351, Accounts, Java)...">
           <button onclick="executeSearch()" style="background: #38bdf8;">Search</button>
           <button onclick="clearSearch()" style="background: #334155; color: #cbd5e1;">Clear</button>
         </div>
@@ -248,62 +278,74 @@
 
   <script>
     const API_BASE = "https://synsocial.onrender.com/api/posts";
-    const RENDER_BASE = "https://synsocial.onrender.com";
+    const QUOTE_API = "https://dummyjson.com/quotes/random";
+    
     let allPosts = [];
     let currentDeptFilter = 'all';
     let currentSemFilter = 'all';
     let savedBookmarks = JSON.parse(localStorage.getItem('saved_bookmarks') || '[]');
     let currentPage = 'upload';
 
-    // Theme Toggle Function
+    const backupQuotes = [
+      { quote: "Education is the most powerful weapon which you can use to change the world.", author: "Nelson Mandela" },
+      { quote: "Live as if you were to die tomorrow. Learn as if you were to live forever.", author: "Mahatma Gandhi" },
+      { quote: "The mind is not a vessel to be filled, but a fire to be kindled.", author: "Plutarch" },
+      { quote: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin" },
+      { quote: "Success is no accident. It is hard work, perseverance, and learning.", author: "Pelé" }
+    ];
+
+    let lastQuoteText = "";
+
+    async function fetchAndUpdateQuote() {
+      const quoteElement = document.getElementById('quoteText');
+      if (!quoteElement) return;
+
+      let newQuote = "";
+      let newAuthor = "";
+
+      try {
+        const response = await fetch(QUOTE_API);
+        if (response.ok) {
+          const data = await response.json();
+          newQuote = data.quote;
+          newAuthor = data.author;
+        } else {
+          throw new Error("API Limit");
+        }
+      } catch (err) {
+        let randomIndex;
+        do {
+          randomIndex = Math.floor(Math.random() * backupQuotes.length);
+        } while (backupQuotes[randomIndex].quote === lastQuoteText && backupQuotes.length > 1);
+        
+        newQuote = backupQuotes[randomIndex].quote;
+        newAuthor = backupQuotes[randomIndex].author;
+      }
+
+      lastQuoteText = newQuote;
+
+      quoteElement.style.opacity = 0;
+      setTimeout(() => {
+        quoteElement.innerText = `"${newQuote}" — ${newAuthor}`;
+        quoteElement.style.opacity = 1;
+      }, 300);
+    }
+
+    setInterval(fetchAndUpdateQuote, 20000);
+
+    function toggleDeptAccordion() {
+      const accordion = document.getElementById('deptAccordion');
+      const icon = document.getElementById('accordionIcon');
+      accordion.classList.toggle('show');
+      icon.innerText = accordion.classList.contains('show') ? '▲' : '▼';
+    }
+
     function toggleTheme() {
-      const body = document.body;
-      const themeBtn = document.getElementById('themeToggleBtn');
-      
-      body.classList.toggle('light-mode');
-      
-      if (body.classList.contains('light-mode')) {
-        themeBtn.innerText = "🌙 Dark Mode";
-        localStorage.setItem('selected_theme', 'light');
-      } else {
-        themeBtn.innerText = "☀️ Light Mode";
-        localStorage.setItem('selected_theme', 'dark');
-      }
+      document.body.classList.toggle('light-mode');
     }
-
-    // Auto load saved theme
-    (function loadSavedTheme() {
-      const savedTheme = localStorage.getItem('selected_theme');
-      if (savedTheme === 'light') {
-        document.body.classList.add('light-mode');
-        document.getElementById('themeToggleBtn').innerText = "🌙 Dark Mode";
-      }
-    })();
-
-    function updateOnlineStatus() {
-      const badge = document.getElementById('networkBadge');
-      const text = document.getElementById('statusText');
-      if (navigator.onLine) {
-        badge.style.background = "rgba(46, 204, 113, 0.1)";
-        text.style.color = "#2ecc71";
-        text.innerText = "🌐 Cloud Sync: Live (Online)";
-        syncOfflinePostsToServer();
-      } else {
-        badge.style.background = "rgba(243, 156, 18, 0.1)";
-        text.style.color = "#f39c12";
-        text.innerText = "⚠️ Offline Mode (Local Storage)";
-        loadOfflineFeed();
-      }
-    }
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
 
     function togglePageView() {
-      if (currentPage === 'upload') {
-        switchPage('library');
-      } else {
-        switchPage('upload');
-      }
+      switchPage(currentPage === 'upload' ? 'library' : 'upload');
     }
 
     function switchPage(pageName) {
@@ -324,66 +366,20 @@
       }
     }
 
-    async function syncOfflinePostsToServer() {
-      const localOnlyPosts = JSON.parse(localStorage.getItem('offline_posts') || '[]');
-      if (localOnlyPosts.length > 0) {
-        for (let post of localOnlyPosts) {
-          try {
-            const formData = new FormData();
-            formData.append('author', post.author);
-            formData.append('content', post.content);
-            formData.append('codeSnippet', post.codeSnippet || '');
-            formData.append('resourceLink', post.resourceLink || '');
-
-            await fetch(API_BASE, { method: 'POST', body: formData });
-          } catch(e) {
-            console.error("Failed syncing post:", e);
-          }
-        }
-        localStorage.removeItem('offline_posts');
-      }
-      loadFeed();
-    }
-
     async function loadFeed() {
-      if (!navigator.onLine) {
-        loadOfflineFeed();
-        return;
-      }
       try {
         const res = await fetch(API_BASE);
-        const serverPosts = await res.json();
-        
-        const localOnlyPosts = JSON.parse(localStorage.getItem('offline_posts') || '[]');
-        allPosts = [...localOnlyPosts, ...serverPosts];
-        
-        localStorage.setItem('cached_posts', JSON.stringify(serverPosts));
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const postIdFromUrl = urlParams.get('post');
-        if (postIdFromUrl) {
-          switchPage('library');
-          openFullPostPage(postIdFromUrl);
-        } else {
-          filterPosts();
-        }
+        allPosts = await res.json();
+        filterPosts();
       } catch (err) {
-        loadOfflineFeed();
+        document.getElementById('feedList').innerHTML = "<p style='color:#94a3b8; text-align:center;'>Error loading materials or Server Offline.</p>";
       }
     }
 
-    function loadOfflineFeed() {
-      const cached = JSON.parse(localStorage.getItem('cached_posts') || '[]');
-      const localOnly = JSON.parse(localStorage.getItem('offline_posts') || '[]');
-      allPosts = [...localOnly, ...cached];
-      filterPosts();
-    }
-
-    function applyDeptFilter(filterVal, btnElement) {
+    function applyDeptFilter(dept, btn) {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      if(btnElement) btnElement.classList.add('active');
-      
-      currentDeptFilter = filterVal;
+      if(btn) btn.classList.add('active');
+      currentDeptFilter = dept;
       switchPage('library');
     }
 
@@ -419,10 +415,6 @@
       renderPosts(searchResults);
     }
 
-    function checkSearchEarse() {
-      if (document.getElementById('searchInput').value.trim() === '') filterPosts();
-    }
-
     function clearSearch() {
       document.getElementById('searchInput').value = '';
       filterPosts();
@@ -439,18 +431,30 @@
       if(box) box.style.display = box.style.display === 'block' ? 'none' : 'block';
     }
 
-    function addComment(postId) {
+    async function addComment(postId) {
       const input = document.getElementById(`comment-input-${postId}`);
       const text = input.value.trim();
       if (!text) return alert("Please enter a reply!");
       
-      const commentList = document.getElementById(`comment-list-${postId}`);
-      const newComment = document.createElement('div');
-      newComment.className = 'comment-item';
-      newComment.innerHTML = `<div class="comment-author">You (Student)</div><div>${text}</div>`;
-      
-      commentList.appendChild(newComment);
-      input.value = '';
+      const author = prompt("Enter your Name:") || "Student";
+
+      try {
+        await fetch(`${API_BASE}/${postId}/comment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ author, text })
+        });
+        
+        input.value = '';
+        loadFeed();
+      } catch (err) {
+        const commentList = document.getElementById(`comment-list-${postId}`);
+        const newComment = document.createElement('div');
+        newComment.className = 'comment-item';
+        newComment.innerHTML = `<div class="comment-author">${author}</div><div>${text}</div>`;
+        commentList.appendChild(newComment);
+        input.value = '';
+      }
     }
 
     function copyCode(btn, elementId) {
@@ -460,70 +464,28 @@
       setTimeout(() => btn.innerText = "Copy Text", 2000);
     }
 
-    function toggleBookmark(postId) {
-      if (savedBookmarks.includes(postId)) {
-        savedBookmarks = savedBookmarks.filter(id => id !== postId);
-        alert("Removed from Saved Items!");
-      } else {
-        savedBookmarks.push(postId);
-        alert("Saved to Bookmarks!");
-      }
-      localStorage.setItem('saved_bookmarks', JSON.stringify(savedBookmarks));
-      filterPosts();
-    }
-
-    function showSavedBookmarks(btnElement) {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      if(btnElement) btnElement.classList.add('active');
-
-      switchPage('library');
-      const bookmarkedPosts = allPosts.filter(p => savedBookmarks.includes(p._id));
-      renderPosts(bookmarkedPosts);
+    function extractDocLink(content) {
+      const match = content.match(/\[DOCLINK:(https?:\/\/[^\s\]]+)\]/);
+      return match ? match[1] : null;
     }
 
     function openFullPostPage(postId) {
       const post = allPosts.find(p => p._id === postId);
       if (!post) return alert("Post not found!");
 
-      let attachmentHTML = '';
-      if (post.filePath) {
-        const isBase64 = post.filePath.startsWith('data:');
-        const fileUrl = isBase64 ? post.filePath : `${RENDER_BASE}/${post.filePath.replace(/\\/g, '/')}`;
-        if (isBase64 || post.filePath.match(/\.(jpg|jpeg|png|gif)$/i)) {
-          attachmentHTML = `<div style="margin-top:15px; text-align:center;"><img src="${fileUrl}" alt="Attachment" style="max-width:100%; border-radius:8px;"></div>`;
-        } else {
-          attachmentHTML = `<div style="margin-top:15px;"><a href="${fileUrl}" target="_blank" style="background:#38bdf8; color:#0f172a; padding:8px 15px; border-radius:6px; text-decoration:none; font-weight:bold; display:inline-block;">📎 Open / Download Attachment File</a></div>`;
-        }
-      }
-
-      const cleanedContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '').replace(/\[STAFF\]/g, '') : '';
-      const shareUrl = `${window.location.origin}${window.location.pathname}?post=${post._id}`;
-
+      const docLink = extractDocLink(post.content || '');
+      let cleanedContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '').replace(/\[STAFF\]/g, '').replace(/\[DOCLINK:[^\]]+\]/g, '') : '';
+      
       const detailHTML = `
         <div style="padding:15px; border-radius:8px; border:1px solid #334155; margin-bottom:15px;">
           <p style="color:#38bdf8; font-weight:bold; font-size:1rem;">👤 Author: ${post.author || 'Student'} ${post.content && post.content.includes('[STAFF]') ? '<span class="staff-badge">✔ Staff</span>' : ''}</p>
-          <p style="color:#94a3b8; font-size:0.8rem;">📅 Posted on: ${new Date(post.createdAt).toLocaleString()}</p>
+          <p style="color:#94a3b8; font-size:0.8rem;">📅 Posted on: ${new Date(post.createdAt || Date.now()).toLocaleDateString()}</p>
         </div>
-
-        <h4 style="margin-bottom:10px;">Resource / Announcement Details:</h4>
-        <p style="font-size:15px; line-height:1.6; white-space:pre-wrap; padding:15px; border-radius:8px; border:1px solid #334155;">${cleanedContent}</p>
-
-        ${(post.codeSnippet && post.codeSnippet.trim() !== '') ? `
-          <h4 style="color:#2ecc71; margin-top:15px; margin-bottom:5px;">Verified Notes / Solution:</h4>
-          <div class="code-block" style="max-height:300px; overflow-y:auto;">
-            <button class="copy-btn" onclick="copyCode(this, 'modalCodeSnippet')">Copy Text</button>
-            <span id="modalCodeSnippet">${post.codeSnippet}</span>
-          </div>
-        ` : ''}
-
-        ${post.resourceLink ? `<div style="margin-top:15px;"><a href="${post.resourceLink}" target="_blank" style="color:#38bdf8; text-decoration:none; font-size:14px; font-weight:bold;">🔗 Open Reference Drive / Resource Link</a></div>` : ''}
-        
-        ${attachmentHTML}
-
-        <div style="margin-top:20px; padding-top:15px; border-top:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
-          <button onclick="navigator.clipboard.writeText('${shareUrl}'); alert('Direct Link Copied!');" style="background:#334155; color:#38bdf8;">🔗 Share Direct Link</button>
-          <button onclick="closeModal()" style="background:#f43f5e; color:#fff;">Close View</button>
-        </div>
+        <h4 style="margin-bottom:10px;">Resource Details:</h4>
+        <p style="font-size:15px; line-height:1.6; padding:15px; border-radius:8px; border:1px solid #334155;">${cleanedContent}</p>
+        ${docLink ? `<div style="margin-top:10px;"><a href="${docLink}" target="_blank" class="doc-link-btn">🔗 Open Attached Resource / Link</a></div>` : ''}
+        ${post.fileUrl ? `<div style="margin-top:10px;"><a href="${post.fileUrl}" target="_blank" class="doc-link-btn" style="background:rgba(56, 189, 248, 0.15); color:#38bdf8; border-color:#38bdf8;">📄 Download Attached File</a></div>` : ''}
+        ${post.codeSnippet ? `<h4 style="color:#2ecc71; margin-top:15px;">Notes / Code Snippet / Solution:</h4><div class="code-block">${post.codeSnippet}</div>` : ''}
       `;
 
       document.getElementById('modalTitle').innerText = "📖 Dedicated Material View";
@@ -531,63 +493,75 @@
       document.getElementById('infoModal').style.display = 'flex';
     }
 
-    function renderPosts(postsToDisplay) {
+    async function likePost(id) {
+      const post = allPosts.find(p => p._id === id);
+      if (post) {
+        post.likes = (post.likes || 0) + 1;
+        renderPosts(allPosts);
+      }
+      fetch(`${API_BASE}/${id}/like`, { method: 'PUT' }).catch(() => {});
+    }
+
+    function renderPosts(posts) {
       const container = document.getElementById('feedList');
       container.innerHTML = '';
 
-      if (!postsToDisplay || postsToDisplay.length === 0) {
-        container.innerHTML = `<p style="color:#94a3b8; text-align:center; padding: 20px;">No matching materials found.</p>`;
+      if (!posts || posts.length === 0) {
+        container.innerHTML = `<p style="color:#94a3b8; text-align:center;">No academic materials found for this filter.</p>`;
         return;
       }
 
-      postsToDisplay.forEach(post => {
-        let attachmentHTML = '';
-        if (post.filePath) {
-          const isBase64 = post.filePath.startsWith('data:');
-          const fileUrl = isBase64 ? post.filePath : `${RENDER_BASE}/${post.filePath.replace(/\\/g, '/')}`;
-          
-          if (isBase64 || post.filePath.match(/\.(jpg|jpeg|png|gif)$/i)) {
-            attachmentHTML = `<div style="margin-top:10px;"><img src="${fileUrl}" alt="Attachment" style="max-width:100%; max-height:250px; border-radius:6px;"></div>`;
-          } else {
-            attachmentHTML = `<div style="margin-top:8px;"><a href="${fileUrl}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold;">📎 Download Attachment File</a></div>`;
-          }
-        }
-
+      posts.forEach(post => {
         const isStaff = post.content && post.content.includes('[STAFF]');
-        const isOfflineCreated = post.isOfflinePost;
-        const cleanedDisplayContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '').replace(/\[STAFF\]/g, '') : '';
+        const docLink = extractDocLink(post.content || '');
+        const cleanedContent = post.content ? post.content.replace(/\[PIN:\d{4}\]/g, '').replace(/\[STAFF\]/g, '').replace(/\[DOCLINK:[^\]]+\]/g, '') : '';
         const solId = `sol-${post._id}`;
         const codeId = `code-${post._id}`;
         const isSaved = savedBookmarks.includes(post._id);
+
+        const commentsHTML = (post.comments || []).map(c => `
+          <div class="comment-item">
+            <div class="comment-author">${c.author || 'Student'}</div>
+            <div>${c.text || c}</div>
+          </div>
+        `).join('');
 
         container.innerHTML += `
           <div class="card">
             <div>
               <span class="category-badge">🎓 Campus Hub</span>
               <span class="pin-badge">🔒 PIN Protected</span>
-              ${isOfflineCreated ? '<span class="offline-badge">💾 Local Saved</span>' : ''}
             </div>
 
             <div style="display:flex; justify-content:space-between; color:#94a3b8; font-size:13px; margin-top:5px;">
               <strong>👤 ${post.author || 'Student'} ${isStaff ? '<span class="staff-badge">✔ Staff</span>' : ''}</strong> 
-              <span>${new Date(post.createdAt).toLocaleDateString()}</span>
+              <span>${new Date(post.createdAt || Date.now()).toLocaleDateString()}</span>
             </div>
             
-            <p style="margin-top:10px; line-height: 1.5;">${cleanedDisplayContent}</p>
+            <p style="margin-top:10px; line-height: 1.5;">${cleanedContent}</p>
             
+            ${docLink ? `
+              <div style="margin-top:8px;">
+                <a href="${docLink}" target="_blank" class="doc-link-btn">🔗 Open Attached Resource / Link</a>
+              </div>
+            ` : ''}
+
+            ${post.fileUrl ? `
+              <div style="margin-top:8px;">
+                <a href="${post.fileUrl}" target="_blank" class="doc-link-btn" style="background:rgba(56, 189, 248, 0.15); color:#38bdf8; border-color:#38bdf8;">📄 Download Attached File</a>
+              </div>
+            ` : ''}
+
             ${(post.codeSnippet && post.codeSnippet.trim() !== '') ? `
-              <button onclick="toggleSolution('${solId}')" style="margin-top:10px; padding:6px 12px; font-size:12px; background:#334155; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; cursor:pointer;">💡 View Notes / Answer Details</button>
+              <button onclick="toggleSolution('${solId}')" style="margin-top:10px; padding:6px 12px; font-size:12px; background:#334155; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; cursor:pointer;">💡 View Code / Notes / Answer Details</button>
               <div id="${solId}" class="solution-box">
-                <strong>Answer / Notes / Details:</strong>
+                <strong>Answer / Code Snippet / Details:</strong>
                 <div class="code-block">
                   <button class="copy-btn" onclick="copyCode(this, '${codeId}')">Copy Text</button>
                   <span id="${codeId}">${post.codeSnippet}</span>
                 </div>
               </div>
             ` : ''}
-
-            ${post.resourceLink ? `<div style="margin-top:8px;"><a href="${post.resourceLink}" target="_blank" style="color:#38bdf8; text-decoration:none;">🔗 Open External Resource Link</a></div>` : ''}
-            ${attachmentHTML}
             
             <div class="actions">
               <span class="action-btn" onclick="openFullPostPage('${post._id}')" style="color:#38bdf8; font-weight:bold;">👁️ View Details</span>
@@ -599,7 +573,9 @@
 
             <div id="comments-${post._id}" class="comment-section">
               <p style="font-size: 12px; color: #38bdf8; font-weight: bold; margin-bottom: 8px;">💬 Discussion & Doubts</p>
-              <div id="comment-list-${post._id}"></div>
+              <div id="comment-list-${post._id}">
+                ${commentsHTML.length > 0 ? commentsHTML : '<p style="font-size:11px; color:#94a3b8;">No replies yet. Be the first to discuss!</p>'}
+              </div>
               <div style="display: flex; gap: 6px; margin-top: 8px;">
                 <input type="text" id="comment-input-${post._id}" placeholder="Type comment or answer..." style="margin-bottom:0; font-size:12px;">
                 <button onclick="addComment('${post._id}')" style="padding:6px 12px; font-size:12px;">Send</button>
@@ -615,162 +591,88 @@
       const department = document.getElementById('postDepartment').value;
       const semester = document.getElementById('postSemester').value;
       const category = document.getElementById('postCategory').value;
-      const subjectDetails = document.getElementById('subjectDetails').value.trim();
+      const subject = document.getElementById('subjectDetails').value.trim();
+      const docLink = document.getElementById('documentLink').value.trim();
+      const fileInput = document.getElementById('fileAttachment');
       const content = document.getElementById('postContent').value.trim();
       const codeSnippet = document.getElementById('codeContent').value;
-      const resourceLink = document.getElementById('resourceLink').value;
-      const fileInput = document.getElementById('mediaInput');
-      const btn = document.getElementById('publishBtn');
       const isStaff = document.getElementById('isStaffCheck').checked;
 
-      if (!author) return alert("Please enter your Name or Department!");
-      if (!department) return alert("Please select a Department!");
-      if (!semester) return alert("Please select a Semester!");
-      if (!category) return alert("Please select a Material Type!");
-      if (!content) return alert("Please enter details or description!");
-
-      const userPin = prompt("🔑 Set a 4-Digit Security PIN (e.g., 1234) to protect your post from deletion:");
-      if (!userPin || userPin.length < 4 || isNaN(userPin)) {
-        return alert("⚠️ Post creation cancelled! Enter a valid 4-digit PIN.");
+      if (!author || !department || !semester || !category || !content) {
+        return alert("Please fill all mandatory academic fields!");
       }
 
-      btn.disabled = true;
-      btn.innerText = "Publishing Material...";
+      const userPin = prompt("Set a 4-Digit Security PIN for this upload:");
+      if (!userPin || userPin.length < 4 || isNaN(userPin)) return alert("Invalid PIN!");
 
-      let fullContent = `[${department}] [${semester}] ${subjectDetails ? '[' + subjectDetails + ']' : ''} [${category}] [PIN:${userPin}] ${content}`;
-      if (isStaff) {
-        fullContent = `[STAFF] ` + fullContent;
-      }
-
-      let fileDataBase64 = null;
-      if (fileInput.files[0]) {
-        fileDataBase64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target.result);
-          reader.readAsDataURL(fileInput.files[0]);
-        });
-      }
-
-      if (!navigator.onLine) {
-        const localPost = {
-          _id: "off_" + Date.now(),
-          author: author,
-          content: fullContent,
-          codeSnippet: codeSnippet,
-          resourceLink: resourceLink,
-          filePath: fileDataBase64,
-          createdAt: new Date().toISOString(),
-          likes: 0,
-          isOfflinePost: true
-        };
-
-        const existingOffline = JSON.parse(localStorage.getItem('offline_posts') || '[]');
-        existingOffline.unshift(localPost);
-        localStorage.setItem('offline_posts', JSON.stringify(existingOffline));
-
-        document.getElementById('successMessageText').innerText = "Saved locally in Offline Mode! Will auto-sync when online.";
-        document.getElementById('uploadSuccessBox').style.display = 'block';
-        btn.disabled = false;
-        btn.innerText = "Publish Material for Students";
-        loadOfflineFeed();
-        return;
-      }
+      let fullContent = `[${department}] [${semester}] ${subject ? '[' + subject + ']' : ''} [${category}] [PIN:${userPin}]`;
+      if (docLink) fullContent += ` [DOCLINK:${docLink}]`;
+      fullContent += ` ${content}`;
+      
+      if (isStaff) fullContent = `[STAFF] ` + fullContent;
 
       const formData = new FormData();
       formData.append('author', author);
       formData.append('content', fullContent);
-      formData.append('codeSnippet', codeSnippet);
-      formData.append('resourceLink', resourceLink);
       
-      if (fileInput.files[0]) {
+      if (codeSnippet) {
+        formData.append('codeSnippet', codeSnippet);
+      }
+
+      // Appending File Object directly from File Input
+      if (fileInput.files.length > 0) {
         formData.append('file', fileInput.files[0]);
       }
 
       try {
-        const response = await fetch(API_BASE, { method: 'POST', body: formData });
-        if (!response.ok) throw new Error('Upload failed');
-
-        document.getElementById('successMessageText').innerText = "Your study material is published to campus cloud server.";
+        await fetch(API_BASE, { method: 'POST', body: formData });
         document.getElementById('uploadSuccessBox').style.display = 'block';
-        await loadFeed();
-      } catch (err) {
-        alert("Server error. Saving locally instead...");
-        const localPost = {
-          _id: "off_" + Date.now(),
-          author: author,
-          content: fullContent,
-          codeSnippet: codeSnippet,
-          resourceLink: resourceLink,
-          filePath: fileDataBase64,
-          createdAt: new Date().toISOString(),
-          likes: 0,
-          isOfflinePost: true
-        };
-        const existingOffline = JSON.parse(localStorage.getItem('offline_posts') || '[]');
-        existingOffline.unshift(localPost);
-        localStorage.setItem('offline_posts', JSON.stringify(existingOffline));
-        document.getElementById('uploadSuccessBox').style.display = 'block';
-        loadOfflineFeed();
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "Publish Material for Students";
+        loadFeed();
+      } catch(err) {
+        alert("Upload Failed!");
       }
     }
 
     function resetUploadForm() {
       document.getElementById('postContent').value = '';
       document.getElementById('codeContent').value = '';
-      document.getElementById('resourceLink').value = '';
-      document.getElementById('mediaInput').value = '';
+      document.getElementById('documentLink').value = '';
+      document.getElementById('fileAttachment').value = '';
       document.getElementById('postDepartment').value = '';
       document.getElementById('postSemester').value = '';
       document.getElementById('postCategory').value = '';
       document.getElementById('subjectDetails').value = '';
-      document.getElementById('isStaffCheck').checked = false;
       document.getElementById('uploadSuccessBox').style.display = 'none';
     }
 
-    async function likePost(id) {
-      if (!navigator.onLine || id.startsWith('off_')) {
-        const post = allPosts.find(p => p._id === id);
-        if (post) {
-          post.likes = (post.likes || 0) + 1;
-          renderPosts(allPosts);
-        }
-        return;
+    function toggleBookmark(postId) {
+      if (savedBookmarks.includes(postId)) {
+        savedBookmarks = savedBookmarks.filter(id => id !== postId);
+      } else {
+        savedBookmarks.push(postId);
       }
-      await fetch(`${API_BASE}/${id}/like`, { method: 'PUT' });
-      loadFeed();
+      localStorage.setItem('saved_bookmarks', JSON.stringify(savedBookmarks));
+      filterPosts();
+    }
+
+    function showSavedBookmarks(btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+      switchPage('library');
+      const bookmarked = allPosts.filter(p => savedBookmarks.includes(p._id));
+      renderPosts(bookmarked);
     }
 
     async function deletePost(id, rawContent) {
       const pinMatch = rawContent.match(/\[PIN:(\d{4})\]/);
       const correctPin = pinMatch ? pinMatch[1] : null;
-
-      const enteredPin = prompt("🔒 Enter your 4-Digit Security PIN (or Admin PIN: 9999) to delete this post:");
-      if (!enteredPin) return;
-
+      const enteredPin = prompt("🔒 Enter your 4-Digit Security PIN to delete:");
       if (enteredPin === correctPin || enteredPin === "9999") {
-        if (confirm("Delete this material permanently?")) {
-          if (id.startsWith('off_')) {
-            let offlinePosts = JSON.parse(localStorage.getItem('offline_posts') || '[]');
-            offlinePosts = offlinePosts.filter(p => p._id !== id);
-            localStorage.setItem('offline_posts', JSON.stringify(offlinePosts));
-            alert("✅ Local post deleted!");
-            loadOfflineFeed();
-            return;
-          }
-
-          if (navigator.onLine) {
-            await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
-            alert("✅ Deleted successfully!");
-            await loadFeed();
-          } else {
-            alert("⚠️ Internet connection required to delete server posts.");
-          }
-        }
+        await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+        alert("✅ Material Deleted!");
+        loadFeed();
       } else {
-        alert("❌ Invalid PIN! Only the author or Admin can delete.");
+        alert("❌ Incorrect PIN!");
       }
     }
 
@@ -781,26 +683,8 @@
     }
     function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
 
-    updateOnlineStatus();
-
-    async function fetchDynamicQuote() {
-      const quoteElement = document.getElementById('quoteText');
-      if (!quoteElement) return;
-
-      if (!navigator.onLine) {
-        quoteElement.innerText = '"Education is the most powerful weapon which you can use to change the world." — Nelson Mandela';
-        return;
-      }
-
-      try {
-        const res = await fetch('https://dummyjson.com/quotes/random');
-        const data = await res.json();
-        quoteElement.innerText = `"${data.quote}" — ${data.author}`;
-      } catch (err) {
-        quoteElement.innerText = '"Education is the most powerful weapon which you can use to change the world." — Nelson Mandela';
-      }
-    }
-    fetchDynamicQuote();
+    fetchAndUpdateQuote();
+    loadFeed();
   </script>
 </body>
 </html>
