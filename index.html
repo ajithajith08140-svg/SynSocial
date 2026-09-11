@@ -16,6 +16,52 @@
     .main-container { display: flex; flex: 1; padding: 20px; gap: 20px; max-width: 1100px; margin: 0 auto; width: 100%; }
     .sidebar { width: 280px; background: #1e293b; padding: 20px; border-radius: 10px; height: fit-content; border: 1px solid #334155; }
     
+    /* Logo Style Added */
+    .sidebar-logo {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #38bdf8;
+      display: block;
+      margin: 0 auto 10px auto;
+    }
+
+    /* Online / Offline Status Badge Styles */
+    .status-card {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0f172a;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      margin-bottom: 12px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.online {
+      background-color: #2ecc71;
+      box-shadow: 0 0 8px #2ecc71;
+    }
+
+    .status-dot.offline {
+      background-color: #f43f5e;
+      box-shadow: 0 0 8px #f43f5e;
+    }
+
+    .status-text {
+      color: #f8fafc;
+    }
+
     .view-section { flex: 1; }
     .card { background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #334155; position: relative; }
     
@@ -95,6 +141,9 @@
     
     body.light-mode .quote-card { background-color: #f1f5f9 !important; border-left-color: #f39c12; }
     body.light-mode .quote-card p { color: #0f172a !important; }
+
+    body.light-mode .status-card { background-color: #f1f5f9; border-color: #cbd5e1; }
+    body.light-mode .status-text { color: #0f172a; }
     
     body.light-mode textarea, 
     body.light-mode input, 
@@ -122,12 +171,21 @@
   <div class="main-container">
     
     <div class="sidebar">
+      <!-- 🟢 ONLINE / OFFLINE STATUS DISPLAY -->
+      <div class="status-card">
+        <span id="statusIndicator" class="status-dot online"></span>
+        <span id="statusText" class="status-text">🌐 Campus Cloud Sync: Live</span>
+      </div>
+
       <div class="quote-card" onclick="openModal('Daily Inspiration Thought', document.getElementById('quoteText').innerText)" style="padding: 10px; background: #0f172a; border-radius: 6px; border-left: 3px solid #f39c12; cursor: pointer; margin-bottom: 15px;">
           <p style="font-size: 0.7rem; color: #f39c12; font-weight: bold; margin-bottom: 3px;">💡 THOUGHT FOR TODAY</p>
           <p id="quoteText" style="font-size: 0.8rem; font-style: italic; transition: opacity 0.3s ease;">Loading thought...</p>
       </div>
 
       <hr style="border: 0.5px solid #334155; margin-bottom: 15px;">
+
+      <!-- Logo Added Above Campus Connect -->
+      <img src="logo.png" alt="Campus Connect Logo" class="sidebar-logo">
 
       <h3 style="font-size: 1rem; margin-bottom: 2px; text-align: center;">Campus Connect</h3>
       <p style="color: #38bdf8; font-size: 0.8rem; margin-bottom: 15px; text-align: center;">All Departments Student Hub</p>
@@ -143,7 +201,8 @@
         <option value="Sem 4">Semester 4</option>
         <option value="Sem 5">Semester 5</option>
         <option value="Sem 6">Semester 6</option>
-
+        <option value="Sem 7">Semester 7</option>
+        <option value="Sem 8">Semester 8</option>
       </select>
 
       <p style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 8px;">DEPARTMENT / COURSES</p>
@@ -212,7 +271,8 @@
               <option value="Sem 5">Semester 5</option>
               <option value="Sem 6">Semester 6</option>
               <option value="Sem 7">Semester 7</option>
-              
+              <option value="Sem 8">Semester 8</option>
+              <option value="General">General / All Semesters</option>
             </select>
           </div>
 
@@ -295,6 +355,23 @@
     ];
 
     let lastQuoteText = "";
+
+    function updateOnlineStatus() {
+  const statusDot = document.getElementById('statusIndicator');
+  const statusText = document.getElementById('statusText');
+
+  if (navigator.onLine) {
+    statusDot.className = 'status-dot online';
+    statusText.innerText = '🌐 Campus Cloud Sync: Live';
+    statusText.style.color = '#2ecc71';
+  } else {
+    statusDot.className = 'status-dot offline';
+    statusText.innerText = '⚠️ Offline Mode (Local Storage)';
+    statusText.style.color = '#f43f5e';
+  }
+}
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
 
     async function fetchAndUpdateQuote() {
       const quoteElement = document.getElementById('quoteText');
@@ -619,7 +696,6 @@
         formData.append('codeSnippet', codeSnippet);
       }
 
-      // Appending File Object directly from File Input
       if (fileInput.files.length > 0) {
         formData.append('file', fileInput.files[0]);
       }
@@ -683,6 +759,7 @@
     }
     function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
 
+    updateOnlineStatus();
     fetchAndUpdateQuote();
     loadFeed();
   </script>
