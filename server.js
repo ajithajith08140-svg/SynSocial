@@ -4,39 +4,35 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const { exec } = require('child_process');
 require('dotenv').config();
 
 const app = express();
 
-// 1. Ensure 'uploads' directory exists
-if (!fs.existsSync('uploads')) {
-    fs.mkdirSync('uploads');
-}
-
-// 2. Dynamic Port Binding
-const PORT = process.env.PORT || 5000;
-
-// 3. CORS Configuration
+// 1. Core Middlewares
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve Uploaded Files Statically
+// 2. Ensure Uploads Directory Exists & Static Server
+if (!fs.existsSync('uploads')) {
+    fs.mkdirSync('uploads');
+}
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 4. MongoDB Connection & Schema Setup
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/?appName=Cluster0";
+// 3. Port & MongoDB Connection Setup
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI)
     .then(() => console.log("MongoDB Connected Successfully!"))
     .catch(err => console.error("MongoDB Connection Error:", err));
 
-// Mongoose Schema Definition (CRITICAL FIX)
+// 4. Mongoose Schema Definition
 const postSchema = new mongoose.Schema({
     title: { type: String, required: true },
     author: { type: String, required: true },
@@ -65,11 +61,30 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 6. API Routes
+// 6. API Endpoints
 
 // Health Check Endpoint
 app.get('/', (req, res) => {
     res.send("Synsocial API Server is running!");
+});
+
+// C Code Execution Endpoint (with Stdin Support for scanf)
+app.post('/run-c', (req, res) => {
+    const { code, input } = req.body;
+
+    fs.writeFileSync('temp.c', code);
+
+    const process = exec('gcc temp.c -o temp && ./temp', (error, stdout, stderr) => {
+        if (error && !stdout) {
+            return res.json({ output: stderr || error.message });
+        }
+        res.json({ output: stdout });
+    });
+
+    if (input) {
+        process.stdin.write(input);
+    }
+    process.stdin.end();
 });
 
 // Create Post and Save to MongoDB
@@ -81,7 +96,6 @@ app.post('/api/posts/create', upload.single('document'), async (req, res) => {
         let docName = "";
 
         if (req.file) {
-            // Dynamic host URL generation for Render production
             docUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
             docName = req.file.originalname;
         }
@@ -107,7 +121,7 @@ app.post('/api/posts/create', upload.single('document'), async (req, res) => {
     }
 });
 
-// Fetch All Posts from MongoDB
+// Fetch All Posts
 app.get('/api/posts', async (req, res) => {
     try {
         const posts = await Post.find().sort({ createdAt: -1 });
