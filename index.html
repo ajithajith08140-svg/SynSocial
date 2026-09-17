@@ -348,6 +348,11 @@ int main() {
                             <i class="fa-solid fa-play"></i>
                             <span>Execute Code Online</span>
                         </button>
+                        <!-- Input area for user stdin -->
+<label for="stdinInput">Program Input (stdin):</label>
+<textarea id="stdinInput" placeholder="Enter inputs here (e.g., 5)"></textarea>
+
+<button id="runBtn">Run Code</button>
                         
                         <pre id="sandboxOutput" class="w-full p-3.5 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[120px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
                     </div>
@@ -701,27 +706,29 @@ int main() {
                     outputEl.innerText = outputs.join('\n') || "Python code executed successfully.";
                 } 
                 else if (lang === 'cpp' || lang === 'c' || lang === 'java') {
-                    // 1. Assign the editor input code to userCode
-                    const userCode = code; 
+    const userCode = code; 
 
-                    // 2. Send request to Render backend compiler endpoint
-                    const response = await fetch('https://synsocial.onrender.com/run-c', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            code: userCode,
-                            input: customInput // Optional stdin input
-                        })
-                    });
+    // Read input from the UI element safely
+    const inputElement = document.getElementById('stdinInput');
+    const customInput = inputElement ? inputElement.value : "";
 
-                    if (!response.ok) {
-                        throw new Error("Compiler status error: " + response.status);
-                    }
+    const response = await fetch('https://synsocial.onrender.com/run-c', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            code: userCode,
+            input: customInput // Sends the user-typed input to backend
+        })
+    });
 
-                    const data = await response.json();
-                    let resOutput = data.output || data.stdout || data.stderr;
-                    outputEl.innerText = resOutput ? resOutput.trim() : "Execution completed with no output.";
-                }
+    if (!response.ok) {
+        throw new Error("Compiler status error: " + response.status);
+    }
+
+    const data = await response.json();
+    let resOutput = data.output || data.stdout || data.stderr;
+    outputEl.innerText = resOutput ? resOutput.trim() : "Execution completed with no output.";
+}
             }catch(e) {
                 outputEl.innerText = "Execution Error:\n" + e.message;
             } finally {
