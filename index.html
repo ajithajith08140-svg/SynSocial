@@ -344,15 +344,24 @@ int main() {
     return 0;
 }</textarea>
                         
-                        <button onclick="runUniversalSandboxCode()" id="runBtn" class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-600 text-slate-950 font-bold text-sm transition-all flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-play"></i>
-                            <span>Execute Code Online</span>
-                        </button>
-                        <!-- Input area for user stdin -->
-<label for="stdinInput">Program Input (stdin):</label>
-<textarea id="stdinInput" placeholder="Enter inputs here (e.g., 5)"></textarea>
+                        <!-- Clean Input UI with High Visibility -->
+<div class="mt-4 space-y-3">
+    <div>
+        <label for="stdinInput" class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center space-x-1.5">
+            <i class="fa-solid fa-terminal text-accent-emerald text-xs"></i>
+            <span>Program Input (stdin):</span>
+        </label>
+        <textarea id="stdinInput" rows="3" 
+            placeholder="Enter inputs line-by-line (e.g.&#10;3&#10;2 4&#10;5 0&#10;3 4)" 
+            class="w-full p-3 rounded-xl bg-slate-900 text-emerald-400 placeholder-slate-500 border border-slate-700/80 code-font text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-inner resize-none transition-all"></textarea>
+    </div>
 
-<button id="runBtn">Run Code</button>
+    <button onclick="runUniversalSandboxCode()" id="runBtn" 
+        class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-500 text-slate-950 font-bold text-sm transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-emerald-950/20 active:scale-[0.98]">
+        <i class="fa-solid fa-play text-xs"></i>
+        <span>Execute Code Online</span>
+    </button>
+</div>
                         
                         <pre id="sandboxOutput" class="w-full p-3.5 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[120px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
                     </div>
