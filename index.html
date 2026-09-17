@@ -356,11 +356,11 @@ int main() {
             class="w-full p-3 rounded-xl bg-slate-900 text-emerald-400 placeholder-slate-500 border border-slate-700/80 code-font text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-inner resize-none transition-all"></textarea>
     </div>
 
-    <button onclick="checkCodeAndRun()" id="runBtn" 
-        class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-500 text-slate-950 font-bold text-sm transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-emerald-950/20 active:scale-[0.98]">
-        <i class="fa-solid fa-play text-xs"></i>
-        <span>Execute Code Online</span>
-    </button>
+    <button onclick="runUniversalSandboxCode()" id="runBtn" 
+    class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-500 text-slate-950 font-bold text-sm transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-emerald-950/20 active:scale-[0.98]">
+    <i class="fa-solid fa-play text-xs"></i>
+    <span>Execute Code Online</span>
+</button>
 </div>
                         
                         <pre id="sandboxOutput" class="w-full p-3.5 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[120px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
@@ -692,50 +692,25 @@ function checkCodeAndRun() {
 async function runUniversalSandboxCode() {
     const code = document.getElementById('sandboxCode').value;
     const input = document.getElementById('stdinInput').value;
-    const language = document.getElementById('languageSelect').value; // 'c', 'cpp', 'python', 'javascript'
+    const language = document.getElementById('languageSelect').value;
     const outputBox = document.getElementById('outputBox');
-    const runBtn = document.getElementById('runBtn');
 
-    if (!code.trim()) {
-        outputBox.innerText = "Error: Code area is empty!";
-        return;
-    }
-
-    // UI Loading State
     outputBox.innerText = "Executing code on server...";
-    runBtn.disabled = true;
 
     try {
-        // Updated backend URL pointing to /run-code
-        const response = await fetch('https://synsocial.onrender.com/run-code', {
+        // EXACT RENDER BACKEND URL HERE
+        const response = await fetch('https://synsocial.onrender.com', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                code: code,
-                input: input,
-                language: language
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, input, language })
         });
 
         const data = await response.json();
-        
-        // Display Output
-        if (data.output) {
-            outputBox.innerText = data.output;
-        } else {
-            outputBox.innerText = "Execution completed with no output.";
-        }
-
-    } catch (error) {
-        outputBox.innerText = "Error connecting to backend server: " + error.message;
-    } finally {
-        // Reset UI Button State
-        runBtn.disabled = false;
+        outputBox.innerText = data.output || "Execution completed with no output.";
+    } catch (err) {
+        outputBox.innerText = "Error connecting to server: " + err.message;
     }
 }
-    
 
         function renderVault() {
             const vaultContainer = document.getElementById('vaultStream');
