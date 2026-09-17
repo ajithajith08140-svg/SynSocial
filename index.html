@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SynSocial | Academic Collaboration Workspace</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81',
+                        },
+                        accent: { cyan: '#06b6d4', emerald: '#10b981', violet: '#8b5cf6' }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        html.light body { background-color: #f8fafc !important; color: #0f172a !important; }
+        html.light .glass-panel {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(203, 213, 225, 0.8) !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        html.light .text-slate-100, html.light .text-slate-200, html.light .text-slate-300 { color: #1e293b !important; }
+        html.light .text-slate-400 { color: #475569 !important; }
+        html.light .bg-slate-900, html.light .bg-slate-950 { background-color: #f1f5f9 !important; color: #0f172a !important; }
+        html.light input, html.light textarea, html.light select {
+            background-color: #ffffff !important; color: #0f172a !important; border-color: #cbd5e1 !important;
+        }
+        
+        .code-font { font-family: 'Fira Code', 'Courier New', monospace; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 transition-colors duration-200 min-h-screen flex flex-col font-sans">
+
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('landing')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-accent-violet to-accent-cyan flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid fa-code"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-300 to-cyan-400 bg-clip-text text-transparent">SynSocial</span>
+                    <span class="block text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Academic Hub</span>
+                </div>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-1 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+                <button onclick="switchTab('landing')" id="nav-landing" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 text-brand-400 bg-slate-800 shadow-sm">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Home</span>
+                </button>
+                <button onclick="switchTab('search')" id="nav-search" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span>Search Hub</span>
+                </button>
+                <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-square-rss"></i>
+                    <span>Feed Workspace</span>
+                </button>
+                <button onclick="switchTab('vault')" id="nav-vault" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-box-archive"></i>
+                    <span>Code Vault</span>
+                </button>
+                <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-user-graduate"></i>
+                    <span id="nav-profile-name">My Profile</span>
+                </button>
+            </nav>
+
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button id="themeToggle" onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-900 text-slate-400 hover:text-slate-100 border border-slate-800 transition-all" title="Toggle Theme">
+                    <i id="themeIcon" class="fa-solid fa-moon text-lg"></i>
+                </button>
+                
+                <button onclick="switchTab('feed')" class="hidden sm:flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-accent-violet text-white font-medium text-sm hover:opacity-90 transition-all shadow-md shadow-brand-600/30">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Post</span>
+                </button>
+
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2.5 rounded-xl bg-slate-900 text-slate-300 border border-slate-800">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="mobileMenu" class="hidden md:hidden mt-3 pt-3 border-t border-slate-800/80 space-y-2">
+            <button onclick="switchTab('landing'); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 flex items-center space-x-3">
+                <i class="fa-solid fa-house text-brand-400"></i>
+                <span>Home</span>
+            </button>
+            <button onclick="switchTab('search'); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 flex items-center space-x-3">
+                <i class="fa-solid fa-magnifying-glass text-brand-400"></i>
+                <span>Search Hub</span>
+            </button>
+            <button onclick="switchTab('feed'); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 flex items-center space-x-3">
+                <i class="fa-solid fa-square-rss text-accent-cyan"></i>
+                <span>Feed Workspace</span>
+            </button>
+            <button onclick="switchTab('vault'); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 flex items-center space-x-3">
+                <i class="fa-solid fa-box-archive text-accent-violet"></i>
+                <span>Code Vault</span>
+            </button>
+            <button onclick="switchTab('profile'); toggleMobileMenu();" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 flex items-center space-x-3">
+                <i class="fa-solid fa-user-graduate text-accent-emerald"></i>
+                <span>My Profile</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+
+        <!-- VIEW 1: LANDING PAGE -->
+        <section id="view-landing" class="page-view space-y-8 sm:space-y-12 py-8 sm:py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="relative rounded-3xl overflow-hidden glass-panel p-6 sm:p-12 border border-slate-800/80">
+                    <div class="relative z-10 max-w-3xl space-y-6">
+                        <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-semibold uppercase tracking-wider">
+                            <span class="w-2 h-2 rounded-full bg-accent-emerald animate-ping"></span>
+                            <span>Secure Academic Hub</span>
+                        </div>
+                        <h1 class="text-3xl sm:text-6xl font-black tracking-tight leading-tight text-slate-100">
+                            Empowering <span class="bg-gradient-to-r from-brand-500 via-accent-violet to-accent-cyan bg-clip-text text-transparent">Peer Learning</span> & Code Sharing.
+                        </h1>
+                        <p class="text-slate-400 text-sm sm:text-lg font-normal leading-relaxed">
+                            Upload documents, share reference links, code snippets, and manage academic resources with PIN protection.
+                        </p>
+                        <div class="flex flex-wrap gap-4 pt-2">
+                            <button onclick="switchTab('feed')" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 via-accent-violet to-accent-cyan text-white font-bold text-base hover:shadow-lg hover:shadow-brand-500/25 transition-all flex items-center justify-center space-x-3">
+                                <span>Enter Workspace</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="glass-panel p-6 rounded-2xl border border-brand-500/30 text-center relative overflow-hidden bg-slate-900/50">
+                    <div class="text-xs font-bold uppercase tracking-widest text-brand-400 mb-2 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-quote-left"></i>
+                        <span>Academic Motivation</span>
+                        <i class="fa-solid fa-quote-right"></i>
+                    </div>
+                    <p id="quoteText" class="text-base sm:text-xl font-semibold italic text-slate-200 transition-opacity duration-500 min-h-[50px] flex items-center justify-center">
+                        "The beautiful thing about learning is that no one can take it away from you."
+                    </p>
+                    <span id="quoteAuthor" class="block text-xs text-accent-cyan mt-2 font-mono font-medium">— B.B. King</span>
+                </div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 text-center">
+                        <div id="metric-posts" class="text-2xl sm:text-4xl font-extrabold text-brand-400">0</div>
+                        <div class="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400 mt-1 font-medium">Shared Notes</div>
+                    </div>
+                    <div class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 text-center">
+                        <div id="metric-snippets" class="text-2xl sm:text-4xl font-extrabold text-accent-cyan">0</div>
+                        <div class="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400 mt-1 font-medium">Code Snippets</div>
+                    </div>
+                    <div class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 text-center">
+                        <div id="metric-likes" class="text-2xl sm:text-4xl font-extrabold text-accent-violet">0</div>
+                        <div class="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400 mt-1 font-medium">Peer Upvotes</div>
+                    </div>
+                    <div class="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 text-center">
+                        <div id="metric-saved" class="text-2xl sm:text-4xl font-extrabold text-accent-emerald">0</div>
+                        <div class="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400 mt-1 font-medium">Saved Bookmarks</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: SEARCH PAGE -->
+        <section id="view-search" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+                <h2 class="text-xl font-extrabold text-slate-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-magnifying-glass text-brand-400"></i>
+                    <span>Advanced Resource Search Hub</span>
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="md:col-span-2 relative">
+                        <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-500"></i>
+                        <input type="text" id="dedicatedSearchInput" oninput="executeDedicatedSearch()" placeholder="Search title, content, links, author..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <select id="filterTag" onchange="executeDedicatedSearch()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-500">
+                            <option value="ALL">All Subjects</option>
+                            <option value="Programming">Programming</option>
+                            <option value="DataStructures">DSA</option>
+                            <option value="WebDev">Web Dev</option>
+                            <option value="Database">DBMS</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="searchResultsStream" class="space-y-4 max-w-4xl mx-auto"></div>
+        </section>
+
+        <!-- VIEW 3: FEED WORKSPACE PAGE -->
+        <section id="view-feed" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid lg:grid-cols-12 gap-8">
+                
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 sticky top-24">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                            <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
+                                <i class="fa-solid fa-pen-to-square text-brand-400"></i>
+                                <span>Create Secured Post</span>
+                            </h2>
+                            <span class="text-xs bg-brand-500/20 text-brand-400 px-2.5 py-1 rounded-md font-mono">PIN Security</span>
+                        </div>
+
+                        <form id="postForm" onsubmit="handleCreatePost(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Post Title *</label>
+                                <input type="text" id="postTitle" required placeholder="e.g., C++ Memory Allocation Notes" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Author Name *</label>
+                                <input type="text" id="postAuthor" required placeholder="Your Name" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-400 mb-1">Subject Tag *</label>
+                                    <select id="postTag" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
+                                        <option value="Programming">Programming</option>
+                                        <option value="DataStructures">DSA</option>
+                                        <option value="WebDev">Web Dev</option>
+                                        <option value="Database">DBMS</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-400 mb-1">Security PIN (4 Digits) *</label>
+                                    <input type="password" id="postPin" maxlength="4" required placeholder="1234" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500 font-mono">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">PIN Hint (For Recovery) *</label>
+                                <input type="text" id="postPinHint" required placeholder="e.g., My birth year" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Description *</label>
+                                <textarea id="postContent" required rows="2" placeholder="Explain your doubt or write notes..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-500 resize-none"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Reference Link / URL (Optional)</label>
+                                <input type="url" id="postLink" placeholder="https://example.com or GitHub URL" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Code Snippet (Optional)</label>
+                                <textarea id="postCode" rows="2" placeholder="Paste code here..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs code-font focus:outline-none focus:border-brand-500 resize-none"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Attach File / Document (PDF, Image, Text)</label>
+                                <input type="file" id="postDocFile" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
+                            </div>
+
+                            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-brand-600 to-accent-violet text-white font-bold text-sm hover:opacity-90 transition-all shadow-md shadow-brand-600/30 flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-lock"></i>
+                                <span>Publish Protected Post</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-7 space-y-4">
+                    <div id="postsStream" class="space-y-4"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- VIEW 4: CODE VAULT PAGE -->
+        <section id="view-vault" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <div class="space-y-2">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-100 flex items-center space-x-3">
+                    <i class="fa-solid fa-box-archive text-accent-cyan"></i>
+                    <span>Code Vault & Universal Sandbox</span>
+                </h1>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-7 space-y-4" id="vaultStream"></div>
+
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 sticky top-24">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-100 flex items-center space-x-2">
+                                <i class="fa-solid fa-terminal text-accent-emerald"></i>
+                                <span>Multi-Language Runner</span>
+                            </h3>
+                            <select id="sandboxLang" onchange="loadLangTemplate()" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-emerald-400 focus:outline-none">
+                                <option value="cpp">C++ (GCC)</option>
+                                <option value="c">C</option>
+                                <option value="python">Python 3</option>
+                                <option value="java">Java</option>
+                                <option value="javascript">JavaScript</option>
+                            </select>
+                        </div>
+
+                        <textarea id="sandboxCode" rows="8" class="w-full p-3 rounded-xl bg-slate-950 text-emerald-400 border border-slate-800 code-font text-xs focus:outline-none focus:border-accent-emerald resize-none">#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int a = 5, b = 3;
+    int c = a + b;
+    cout &lt;&lt; "Value: " &lt;&lt; a &lt;&lt; b &lt;&lt; endl;
+    cout &lt;&lt; "Ans: " &lt;&lt; c &lt;&lt; endl;
+    return 0;
+}</textarea>
+                        
+                        <button onclick="runUniversalSandboxCode()" id="runBtn" class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-600 text-slate-950 font-bold text-sm transition-all flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Execute Code Online</span>
+                        </button>
+                        
+                        <pre id="sandboxOutput" class="w-full p-3.5 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[120px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 5: PROFILE DASHBOARD PAGE -->
+        <section id="view-profile" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800 relative overflow-hidden">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 relative z-10">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-brand-600 to-accent-cyan flex items-center justify-center text-white font-black text-2xl sm:text-3xl shadow-lg shadow-brand-500/20 border-2 border-slate-700">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    
+                    <div class="flex-grow text-center sm:text-left space-y-1">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <h1 id="profileDisplayName" class="text-2xl font-black text-slate-100">Student User</h1>
+                            <button onclick="toggleProfileEditModal()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-all flex items-center justify-center space-x-1.5 self-center sm:self-auto">
+                                <i class="fa-solid fa-pen-to-square text-brand-400"></i>
+                                <span>Edit Profile</span>
+                            </button>
+                        </div>
+                        <p id="profileDisplayMeta" class="text-xs font-semibold text-brand-400">Computer Science & Engineering</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-800/80">
+                    <div class="text-center p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
+                        <span id="prof-stat-posts" class="block text-xl font-black text-brand-400">0</span>
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Posts Shared</span>
+                    </div>
+                    <div class="text-center p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
+                        <span id="prof-stat-code" class="block text-xl font-black text-accent-cyan">0</span>
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Upvotes</span>
+                    </div>
+                    <div class="text-center p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
+                        <span id="prof-stat-docs" class="block text-xl font-black text-accent-emerald">0</span>
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Bookmarks</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center space-x-2 border-b border-slate-800 pb-2">
+                    <button onclick="switchProfileTab('uploads')" id="prof-tab-btn-uploads" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md">
+                        <i class="fa-solid fa-folder-open mr-1.5"></i> My Uploads
+                    </button>
+                    <button onclick="switchProfileTab('saved')" id="prof-tab-btn-saved" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
+                        <i class="fa-solid fa-bookmark mr-1.5"></i> Bookmarked Posts
+                    </button>
+                </div>
+
+                <div id="profile-tab-uploads" class="space-y-3"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const quotesList = [
+            { quote: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King" },
+            { quote: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
+            { quote: "Education is the passport to the future, for tomorrow belongs to those who prepare for it today.", author: "Malcolm X" },
+            { quote: "Programs must be written for people to read, and only incidentally for machines to execute.", author: "Harold Abelson" },
+            { quote: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.", author: "Martin Fowler" }
+        ];
+
+        let quoteIndex = 0;
+        function rotateQuotes() {
+            const q = quotesList[quoteIndex];
+            const qEl = document.getElementById('quoteText');
+            const aEl = document.getElementById('quoteAuthor');
+            if (qEl && aEl) {
+                qEl.innerText = `"${q.quote}"`;
+                aEl.innerText = `— ${q.author}`;
+            }
+            quoteIndex = (quoteIndex + 1) % quotesList.length;
+        }
+        setInterval(rotateQuotes, 12000);
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        const initialPosts = [
+            {
+                id: "post-101",
+                title: "C++ Memory Leak Notes",
+                author: "Alex",
+                tag: "Programming",
+                pin: "1234",
+                pinHint: "Default 1234",
+                content: "Remember to free heap allocated memory using delete operator!",
+                link: "https://cppreference.com",
+                code: "int* ptr = new int(10);\ndelete ptr;",
+                docData: "",
+                docName: "",
+                likes: 3,
+                isBookmarked: false,
+                createdAt: "10 mins ago"
+            }
+        ];
+
+        function getStoredPosts() {
+            try {
+                const data = localStorage.getItem('synsocial_posts');
+                return data ? JSON.parse(data) : initialPosts;
+            } catch (err) {
+                console.error("Error reading localStorage", err);
+                return initialPosts;
+            }
+        }
+
+        function savePosts(posts) {
+            try {
+                localStorage.setItem('synsocial_posts', JSON.stringify(posts));
+            } catch (err) {
+                if (err.name === 'QuotaExceededError' || err.code === 22) {
+                    alert("⚠️ Storage Limit Exceeded! Please clear old posts or upload smaller files.");
+                } else {
+                    console.error("Storage error:", err);
+                }
+            }
+            updateMetrics();
+        }
+
+        function switchTab(viewId) {
+            document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200";
+            });
+            const activeNav = document.getElementById('nav-' + viewId);
+            if (activeNav) {
+                activeNav.className = "nav-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 text-brand-400 bg-slate-800 shadow-sm";
+            }
+
+            const target = document.getElementById('view-' + viewId);
+            if (target) target.classList.remove('hidden');
+
+            if (viewId === 'feed') renderFeed();
+            if (viewId === 'search') executeDedicatedSearch();
+            if (viewId === 'vault') renderVault();
+            if (viewId === 'profile') renderProfile();
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            document.documentElement.classList.toggle('light');
+            const icon = document.getElementById('themeIcon');
+            if (document.documentElement.classList.contains('light')) {
+                icon.className = 'fa-solid fa-sun text-amber-500';
+            } else {
+                icon.className = 'fa-solid fa-moon text-lg';
+            }
+        }
+
+        // Handle Protected Post Creation with Blob Object URL
+        // Optimized Instant Post Handler
+async function handleCreatePost(e) {
+    e.preventDefault();
+
+    const title = document.getElementById('postTitle').value.trim();
+    const author = document.getElementById('postAuthor').value.trim();
+    const tag = document.getElementById('postTag').value;
+    const pin = document.getElementById('postPin').value.trim();
+    const pinHint = document.getElementById('postPinHint').value.trim();
+    const content = document.getElementById('postContent').value.trim();
+    let link = document.getElementById('postLink').value.trim();
+    const code = document.getElementById('postCode').value;
+    const fileInput = document.getElementById('postDocFile');
+
+    if (pin.length !== 4 || isNaN(pin)) {
+        alert("Security PIN must be exactly 4 numeric digits!");
+        return;
+    }
+
+    if (link && !link.startsWith('http://') && !link.startsWith('https://')) {
+        link = 'https://' + link;
+    }
+
+    // Build FormData to send text and file binary to backend
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('author', author);
+    formData.append('tag', tag);
+    formData.append('pin', pin);
+    formData.append('pinHint', pinHint);
+    formData.append('content', content);
+    formData.append('link', link);
+    formData.append('code', code);
+
+    if (fileInput.files.length > 0) {
+        formData.append('document', fileInput.files[0]);
+    }
+
+    try {
+        const response = await fetch('http://localhost:5000/api/posts/create', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Store a local backup copy in localStorage
+            let localPosts = JSON.parse(localStorage.getItem('synsocial_posts')) || [];
+            localPosts.unshift(result.post);
+            localStorage.setItem('synsocial_posts', JSON.stringify(localPosts));
+
+            document.getElementById('postForm').reset();
+            renderFeed(); // Reload feed directly from MongoDB
+        } else {
+            alert('Failed to save post: ' + result.error);
+        }
+    } catch (err) {
+        console.error('Error saving post to MongoDB:', err);
+        alert('Server unreachable. Make sure node server.js is running.');
+    }
+}
+        function deletePostSecured(postId, correctPin, pinHint) {
+            const userPin = prompt(`🔐 Security PIN to delete:\n(Click 'Cancel' for Hint)`);
+            if (userPin === null) {
+                alert(`💡 PIN Recovery Hint: ${pinHint}`);
+                return;
+            }
+
+            if (userPin.trim() === correctPin) {
+                let posts = getStoredPosts();
+                posts = posts.filter(p => p.id !== postId);
+                savePosts(posts);
+                renderFeed();
+                executeDedicatedSearch();
+                alert("✅ Post deleted successfully!");
+            } else {
+                alert(`❌ Incorrect PIN!\nHint: ${pinHint}`);
+            }
+        }
+
+        function buildPostCardHTML(post) {
+            return `
+                <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-brand-500/20 text-brand-400 font-bold font-mono">${post.tag}</span>
+                            <h3 class="text-lg font-bold mt-1 text-slate-100">${post.title}</h3>
+                            <div class="text-xs text-slate-400">By ${post.author} • ${post.createdAt}</div>
+                        </div>
+                        <button onclick="deletePostSecured('${post.id}', '${post.pin}', '${post.pinHint}')" class="p-2 text-slate-400 hover:text-rose-500" title="Delete with PIN">
+                            <i class="fa-solid fa-lock text-xs mr-1"></i><i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+
+                    <p class="text-sm text-slate-300">${post.content}</p>
+
+                    ${post.link ? `
+                    <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                        <span class="text-xs text-slate-400 truncate max-w-[70%]"><i class="fa-solid fa-link text-brand-400 mr-2"></i>${post.link}</span>
+                        <a href="${post.link}" target="_blank" class="px-3 py-1 bg-brand-600/30 hover:bg-brand-600 text-brand-400 hover:text-white text-xs rounded-lg font-bold transition-all flex items-center space-x-1">
+                            <span>Visit Link</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </div>` : ''}
+
+                    ${post.code ? `
+                    <div class="rounded-xl bg-slate-950 p-3 relative border border-slate-800">
+                        <div class="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>Code Snippet</span>
+                            <button onclick="copyToClipboard(\`${post.code.replace(/`/g, '\\`')}\`)" class="text-brand-400 hover:underline"><i class="fa-regular fa-copy"></i> Copy</button>
+                        </div>
+                        <pre class="code-font text-xs text-emerald-400 overflow-x-auto">${post.code}</pre>
+                    </div>` : ''}
+
+                    ${post.docData ? `
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                        <span class="text-xs text-accent-cyan truncate"><i class="fa-solid fa-file-arrow-down mr-2"></i>${post.docName}</span>
+                        <a href="${post.docData}" download="${post.docName}" class="px-3 py-1 bg-brand-600 text-white text-xs rounded-lg font-bold hover:bg-brand-500">Download File</a>
+                    </div>` : ''}
+
+                    <div class="flex items-center space-x-4 pt-2 border-t border-slate-800/80 text-xs font-semibold">
+                        <button onclick="toggleLike('${post.id}')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-purple-400 hover:bg-slate-800 transition-all">
+                            <i class="fa-solid fa-thumbs-up"></i>
+                            <span>${post.likes || 0} Upvotes</span>
+                        </button>
+
+                        <button onclick="toggleBookmark('${post.id}')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 ${post.isBookmarked ? 'text-emerald-400' : 'text-slate-400'} hover:bg-slate-800 transition-all">
+                            <i class="${post.isBookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
+                            <span>${post.isBookmarked ? 'Saved' : 'Bookmark'}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function renderFeed() {
+    const postsContainer = document.getElementById('postsStream');
+    if (!postsContainer) return;
+
+    try {
+        const response = await fetch('http://localhost:5000/api/posts');
+        const posts = await response.json();
+
+        if (posts.length === 0) {
+            postsContainer.innerHTML = `<div class="text-center text-slate-400 py-12 glass-panel rounded-2xl border border-slate-800">No posts in MongoDB yet! Create one above.</div>`;
+            return;
+        }
+
+        postsContainer.innerHTML = posts.map(post => buildPostCardHTML({
+            id: post._id,
+            title: post.title,
+            author: post.author,
+            tag: post.tag,
+            pin: post.pin,
+            pinHint: post.pinHint,
+            content: post.content,
+            link: post.link,
+            code: post.code,
+            docData: post.docUrl,
+            docName: post.docName,
+            likes: post.likes,
+            createdAt: new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        })).join('');
+
+    } catch (err) {
+        console.error('Error fetching posts from MongoDB:', err);
+    }
+}
+        function executeDedicatedSearch() {
+            const stream = document.getElementById('searchResultsStream');
+            if (!stream) return;
+
+            const query = (document.getElementById('dedicatedSearchInput')?.value || "").toLowerCase();
+            const selectedTag = document.getElementById('filterTag')?.value || "ALL";
+            const posts = getStoredPosts();
+
+            const results = posts.filter(p => {
+                const matchesQuery = p.title.toLowerCase().includes(query) || 
+                                     p.content.toLowerCase().includes(query) || 
+                                     p.author.toLowerCase().includes(query) ||
+                                     (p.link && p.link.toLowerCase().includes(query));
+                const matchesTag = selectedTag === "ALL" || p.tag === selectedTag;
+                return matchesQuery && matchesTag;
+            });
+
+            if (results.length === 0) {
+                stream.innerHTML = `<div class="text-center text-slate-400 py-12 glass-panel rounded-2xl border border-slate-800">No matching resources found!</div>`;
+                return;
+            }
+
+            stream.innerHTML = results.map(post => buildPostCardHTML(post)).join('');
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            alert("📋 Code copied to clipboard!");
+        }
+
+        const langTemplates = {
+            cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int a = 5, b = 3;\n    int c = a + b;\n    cout << "Value: " << a << b << endl;\n    cout << "Ans: " << c << endl;\n    return 0;\n}`,
+            c: `#include <stdio.h>\n\nint main() {\n    int a = 5, b = 3;\n    printf("Value: %d%d\\n", a, b);\n    printf("Ans: %d\\n", a + b);\n    return 0;\n}`,
+            python: `a = 5\nb = 3\nc = a + b\nprint(f"Value: {a}{b}")\nprint(f"Ans:{c}")`,
+            java: `public class Main {\n    public static void main(String[] args) {\n        int a = 5, b = 3;\n        System.out.println("Value: " + a + b);\n        System.out.println("Ans: " + c);\n    }\n}`,
+            javascript: `let a = 5, b = 3;\nlet c = a + b;\nconsole.log("Value: " + a + b);\nconsole.log("Ans: " + c);`
+        };
+
+        function loadLangTemplate() {
+            const lang = document.getElementById('sandboxLang').value;
+            document.getElementById('sandboxCode').value = langTemplates[lang] || '';
+        }
+
+        let pyodideInstance = null;
+
+        async function runUniversalSandboxCode() {
+            const lang = document.getElementById('sandboxLang').value;
+            let code = document.getElementById('sandboxCode').value;
+            const outputEl = document.getElementById('sandboxOutput');
+            const runBtn = document.getElementById('runBtn');
+
+            outputEl.innerText = "⚡ Compiling & Executing Code...\n";
+            if (runBtn) runBtn.disabled = true;
+
+            try {
+                if (lang === 'javascript') {
+                    let logs = [];
+                    const originalConsoleLog = console.log;
+                    console.log = (...args) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '));
+                    
+                    try {
+                        new Function(code)();
+                        outputEl.innerText = logs.join('\n') || "Code executed successfully with no output.";
+                    } catch(err) {
+                        outputEl.innerText = "JavaScript Runtime Error:\n" + err.message;
+                    } finally {
+                        console.log = originalConsoleLog;
+                    }
+                } 
+                else if (lang === 'python') {
+                    if (!pyodideInstance) {
+                        outputEl.innerText = "⏳ Loading Python Engine...";
+                        if (typeof loadPyodide === 'undefined') {
+                            throw new Error("Pyodide script missing in <head>.");
+                        }
+                        pyodideInstance = await loadPyodide();
+                    }
+                    
+                    let outputs = [];
+                    pyodideInstance.setStdout({
+                        batched: (text) => outputs.push(text)
+                    });
+
+                    await pyodideInstance.runPythonAsync(code);
+                    outputEl.innerText = outputs.join('\n') || "Python code executed successfully.";
+                } 
+                else if (lang === 'cpp' || lang === 'c' || lang === 'java') {
+    const judgeLangMap = { cpp: 54, c: 50, java: 62 };
+
+    if (lang === 'java') {
+        // Automatically replace any public class name with 'Main'
+        if (code.includes('public class ')) {
+            code = code.replace(/public\s+class\s+\w+/, 'public class Main');
+        } 
+        // If 'public' was removed, restore 'public class Main'
+        else if (code.includes('class ')) {
+            code = code.replace(/class\s+\w+/, 'public class Main');
+        }
+        // If only the main method body was pasted
+        else if (!code.includes('class ')) {
+            code = `public class Main {\n    public static void main(String[] args) {\n        ${code}\n    }\n}`;
+        }
+    }
+
+    const response = await fetch("https://ce.judge0.com/submissions?wait=true", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            source_code: code,
+            language_id: judgeLangMap[lang]
+        })
+    });
+    
+    // ... rest of execution handling
+
+
+                    if (!response.ok) {
+                        throw new Error("Compiler status error: " + response.status);
+                    }
+
+                    const data = await response.json();
+                    let resOutput = data.stdout || data.stderr || data.compile_output;
+                    outputEl.innerText = resOutput ? resOutput.trim() : "Execution completed with no output.";
+                }
+
+            } catch(e) {
+                outputEl.innerText = "Execution Error:\n" + e.message;
+            } finally {
+                if (runBtn) runBtn.disabled = false;
+            }
+        }
+
+        function renderVault() {
+            const vaultContainer = document.getElementById('vaultStream');
+            const posts = getStoredPosts().filter(p => p.code);
+            vaultContainer.innerHTML = posts.map(p => `
+                <div class="glass-panel p-4 rounded-xl space-y-2 border border-slate-800">
+                    <h4 class="font-bold text-sm text-slate-100">${p.title}</h4>
+                    <pre class="code-font text-xs text-cyan-300 bg-slate-950 p-2 rounded border border-slate-800">${p.code}</pre>
+                </div>
+            `).join('');
+        }
+
+        let currentProfTab = 'uploads';
+        function switchProfileTab(tabName) {
+            currentProfTab = tabName;
+            document.getElementById('prof-tab-btn-uploads').className = tabName === 'uploads' 
+                ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
+                : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+            
+            document.getElementById('prof-tab-btn-saved').className = tabName === 'saved' 
+                ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
+                : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+                
+            renderProfile();
+        }
+
+        function renderProfile() {
+            const uploadsContainer = document.getElementById('profile-tab-uploads');
+            if (!uploadsContainer) return;
+
+            const posts = getStoredPosts();
+            const totalLikes = posts.reduce((acc, curr) => acc + (curr.likes || 0), 0);
+            const totalSaved = posts.filter(p => p.isBookmarked).length;
+
+            document.getElementById('prof-stat-posts').innerText = posts.length;
+            document.getElementById('prof-stat-code').innerText = totalLikes;
+            document.getElementById('prof-stat-docs').innerText = totalSaved;
+
+            if (currentProfTab === 'uploads') {
+                uploadsContainer.innerHTML = posts.map(post => `
+                    <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-100">${post.title}</h4>
+                            <p class="text-xs text-slate-400">${post.content}</p>
+                            ${post.link ? `<a href="${post.link}" target="_blank" class="text-[11px] text-brand-400 hover:underline"><i class="fa-solid fa-link mr-1"></i>${post.link}</a>` : ''}
+                        </div>
+                        <span class="text-xs text-brand-400 font-mono">${post.likes || 0} Upvotes</span>
+                    </div>
+                `).join('');
+            } else {
+                const bookmarked = posts.filter(p => p.isBookmarked);
+                uploadsContainer.innerHTML = bookmarked.length ? bookmarked.map(post => `
+                    <div class="glass-panel p-4 rounded-2xl border border-slate-800">
+                        <h4 class="font-bold text-sm text-slate-100">${post.title}</h4>
+                        <p class="text-xs text-slate-400">${post.content}</p>
+                        ${post.link ? `<a href="${post.link}" target="_blank" class="text-[11px] text-brand-400 hover:underline"><i class="fa-solid fa-link mr-1"></i>${post.link}</a>` : ''}
+                    </div>
+                `).join('') : `<div class="text-xs text-slate-400 text-center py-4">No bookmarked posts yet!</div>`;
+            }
+        }
+
+        function toggleProfileEditModal() {
+            const newName = prompt("Enter new Name:", document.getElementById('profileDisplayName').innerText);
+            if (newName) {
+                document.getElementById('profileDisplayName').innerText = newName;
+                document.getElementById('nav-profile-name').innerText = newName;
+            }
+        }
+
+        function updateMetrics() {
+            const posts = getStoredPosts();
+            const totalLikes = posts.reduce((acc, curr) => acc + (curr.likes || 0), 0);
+            const totalSaved = posts.filter(p => p.isBookmarked).length;
+
+            document.getElementById('metric-posts').innerText = posts.length;
+            document.getElementById('metric-snippets').innerText = posts.filter(p => p.code).length;
+            document.getElementById('metric-likes').innerText = totalLikes;
+            document.getElementById('metric-saved').innerText = totalSaved;
+        }
+
+        window.onload = function() {
+            updateMetrics();
+            renderFeed();
+        };
+    </script>
+</body>
+</html>
