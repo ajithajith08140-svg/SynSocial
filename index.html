@@ -690,27 +690,61 @@ function checkCodeAndRun() {
 
 // 2. Main Execution Function with Universal Language Support
 async function runUniversalSandboxCode() {
-    const code = document.getElementById('sandboxCode').value;
-    const input = document.getElementById('stdinInput').value;
-    const language = document.getElementById('languageSelect').value;
+    // Optional chaining (?.) use pannuvadhaala element illanaalum error adikaadhu
+    const codeEl = document.getElementById('sandboxCode');
+    const inputEl = document.getElementById('stdinInput');
+    const languageSelect = document.getElementById('languageSelect');
     const outputBox = document.getElementById('outputBox');
+    const runBtn = document.getElementById('runBtn');
 
+    if (!codeEl || !outputBox) {
+        console.error("Missing required elements: sandboxCode or outputBox ID not found in HTML!");
+        return;
+    }
+
+    const code = codeEl.value || '';
+    const input = inputEl ? inputEl.value : '';
+    const language = languageSelect ? languageSelect.value : 'c';
+
+    if (!code.trim()) {
+        outputBox.innerText = "Error: Code box is empty!";
+        return;
+    }
+
+    // 1. UI Status Update
     outputBox.innerText = "Executing code on server...";
+    if (runBtn) runBtn.disabled = true;
 
     try {
-        // EXACT RENDER BACKEND URL HERE
-        const response = await fetch('https://synsocial.onrender.com', {
+        // 2. Exact Render Backend Endpoint /run-code
+        const response = await fetch('https://synsocial.onrender.com/run-code', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, input, language })
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                code: code,
+                input: input,
+                language: language
+            })
         });
 
         const data = await response.json();
-        outputBox.innerText = data.output || "Execution completed with no output.";
-    } catch (err) {
-        outputBox.innerText = "Error connecting to server: " + err.message;
+
+        // 3. Render Output
+        if (data.output) {
+            outputBox.innerText = data.output;
+        } else {
+            outputBox.innerText = "Execution completed with no output.";
+        }
+
+    } catch (error) {
+        outputBox.innerText = "Error connecting to backend: " + error.message;
+    } finally {
+        if (runBtn) runBtn.disabled = false;
     }
 }
+
 
         function renderVault() {
             const vaultContainer = document.getElementById('vaultStream');
