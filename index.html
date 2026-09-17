@@ -547,10 +547,10 @@ async function handleCreatePost(e) {
     }
 
     try {
-        const response = await fetch('http://localhost:5000/api/posts/create', {
-            method: 'POST',
-            body: formData
-        });
+        const response = await fetch('https://synsocial-api.onrender.com/api/posts/create', {
+    method: 'POST',
+    body: formData
+});
 
         const result = await response.json();
 
@@ -649,7 +649,7 @@ async function handleCreatePost(e) {
     if (!postsContainer) return;
 
     try {
-        const response = await fetch('http://localhost:5000/api/posts');
+        const response = await fetch('https://synsocial-api.onrender.com/api/posts');
         const posts = await response.json();
 
         if (posts.length === 0) {
