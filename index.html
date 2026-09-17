@@ -665,76 +665,90 @@ int main() {
         let pyodideInstance = null;
 
         async function runUniversalSandboxCode() {
-            const lang = document.getElementById('sandboxLang').value;
-            let code = document.getElementById('sandboxCode').value;
-            const outputEl = document.getElementById('sandboxOutput');
-            const runBtn = document.getElementById('runBtn');
+    const lang = document.getElementById('sandboxLang').value;
+    let code = document.getElementById('sandboxCode').value;
+    const outputEl = document.getElementById('sandboxOutput');
+    const runBtn = document.getElementById('runBtn');
 
-            outputEl.innerText = "⚡ Compiling & Executing Code...\n";
-            if (runBtn) runBtn.disabled = true;
+    // User typing panna input-a edukkurom
+    const inputEl = document.getElementById('stdinInput');
+    const customInput = inputEl ? inputEl.value : "";
 
+    outputEl.innerText = "⚡ Compiling & Executing Code...\n";
+    if (runBtn) runBtn.disabled = true;
+
+    try {
+        if (lang === 'javascript') {
+            let logs = [];
+            const originalConsoleLog = console.log;
+            console.log = (...args) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '));
+            
             try {
-                if (lang === 'javascript') {
-                    let logs = [];
-                    const originalConsoleLog = console.log;
-                    console.log = (...args) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '));
-                    
-                    try {
-                        new Function(code)();
-                        outputEl.innerText = logs.join('\n') || "Code executed successfully with no output.";
-                    } catch(err) {
-                        outputEl.innerText = "JavaScript Runtime Error:\n" + err.message;
-                    } finally {
-                        console.log = originalConsoleLog;
-                    }
-                } 
-                else if (lang === 'python') {
-                    if (!pyodideInstance) {
-                        outputEl.innerText = "⏳ Loading Python Engine...";
-                        if (typeof loadPyodide === 'undefined') {
-                            throw new Error("Pyodide script missing in <head>.");
-                        }
-                        pyodideInstance = await loadPyodide();
-                    }
-                    
-                    let outputs = [];
-                    pyodideInstance.setStdout({
-                        batched: (text) => outputs.push(text)
-                    });
+                // Simple readline mock for JS using customInput lines
+                const inputLines = customInput.split('\n');
+                let lineIndex = 0;
+                window.readline = () => inputLines[lineIndex++] || "";
 
-                    await pyodideInstance.runPythonAsync(code);
-                    outputEl.innerText = outputs.join('\n') || "Python code executed successfully.";
-                } 
-                else if (lang === 'cpp' || lang === 'c' || lang === 'java') {
-    const userCode = code; 
-
-    // Read input from the UI element safely
-    const inputElement = document.getElementById('stdinInput');
-    const customInput = inputElement ? inputElement.value : "";
-
-    const response = await fetch('https://synsocial.onrender.com/run-c', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            code: userCode,
-            input: customInput // Sends the user-typed input to backend
-        })
-    });
-
-    if (!response.ok) {
-        throw new Error("Compiler status error: " + response.status);
-    }
-
-    const data = await response.json();
-    let resOutput = data.output || data.stdout || data.stderr;
-    outputEl.innerText = resOutput ? resOutput.trim() : "Execution completed with no output.";
-}
-            }catch(e) {
-                outputEl.innerText = "Execution Error:\n" + e.message;
+                new Function(code)();
+                outputEl.innerText = logs.join('\n') || "Code executed successfully with no output.";
+            } catch(err) {
+                outputEl.innerText = "JavaScript Runtime Error:\n" + err.message;
             } finally {
-                if (runBtn) runBtn.disabled = false;
+                console.log = originalConsoleLog;
             }
+        } 
+        else if (lang === 'python') {
+            if (!pyodideInstance) {
+                outputEl.innerText = "⏳ Loading Python Engine...";
+                if (typeof loadPyodide === 'undefined') {
+                    throw new Error("Pyodide script missing in <head>.");
+                }
+                pyodideInstance = await loadPyodide();
+            }
+            
+            let outputs = [];
+            pyodideInstance.setStdout({
+                batched: (text) => outputs.push(text)
+            });
+
+            // Feed stdin lines into Python's sys.stdin
+            const formattedInput = customInput.replace(/"/g, '\\"').replace(/\n/g, '\\n');
+            const pythonInitScript = `
+import sys
+from io import StringIO
+sys.stdin = StringIO("${formattedInput}")
+`;
+            await pyodideInstance.runPythonAsync(pythonInitScript + '\n' + code);
+            outputEl.innerText = outputs.join('\n') || "Python code executed successfully.";
+        } 
+        else if (lang === 'c' || lang === 'cpp') {
+            const response = await fetch('https://synsocial.onrender.com/run-c', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: code,
+                    input: customInput
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("Compiler status error: " + response.status);
+            }
+
+            const data = await response.json();
+            let resOutput = data.output || data.stdout || data.stderr;
+            outputEl.innerText = resOutput ? resOutput.trim() : "Execution completed with no output.";
         }
+        else {
+            outputEl.innerText = `Execution for ${lang.toUpperCase()} is not supported on this endpoint.`;
+        }
+
+    } catch(e) {
+        outputEl.innerText = "Execution Error:\n" + e.message;
+    } finally {
+        if (runBtn) runBtn.disabled = false;
+    }
+}
     
 
         function renderVault() {
