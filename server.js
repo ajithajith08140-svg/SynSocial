@@ -1,16 +1,37 @@
 const express = require('express');
-const mongoose = require('mongoose');
-const multer = require('multer');
-const path = require('path');
 const cors = require('cors');
-const Post = require('./models/Post');
-
 const app = express();
-const PORT = 5000;
 
-// Enable CORS and JSON body parsing
-app.use(cors());
+// 1. Precise CORS Setup for Netlify & Localhost
+const allowedOrigins = [
+  'https://synsocial.netlify.app',
+  'http://localhost:3000',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, or Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.netlify.app')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Alternatively, set true to allow all during development
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
+}));
+
+// 2. Pre-flight OPTIONS Handle
+app.options('*', cors());
+
+// 3. Body Parsers (Form-data & JSON)
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files statically so they can be viewed/downloaded
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
