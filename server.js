@@ -1,11 +1,22 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
 
-// 1. Fixed CORS Configuration
+// 1. Ensure 'uploads' directory exists
+if (!fs.existsSync('uploads')) {
+    fs.mkdirSync('uploads');
+}
+
+// 2. Dynamic Port Binding
+const PORT = process.env.PORT || 5000;
+
+// 3. CORS Configuration
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -15,23 +26,34 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 2. Health Check Endpoint
-app.get('/', (req, res) => {
-    res.send("Synsocial API Server is running!");
-});
+// Serve Uploaded Files Statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 3. MongoDB Connection
-const MONGO_URI = process.env.MONGO_URI || "your_mongodb_connection_string_here";
+// 4. MongoDB Connection & Schema Setup
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/?appName=Cluster0";
 
 mongoose.connect(MONGO_URI)
     .then(() => console.log("MongoDB Connected Successfully!"))
     .catch(err => console.error("MongoDB Connection Error:", err));
 
-// 4. Schema & Routes (Ensure your posts routes are defined here)
+// Mongoose Schema Definition (CRITICAL FIX)
+const postSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    author: { type: String, required: true },
+    tag: { type: String, required: true },
+    pin: { type: String, required: true },
+    pinHint: { type: String, required: true },
+    content: { type: String, required: true },
+    link: { type: String, default: "" },
+    code: { type: String, default: "" },
+    docUrl: { type: String, default: "" },
+    docName: { type: String, default: "" },
+    createdAt: { type: Date, default: Date.now }
+});
 
+const Post = mongoose.model('Post', postSchema);
 
-
-// 2. Configure Multer Storage for Document Uploads
+// 5. Configure Multer Storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/');
@@ -43,11 +65,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 3. API Routes
+// 6. API Routes
 
-// Test Route
+// Health Check Endpoint
 app.get('/', (req, res) => {
-    res.send('Synsocial API Server is running!');
+    res.send("Synsocial API Server is running!");
 });
 
 // Create Post and Save to MongoDB
@@ -59,7 +81,8 @@ app.post('/api/posts/create', upload.single('document'), async (req, res) => {
         let docName = "";
 
         if (req.file) {
-            docUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+            // Dynamic host URL generation for Render production
+            docUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
             docName = req.file.originalname;
         }
 
@@ -94,9 +117,7 @@ app.get('/api/posts', async (req, res) => {
     }
 });
 
-// 4. Start Server
-// 5. Dynamic Port Binding (CRITICAL FOR RENDER)
-const PORT = process.env.PORT || 5000;
+// 7. Start Server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
