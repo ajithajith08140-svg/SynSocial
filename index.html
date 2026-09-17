@@ -408,6 +408,8 @@ int main() {
     </main>
 
     <script>
+        const API_URL = "https://synsocial-api.onrender.com";
+
         const quotesList = [
             { quote: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King" },
             { quote: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
@@ -434,47 +436,7 @@ int main() {
             if (menu) menu.classList.toggle('hidden');
         }
 
-        const initialPosts = [
-            {
-                id: "post-101",
-                title: "C++ Memory Leak Notes",
-                author: "Alex",
-                tag: "Programming",
-                pin: "1234",
-                pinHint: "Default 1234",
-                content: "Remember to free heap allocated memory using delete operator!",
-                link: "https://cppreference.com",
-                code: "int* ptr = new int(10);\ndelete ptr;",
-                docData: "",
-                docName: "",
-                likes: 3,
-                isBookmarked: false,
-                createdAt: "10 mins ago"
-            }
-        ];
-
-        function getStoredPosts() {
-            try {
-                const data = localStorage.getItem('synsocial_posts');
-                return data ? JSON.parse(data) : initialPosts;
-            } catch (err) {
-                console.error("Error reading localStorage", err);
-                return initialPosts;
-            }
-        }
-
-        function savePosts(posts) {
-            try {
-                localStorage.setItem('synsocial_posts', JSON.stringify(posts));
-            } catch (err) {
-                if (err.name === 'QuotaExceededError' || err.code === 22) {
-                    alert("⚠️ Storage Limit Exceeded! Please clear old posts or upload smaller files.");
-                } else {
-                    console.error("Storage error:", err);
-                }
-            }
-            updateMetrics();
-        }
+        let fetchedPosts = [];
 
         function switchTab(viewId) {
             document.querySelectorAll('.page-view').forEach(el => el.classList.add('hidden'));
@@ -507,89 +469,65 @@ int main() {
             }
         }
 
-        // Handle Protected Post Creation with Blob Object URL
-        // Optimized Instant Post Handler
-async function handleCreatePost(e) {
-    e.preventDefault();
+        async function handleCreatePost(e) {
+            e.preventDefault();
 
-    const title = document.getElementById('postTitle').value.trim();
-    const author = document.getElementById('postAuthor').value.trim();
-    const tag = document.getElementById('postTag').value;
-    const pin = document.getElementById('postPin').value.trim();
-    const pinHint = document.getElementById('postPinHint').value.trim();
-    const content = document.getElementById('postContent').value.trim();
-    let link = document.getElementById('postLink').value.trim();
-    const code = document.getElementById('postCode').value;
-    const fileInput = document.getElementById('postDocFile');
+            const title = document.getElementById('postTitle').value.trim();
+            const author = document.getElementById('postAuthor').value.trim();
+            const tag = document.getElementById('postTag').value;
+            const pin = document.getElementById('postPin').value.trim();
+            const pinHint = document.getElementById('postPinHint').value.trim();
+            const content = document.getElementById('postContent').value.trim();
+            let link = document.getElementById('postLink').value.trim();
+            const code = document.getElementById('postCode').value;
+            const fileInput = document.getElementById('postDocFile');
 
-    if (pin.length !== 4 || isNaN(pin)) {
-        alert("Security PIN must be exactly 4 numeric digits!");
-        return;
-    }
-
-    if (link && !link.startsWith('http://') && !link.startsWith('https://')) {
-        link = 'https://' + link;
-    }
-
-    // Build FormData to send text and file binary to backend
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('author', author);
-    formData.append('tag', tag);
-    formData.append('pin', pin);
-    formData.append('pinHint', pinHint);
-    formData.append('content', content);
-    formData.append('link', link);
-    formData.append('code', code);
-
-    if (fileInput.files.length > 0) {
-        formData.append('document', fileInput.files[0]);
-    }
-
-    try {
-        const response = await fetch('https://synsocial-api.onrender.com/api/posts/create', {
-    method: 'POST',
-    body: formData
-});
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Store a local backup copy in localStorage
-            let localPosts = JSON.parse(localStorage.getItem('synsocial_posts')) || [];
-            localPosts.unshift(result.post);
-            localStorage.setItem('synsocial_posts', JSON.stringify(localPosts));
-
-            document.getElementById('postForm').reset();
-            renderFeed(); // Reload feed directly from MongoDB
-        } else {
-            alert('Failed to save post: ' + result.error);
-        }
-    } catch (err) {
-        console.error('Error saving post to MongoDB:', err);
-        alert('Server unreachable. Make sure node server.js is running.');
-    }
-}
-        function deletePostSecured(postId, correctPin, pinHint) {
-            const userPin = prompt(`🔐 Security PIN to delete:\n(Click 'Cancel' for Hint)`);
-            if (userPin === null) {
-                alert(`💡 PIN Recovery Hint: ${pinHint}`);
+            if (pin.length !== 4 || isNaN(pin)) {
+                alert("Security PIN must be exactly 4 numeric digits!");
                 return;
             }
 
-            if (userPin.trim() === correctPin) {
-                let posts = getStoredPosts();
-                posts = posts.filter(p => p.id !== postId);
-                savePosts(posts);
-                renderFeed();
-                executeDedicatedSearch();
-                alert("✅ Post deleted successfully!");
-            } else {
-                alert(`❌ Incorrect PIN!\nHint: ${pinHint}`);
+            if (link && !link.startsWith('http://') && !link.startsWith('https://')) {
+                link = 'https://' + link;
+            }
+
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('author', author);
+            formData.append('tag', tag);
+            formData.append('pin', pin);
+            formData.append('pinHint', pinHint);
+            formData.append('content', content);
+            formData.append('link', link);
+            formData.append('code', code);
+
+            if (fileInput.files.length > 0) {
+                formData.append('document', fileInput.files[0]);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/posts/create`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('postForm').reset();
+                    renderFeed();
+                } else {
+                    alert('Failed to save post: ' + result.error);
+                }
+            } catch (err) {
+                console.error('Error saving post to MongoDB:', err);
+                alert('Server unreachable. Make sure node server.js is running.');
             }
         }
 
         function buildPostCardHTML(post) {
+            const docPath = post.docData ? (post.docData.startsWith('http') ? post.docData : `${API_URL}/${post.docData}`) : '';
+
             return `
                 <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
                     <div class="flex justify-between items-start">
@@ -598,9 +536,6 @@ async function handleCreatePost(e) {
                             <h3 class="text-lg font-bold mt-1 text-slate-100">${post.title}</h3>
                             <div class="text-xs text-slate-400">By ${post.author} • ${post.createdAt}</div>
                         </div>
-                        <button onclick="deletePostSecured('${post.id}', '${post.pin}', '${post.pinHint}')" class="p-2 text-slate-400 hover:text-rose-500" title="Delete with PIN">
-                            <i class="fa-solid fa-lock text-xs mr-1"></i><i class="fa-solid fa-trash-can"></i>
-                        </button>
                     </div>
 
                     <p class="text-sm text-slate-300">${post.content}</p>
@@ -623,69 +558,60 @@ async function handleCreatePost(e) {
                         <pre class="code-font text-xs text-emerald-400 overflow-x-auto">${post.code}</pre>
                     </div>` : ''}
 
-                    ${post.docData ? `
+                    ${docPath ? `
                     <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
                         <span class="text-xs text-accent-cyan truncate"><i class="fa-solid fa-file-arrow-down mr-2"></i>${post.docName}</span>
-                        <a href="${post.docData}" download="${post.docName}" class="px-3 py-1 bg-brand-600 text-white text-xs rounded-lg font-bold hover:bg-brand-500">Download File</a>
+                        <a href="${docPath}" download="${post.docName}" target="_blank" class="px-3 py-1 bg-brand-600 text-white text-xs rounded-lg font-bold hover:bg-brand-500">Download File</a>
                     </div>` : ''}
-
-                    <div class="flex items-center space-x-4 pt-2 border-t border-slate-800/80 text-xs font-semibold">
-                        <button onclick="toggleLike('${post.id}')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-purple-400 hover:bg-slate-800 transition-all">
-                            <i class="fa-solid fa-thumbs-up"></i>
-                            <span>${post.likes || 0} Upvotes</span>
-                        </button>
-
-                        <button onclick="toggleBookmark('${post.id}')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 ${post.isBookmarked ? 'text-emerald-400' : 'text-slate-400'} hover:bg-slate-800 transition-all">
-                            <i class="${post.isBookmarked ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
-                            <span>${post.isBookmarked ? 'Saved' : 'Bookmark'}</span>
-                        </button>
-                    </div>
                 </div>
             `;
         }
 
         async function renderFeed() {
-    const postsContainer = document.getElementById('postsStream');
-    if (!postsContainer) return;
+            const postsContainer = document.getElementById('postsStream');
+            if (!postsContainer) return;
 
-    try {
-        const response = await fetch('https://synsocial-api.onrender.com/api/posts');
-        const posts = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/api/posts`);
+                fetchedPosts = await response.json();
 
-        if (posts.length === 0) {
-            postsContainer.innerHTML = `<div class="text-center text-slate-400 py-12 glass-panel rounded-2xl border border-slate-800">No posts in MongoDB yet! Create one above.</div>`;
-            return;
+                if (fetchedPosts.length === 0) {
+                    postsContainer.innerHTML = `<div class="text-center text-slate-400 py-12 glass-panel rounded-2xl border border-slate-800">No posts in MongoDB yet! Create one above.</div>`;
+                    updateMetrics();
+                    return;
+                }
+
+                postsContainer.innerHTML = fetchedPosts.map(post => buildPostCardHTML({
+                    id: post._id,
+                    title: post.title,
+                    author: post.author,
+                    tag: post.tag,
+                    pin: post.pin,
+                    pinHint: post.pinHint,
+                    content: post.content,
+                    link: post.link,
+                    code: post.code,
+                    docData: post.docUrl,
+                    docName: post.docName,
+                    likes: post.likes,
+                    createdAt: new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                })).join('');
+
+                updateMetrics();
+
+            } catch (err) {
+                console.error('Error fetching posts from MongoDB:', err);
+            }
         }
 
-        postsContainer.innerHTML = posts.map(post => buildPostCardHTML({
-            id: post._id,
-            title: post.title,
-            author: post.author,
-            tag: post.tag,
-            pin: post.pin,
-            pinHint: post.pinHint,
-            content: post.content,
-            link: post.link,
-            code: post.code,
-            docData: post.docUrl,
-            docName: post.docName,
-            likes: post.likes,
-            createdAt: new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        })).join('');
-
-    } catch (err) {
-        console.error('Error fetching posts from MongoDB:', err);
-    }
-}
         function executeDedicatedSearch() {
             const stream = document.getElementById('searchResultsStream');
             if (!stream) return;
 
             const query = (document.getElementById('dedicatedSearchInput')?.value || "").toLowerCase();
             const selectedTag = document.getElementById('filterTag')?.value || "ALL";
-            const posts = getStoredPosts();
 
-            const results = posts.filter(p => {
+            const results = fetchedPosts.filter(p => {
                 const matchesQuery = p.title.toLowerCase().includes(query) || 
                                      p.content.toLowerCase().includes(query) || 
                                      p.author.toLowerCase().includes(query) ||
@@ -699,7 +625,18 @@ async function handleCreatePost(e) {
                 return;
             }
 
-            stream.innerHTML = results.map(post => buildPostCardHTML(post)).join('');
+            stream.innerHTML = results.map(post => buildPostCardHTML({
+                id: post._id,
+                title: post.title,
+                author: post.author,
+                tag: post.tag,
+                content: post.content,
+                link: post.link,
+                code: post.code,
+                docData: post.docUrl,
+                docName: post.docName,
+                createdAt: new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            })).join('');
         }
 
         function copyToClipboard(text) {
@@ -711,7 +648,7 @@ async function handleCreatePost(e) {
             cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int a = 5, b = 3;\n    int c = a + b;\n    cout << "Value: " << a << b << endl;\n    cout << "Ans: " << c << endl;\n    return 0;\n}`,
             c: `#include <stdio.h>\n\nint main() {\n    int a = 5, b = 3;\n    printf("Value: %d%d\\n", a, b);\n    printf("Ans: %d\\n", a + b);\n    return 0;\n}`,
             python: `a = 5\nb = 3\nc = a + b\nprint(f"Value: {a}{b}")\nprint(f"Ans:{c}")`,
-            java: `public class Main {\n    public static void main(String[] args) {\n        int a = 5, b = 3;\n        System.out.println("Value: " + a + b);\n        System.out.println("Ans: " + c);\n    }\n}`,
+            java: `public class Main {\n    public static void main(String[] args) {\n        int a = 5, b = 3;\n        System.out.println("Value: " + a + b);\n        System.out.println("Ans: " + (a + b));\n    }\n}`,
             javascript: `let a = 5, b = 3;\nlet c = a + b;\nconsole.log("Value: " + a + b);\nconsole.log("Ans: " + c);`
         };
 
@@ -764,34 +701,26 @@ async function handleCreatePost(e) {
                     outputEl.innerText = outputs.join('\n') || "Python code executed successfully.";
                 } 
                 else if (lang === 'cpp' || lang === 'c' || lang === 'java') {
-    const judgeLangMap = { cpp: 54, c: 50, java: 62 };
+                    const judgeLangMap = { cpp: 54, c: 50, java: 62 };
 
-    if (lang === 'java') {
-        // Automatically replace any public class name with 'Main'
-        if (code.includes('public class ')) {
-            code = code.replace(/public\s+class\s+\w+/, 'public class Main');
-        } 
-        // If 'public' was removed, restore 'public class Main'
-        else if (code.includes('class ')) {
-            code = code.replace(/class\s+\w+/, 'public class Main');
-        }
-        // If only the main method body was pasted
-        else if (!code.includes('class ')) {
-            code = `public class Main {\n    public static void main(String[] args) {\n        ${code}\n    }\n}`;
-        }
-    }
+                    if (lang === 'java') {
+                        if (code.includes('public class ')) {
+                            code = code.replace(/public\s+class\s+\w+/, 'public class Main');
+                        } else if (code.includes('class ')) {
+                            code = code.replace(/class\s+\w+/, 'public class Main');
+                        } else if (!code.includes('class ')) {
+                            code = `public class Main {\n    public static void main(String[] args) {\n        ${code}\n    }\n}`;
+                        }
+                    }
 
-    const response = await fetch("https://ce.judge0.com/submissions?wait=true", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            source_code: code,
-            language_id: judgeLangMap[lang]
-        })
-    });
-    
-    // ... rest of execution handling
-
+                    const response = await fetch("https://ce.judge0.com/submissions?wait=true", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            source_code: code,
+                            language_id: judgeLangMap[lang]
+                        })
+                    });
 
                     if (!response.ok) {
                         throw new Error("Compiler status error: " + response.status);
@@ -811,13 +740,13 @@ async function handleCreatePost(e) {
 
         function renderVault() {
             const vaultContainer = document.getElementById('vaultStream');
-            const posts = getStoredPosts().filter(p => p.code);
-            vaultContainer.innerHTML = posts.map(p => `
+            const posts = fetchedPosts.filter(p => p.code);
+            vaultContainer.innerHTML = posts.length ? posts.map(p => `
                 <div class="glass-panel p-4 rounded-xl space-y-2 border border-slate-800">
                     <h4 class="font-bold text-sm text-slate-100">${p.title}</h4>
                     <pre class="code-font text-xs text-cyan-300 bg-slate-950 p-2 rounded border border-slate-800">${p.code}</pre>
                 </div>
-            `).join('');
+            `).join('') : `<div class="text-xs text-slate-400 text-center py-4">No code snippets found!</div>`;
         }
 
         let currentProfTab = 'uploads';
@@ -838,34 +767,18 @@ async function handleCreatePost(e) {
             const uploadsContainer = document.getElementById('profile-tab-uploads');
             if (!uploadsContainer) return;
 
-            const posts = getStoredPosts();
-            const totalLikes = posts.reduce((acc, curr) => acc + (curr.likes || 0), 0);
-            const totalSaved = posts.filter(p => p.isBookmarked).length;
-
-            document.getElementById('prof-stat-posts').innerText = posts.length;
-            document.getElementById('prof-stat-code').innerText = totalLikes;
-            document.getElementById('prof-stat-docs').innerText = totalSaved;
+            document.getElementById('prof-stat-posts').innerText = fetchedPosts.length;
 
             if (currentProfTab === 'uploads') {
-                uploadsContainer.innerHTML = posts.map(post => `
+                uploadsContainer.innerHTML = fetchedPosts.map(post => `
                     <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
                         <div>
                             <h4 class="font-bold text-sm text-slate-100">${post.title}</h4>
                             <p class="text-xs text-slate-400">${post.content}</p>
                             ${post.link ? `<a href="${post.link}" target="_blank" class="text-[11px] text-brand-400 hover:underline"><i class="fa-solid fa-link mr-1"></i>${post.link}</a>` : ''}
                         </div>
-                        <span class="text-xs text-brand-400 font-mono">${post.likes || 0} Upvotes</span>
                     </div>
                 `).join('');
-            } else {
-                const bookmarked = posts.filter(p => p.isBookmarked);
-                uploadsContainer.innerHTML = bookmarked.length ? bookmarked.map(post => `
-                    <div class="glass-panel p-4 rounded-2xl border border-slate-800">
-                        <h4 class="font-bold text-sm text-slate-100">${post.title}</h4>
-                        <p class="text-xs text-slate-400">${post.content}</p>
-                        ${post.link ? `<a href="${post.link}" target="_blank" class="text-[11px] text-brand-400 hover:underline"><i class="fa-solid fa-link mr-1"></i>${post.link}</a>` : ''}
-                    </div>
-                `).join('') : `<div class="text-xs text-slate-400 text-center py-4">No bookmarked posts yet!</div>`;
             }
         }
 
@@ -878,18 +791,11 @@ async function handleCreatePost(e) {
         }
 
         function updateMetrics() {
-            const posts = getStoredPosts();
-            const totalLikes = posts.reduce((acc, curr) => acc + (curr.likes || 0), 0);
-            const totalSaved = posts.filter(p => p.isBookmarked).length;
-
-            document.getElementById('metric-posts').innerText = posts.length;
-            document.getElementById('metric-snippets').innerText = posts.filter(p => p.code).length;
-            document.getElementById('metric-likes').innerText = totalLikes;
-            document.getElementById('metric-saved').innerText = totalSaved;
+            document.getElementById('metric-posts').innerText = fetchedPosts.length;
+            document.getElementById('metric-snippets').innerText = fetchedPosts.filter(p => p.code).length;
         }
 
         window.onload = function() {
-            updateMetrics();
             renderFeed();
         };
     </script>
