@@ -70,54 +70,80 @@ app.get('/', (req, res) => {
 
 // C Code Execution Endpoint (with Stdin Support for scanf)
 // C Code Execution Endpoint (with Stdin Support for scanf)
-app.post('/run-c', (req, res) => {
-    const { code, input } = req.body;
+// Universal Multi-Language Code Execution Endpoint
+app.post('/run-code', (req, res) => {
+    const { code, input, language } = req.body;
 
     if (!code) {
         return res.status(400).json({ output: "Error: No code provided." });
     }
 
-    // Dynamic unique filename to prevent collisions between multiple users
     const uniqueId = Date.now() + '_' + Math.floor(Math.random() * 1000);
-    const sourceFile = `temp_${uniqueId}.c`;
-    const outputFile = `temp_${uniqueId}`;
+    let sourceFile, compileCmd, runCmd;
 
-    // Helper function to cleanup temporary files from disk
+    // Language Wise Configuration
+    if (language === 'cpp' || language === 'cpp17') {
+        sourceFile = `temp_${uniqueId}.cpp`;
+        const outputFile = `temp_${uniqueId}`;
+        compileCmd = `g++ ${sourceFile} -o ${outputFile}`;
+        runCmd = `./${outputFile}`;
+    } else if (language === 'c') {
+        sourceFile = `temp_${uniqueId}.c`;
+        const outputFile = `temp_${uniqueId}`;
+        compileCmd = `gcc ${sourceFile} -o ${outputFile}`;
+        runCmd = `./${outputFile}`;
+    } else if (language === 'python') {
+        sourceFile = `temp_${uniqueId}.py`;
+        compileCmd = null; // No compilation needed for Python
+        runCmd = `python3 ${sourceFile}`;
+    } else if (language === 'javascript') {
+        sourceFile = `temp_${uniqueId}.js`;
+        compileCmd = null;
+        runCmd = `node ${sourceFile}`;
+    } else {
+        return res.status(400).json({ output: "Error: Unsupported language." });
+    }
+
     const cleanupFiles = () => {
         if (fs.existsSync(sourceFile)) fs.unlinkSync(sourceFile);
-        if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
+        if (language === 'c' || language === 'cpp' || language === 'cpp17') {
+            const outputFile = `temp_${uniqueId}`;
+            if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
+        }
     };
 
-    // 1. Write user code to temporary file
+    // 1. Write Code to File
     fs.writeFileSync(sourceFile, code);
 
-    // 2. GCC compiler call
-    exec(`gcc ${sourceFile} -o ${outputFile}`, (compileErr, stdout, stderr) => {
-        if (compileErr) {
+    // Helper to execute code with stdin & 3-sec timeout
+    const executeBinary = () => {
+        const child = exec(runCmd, { timeout: 3000 }, (runErr, runStdout, runStderr) => {
             cleanupFiles();
-            return res.json({ output: stderr || compileErr.message });
-        }
-
-        // 3. Execution with 3-second Timeout (Prevents infinite loops)
-        const child = exec(`./${outputFile}`, { timeout: 3000 }, (runErr, runStdout, runStderr) => {
-            cleanupFiles(); // Clean up binary and C file after completion
-
             if (runErr && runErr.killed) {
-                return res.json({ 
-                    output: "Execution Timed Out! (Check if inputs are missing in stdin or if there is an infinite loop)." 
-                });
+                return res.json({ output: "Execution Timed Out! (Check missing inputs or infinite loops)." });
             }
             res.json({ output: runStdout || runStderr || "Execution completed with no output." });
         });
 
-        // 4. Pass stdin inputs and close stream immediately (EOF Signal)
         if (input) {
             child.stdin.write(input + "\n");
         }
-        child.stdin.end(); // Stops scanf/cin from hanging indefinitely
-    });
-});
-// Create Post and Save to MongoDB
+        child.stdin.end();
+    };
+
+    // 2. Compile if needed (C/C++), else directly execute (Python/JS)
+    if (compileCmd) {
+        exec(compileCmd, (compileErr, stdout, stderr) => {
+            if (compileErr) {
+                cleanupFiles();
+                return res.json({ output: stderr || compileErr.message });
+            }
+            executeBinary();
+        });
+    } else {
+        executeBinary();
+    }
+});// Create Post and Save to MongoDB
 app.post('/api/posts/create', upload.single('document'), async (req, res) => {
     try {
         const { title, author, tag, pin, pinHint, content, link, code } = req.body;
