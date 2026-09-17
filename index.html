@@ -356,7 +356,7 @@ int main() {
             class="w-full p-3 rounded-xl bg-slate-900 text-emerald-400 placeholder-slate-500 border border-slate-700/80 code-font text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-inner resize-none transition-all"></textarea>
     </div>
 
-    <button onclick="runUniversalSandboxCode()" id="runBtn" 
+    <button onclick="checkCodeAndRun()" id="runBtn" 
         class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-500 text-slate-950 font-bold text-sm transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-emerald-950/20 active:scale-[0.98]">
         <i class="fa-solid fa-play text-xs"></i>
         <span>Execute Code Online</span>
@@ -670,7 +670,21 @@ int main() {
             const lang = document.getElementById('sandboxLang').value;
             document.getElementById('sandboxCode').value = langTemplates[lang] || '';
         }
+// User Code-la input functions irukaa nu check panni alert kaattum Wrapper
+function checkCodeAndRun() {
+    const code = document.getElementById('sandboxCode').value;
+    const customInput = document.getElementById('stdinInput').value.trim();
 
+    // Check if code has C, C++, Python, Java, or JS input keywords
+    const needsInput = /scanf|cin|input\(|Scanner|readline/g.test(code);
+
+    if (needsInput && !customInput) {
+        alert("⚠️ Notice: Your code requires inputs (scanf / cin / input). Please enter the values in the 'Program Input (stdin)' box before running.");
+    }
+
+    // Call actual runner
+    runUniversalSandboxCode();
+}
         let pyodideInstance = null;
 
         async function runUniversalSandboxCode() {
