@@ -1,45 +1,35 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config();
+
 const app = express();
 
-// 1. Precise CORS Setup for Netlify & Localhost
-const allowedOrigins = [
-  'https://synsocial.netlify.app',
-  'http://localhost:3000',
-  'http://localhost:5500',
-  'http://127.0.0.1:5500'
-];
-
+// 1. Fixed CORS Configuration
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, or Postman)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.netlify.app')) {
-      callback(null, true);
-    } else {
-      callback(null, true); // Alternatively, set true to allow all during development
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: true
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 2. Pre-flight OPTIONS Handle
-app.options('*', cors());
-
-// 3. Body Parsers (Form-data & JSON)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files statically so they can be viewed/downloaded
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// 2. Health Check Endpoint
+app.get('/', (req, res) => {
+    res.send("Synsocial API Server is running!");
+});
 
-// 1. Connect to MongoDB
-mongoose.connect("mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority")
-    .then(() => console.log('✅ Connected to MongoDB successfully!'))
-    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+// 3. MongoDB Connection
+const MONGO_URI = process.env.MONGO_URI || "your_mongodb_connection_string_here";
+
+mongoose.connect(MONGO_URI)
+    .then(() => console.log("MongoDB Connected Successfully!"))
+    .catch(err => console.error("MongoDB Connection Error:", err));
+
+// 4. Schema & Routes (Ensure your posts routes are defined here)
+
+
 
 // 2. Configure Multer Storage for Document Uploads
 const storage = multer.diskStorage({
@@ -105,5 +95,8 @@ app.get('/api/posts', async (req, res) => {
 });
 
 // 4. Start Server
+// 5. Dynamic Port Binding (CRITICAL FOR RENDER)
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
