@@ -494,11 +494,6 @@ int main() {
         return;
     }
 
-    // Find the send button and disable it during API call
-    const sendBtn = event.target;
-    sendBtn.disabled = true;
-    sendBtn.innerText = 'Sending...';
-
     const currentUserName = (typeof userProfile !== 'undefined' && userProfile && userProfile.name) 
         ? userProfile.name 
         : "Student User";
@@ -506,23 +501,28 @@ int main() {
     try {
         const response = await fetch(`${API_URL}/api/posts/${postId}/comments`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, author: currentUserName })
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ 
+                text: text, 
+                author: currentUserName 
+            })
         });
 
-        if (response.ok) {
+        const data = await response.json();
+
+        if (response.ok && data.success) {
             showToast('Comment added!', '💬');
-            input.value = ''; // Input clear panrom
-            fetchPosts(); // Refresh feed
+            input.value = '';
+            fetchPosts(); // Refresh feeds
         } else {
-            showToast('Failed to add comment', '❌');
+            console.error("Backend Error Response:", data);
+            showToast(data.message || 'Failed to add comment', '❌');
         }
     } catch (err) {
-        showToast('Network error', '❌');
-    } finally {
-        // Enable button again
-        sendBtn.disabled = false;
-        sendBtn.innerText = 'Send';
+        console.error("Fetch Catch Error:", err);
+        showToast('Network error while commenting', '❌');
     }
 }
         function buildPostCardHTML(post) {

@@ -199,41 +199,44 @@ function prompt(message) {
         executeBinary();
     }
 });
+// Extremely safe Comment Route
 app.post('/api/posts/:id/comments', async (req, res) => {
     try {
         const { id } = req.params;
         const { text, author } = req.body;
 
         if (!text || !text.trim()) {
-            return res.status(400).json({ message: "Comment text empty" });
+            return res.status(400).json({ success: false, message: "Comment cannot be empty" });
         }
 
-        const commentObj = {
+        const newComment = {
             text: text.trim(),
             author: author || "Student User",
             createdAt: new Date()
         };
 
-        const updatedPost = await Post.findByIdAndUpdate(
-            id,
-            { $push: { comments: commentObj } },
-            { new: true }
+        // MongoDB-la direct update query execution
+        const result = await Post.updateOne(
+            { _id: id },
+            { $push: { comments: newComment } }
         );
 
-        if (!updatedPost) {
-            return res.status(404).json({ message: "Post not found" });
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ success: false, message: "Post not found" });
         }
 
-        // Return exact response cleanly
         return res.status(200).json({ 
-            success: true,
-            message: "Comment added successfully", 
-            comments: updatedPost.comments 
+            success: true, 
+            message: "Comment added successfully" 
         });
 
     } catch (error) {
-        console.error("Comment Error:", error);
-        return res.status(500).json({ message: "Server error", error: error.message });
+        console.error("Critical Comment Route Error:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Server internal error", 
+            error: error.message 
+        });
     }
 });// Upvote Post Endpoint
 app.post('/api/posts/upvote/:id', async (req, res) => {
