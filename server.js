@@ -209,28 +209,30 @@ app.post('/api/posts/upvote/:id', async (req, res) => {
 });
 
 // Delete Post with Passkey Verification Endpoint
-app.post('/api/posts/delete', async (req, res) => {
-    const { postId, passkey } = req.body;
-
+app.delete('/api/posts/:id', async (req, res) => {
     try {
-        const post = await Post.findById(postId);
+        const { id } = req.params;
+        const { pin } = req.body;
+
+        const post = await Post.findById(id);
+
         if (!post) {
-            return res.status(404).json({ success: false, message: "Post not found!" });
+            return res.status(404).json({ message: "Post not found!" });
         }
 
-        // Passkey Check
-        if (post.pin !== passkey) {
-            return res.status(401).json({ success: false, message: "Incorrect Passkey! Delete failed." });
+        // Compare PIN
+        if (post.pin !== pin) {
+            return res.status(401).json({ message: "Incorrect PIN!" });
         }
 
-        await Post.findByIdAndDelete(postId);
-        res.json({ success: true, message: "Post deleted successfully!" });
+        await Post.findByIdAndDelete(id);
+        res.status(200).json({ message: "Post deleted successfully" });
 
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+    } catch (error) {
+        console.error("Delete Endpoint Error:", error);
+        res.status(500).json({ message: "Server error during deletion", error: error.message });
     }
 });
-
 // Create Post and Save to MongoDB
 app.post('/api/posts/create', upload.single('document'), async (req, res) => {
     try {

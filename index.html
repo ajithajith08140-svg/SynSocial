@@ -989,27 +989,36 @@ function promptDeletePost(postId) {
 }
 
 async function executeDeletePost(postId, pin) {
+    if (!postId || postId === 'undefined') {
+        alert('Invalid Post ID!');
+        return;
+    }
+
     try {
         const response = await fetch(`${API_URL}/api/posts/${postId}`, {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pin })
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ pin: String(pin).trim() })
         });
 
         const data = await response.json();
 
         if (response.ok) {
             alert('Post deleted successfully! 🗑️');
-            fetchPosts(); // Refresh feed
+            // Local state array-la irundhum instantly remove panrom
+            fetchedPosts = fetchedPosts.filter(p => (p._id || p.id) !== postId);
+            renderFeed();
+            updateMetrics();
         } else {
             alert(`Delete Failed: ${data.message || 'Incorrect PIN!'}`);
         }
     } catch (err) {
-        console.error('Delete error:', err);
+        console.error('Delete fetch error:', err);
         alert('Server error while deleting post.');
     }
-}
-function highlightCodeComments(codeText) {
+}function highlightCodeComments(codeText) {
     if (!codeText) return "";
     
     const safeCode = codeText
