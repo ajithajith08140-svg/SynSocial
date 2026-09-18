@@ -798,55 +798,77 @@ try {
         }
 
         let currentProfTab = 'uploads';
-        function switchProfileTab(tabName) {
-            currentProfTab = tabName;
-            document.getElementById('prof-tab-btn-uploads').className = tabName === 'uploads' 
-                ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
-                : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
-            
-            document.getElementById('prof-tab-btn-saved').className = tabName === 'saved' 
-                ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
-                : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
-                
-            renderProfile();
-        }
 
-        function renderProfile() {
-            const uploadsContainer = document.getElementById('profile-tab-uploads');
-            if (!uploadsContainer) return;
+function switchProfileTab(tabName) {
+    currentProfTab = tabName;
+    document.getElementById('prof-tab-btn-uploads').className = tabName === 'uploads' 
+        ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
+        : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+    
+    document.getElementById('prof-tab-btn-saved').className = tabName === 'saved' 
+        ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
+        : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+        
+    renderProfile();
+}
 
-            document.getElementById('prof-stat-posts').innerText = fetchedPosts.length;
+function renderProfile() {
+    const uploadsContainer = document.getElementById('profile-tab-uploads');
+    if (!uploadsContainer) return;
 
-            if (currentProfTab === 'uploads') {
-                uploadsContainer.innerHTML = fetchedPosts.map(post => `
-                    <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-sm text-slate-100">${post.title}</h4>
-                            <p class="text-xs text-slate-400">${post.content}</p>
-                            ${post.link ? `<a href="${post.link}" target="_blank" class="text-[11px] text-brand-400 hover:underline"><i class="fa-solid fa-link mr-1"></i>${post.link}</a>` : ''}
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
+    // Get currentUser Name from UI
+    const currentUserName = (document.getElementById('profileDisplayName')?.innerText || "").trim().toLowerCase();
 
-        function toggleProfileEditModal() {
-            const newName = prompt("Enter new Name:", document.getElementById('profileDisplayName').innerText);
-            if (newName) {
-                document.getElementById('profileDisplayName').innerText = newName;
-                document.getElementById('nav-profile-name').innerText = newName;
-            }
-        }
+    // 1. Filter Posts by Author Name for "My Uploads"
+    const myUploads = fetchedPosts.filter(p => (p.author || "").trim().toLowerCase() === currentUserName);
 
-        function updateMetrics() {
-            document.getElementById('metric-posts').innerText = fetchedPosts.length;
-            document.getElementById('metric-snippets').innerText = fetchedPosts.filter(p => p.code).length;
-        }
+    // 2. Filter Bookmarked Posts from LocalStorage
+    const savedIds = JSON.parse(localStorage.getItem('synsocial_bookmarks') || '[]');
+    const savedPosts = fetchedPosts.filter(p => savedIds.includes(p._id || p.id));
 
-        window.onload = function() {
-            renderFeed();
-        };
-        const BACKEND_URL = 'https://synsocial.onrender.com';
+    // 3. Calculate Total Upvotes Received across all posts
+    const totalUpvotes = fetchedPosts.reduce((acc, p) => acc + (p.upvotes || 0), 0);
+
+    // Profile Top Metrics Update
+    document.getElementById('prof-stat-posts').innerText = myUploads.length;
+    document.getElementById('prof-stat-code').innerText = totalUpvotes;
+    document.getElementById('prof-stat-docs').innerText = savedPosts.length;
+
+    // Render Items inside Active Tab
+    const targetPosts = currentProfTab === 'uploads' ? myUploads : savedPosts;
+
+    if (targetPosts.length === 0) {
+        uploadsContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-6 glass-panel rounded-xl border border-slate-800">
+            No ${currentProfTab === 'uploads' ? 'uploads' : 'bookmarked posts'} found!
+        </div>`;
+        return;
+    }
+
+    uploadsContainer.innerHTML = targetPosts.map(post => `
+        <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+            <div>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-brand-500/20 text-brand-400 font-bold font-mono">${post.tag}</span>
+                <h4 class="font-bold text-sm text-slate-100 mt-1">${post.title}</h4>
+                <p class="text-xs text-slate-400">${post.content}</p>
+                <div class="text-[11px] text-slate-500 mt-1">👍 ${post.upvotes || 0} Upvotes</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateMetrics() {
+    const savedIds = JSON.parse(localStorage.getItem('synsocial_bookmarks') || '[]');
+    const totalUpvotes = fetchedPosts.reduce((acc, p) => acc + (p.upvotes || 0), 0);
+
+    // Landing Page Main Stat Counters Update
+    if(document.getElementById('metric-posts')) document.getElementById('metric-posts').innerText = fetchedPosts.length;
+    if(document.getElementById('metric-snippets')) document.getElementById('metric-snippets').innerText = fetchedPosts.filter(p => p.code).length;
+    if(document.getElementById('metric-likes')) document.getElementById('metric-likes').innerText = totalUpvotes;
+    if(document.getElementById('metric-saved')) document.getElementById('metric-saved').innerText = savedIds.length;
+
+    // Refresh Profile Stats too
+    renderProfile();
+}        const BACKEND_URL = 'https://synsocial.onrender.com';
 
 // 1. Handle Upvote
 async function handleUpvote(postId) {
