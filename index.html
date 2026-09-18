@@ -582,7 +582,7 @@ int main() {
                     <span>Code Snippet</span>
                     <button onclick="copyToClipboard(\`${post.code.replace(/`/g, '\\`')}\`)" class="text-brand-400 hover:underline"><i class="fa-regular fa-copy"></i> Copy</button>
                 </div>
-                <pre class="code-font text-xs text-emerald-400 overflow-x-auto">${post.code}</pre>
+                <pre class="code-font text-xs text-emerald-400 overflow-x-auto">${highlightCodeComments(post.code)}</pre>
             </div>` : ''}
 
             ${docPath ? `
@@ -591,7 +591,6 @@ int main() {
                 <a href="${docPath}" download="${post.docName}" target="_blank" class="px-3 py-1 bg-brand-600 text-white text-xs rounded-lg font-bold hover:bg-brand-500">Download File</a>
             </div>` : ''}
 
-            <!-- Upvote, Bookmark & Delete Actions -->
             <div class="pt-2 border-t border-slate-800/60 flex items-center gap-3">
                 <button onclick="handleUpvote('${post.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-all">
                     👍 Upvote (<span id="upvote-count-${post.id}">${post.upvotes || 0}</span>)
@@ -794,16 +793,15 @@ try {
     }
 }
         function renderVault() {
-            const vaultContainer = document.getElementById('vaultStream');
-            const posts = fetchedPosts.filter(p => p.code);
-            vaultContainer.innerHTML = posts.length ? posts.map(p => `
-                <div class="glass-panel p-4 rounded-xl space-y-2 border border-slate-800">
-                    <h4 class="font-bold text-sm text-slate-100">${p.title}</h4>
-                    <pre class="code-font text-xs text-cyan-300 bg-slate-950 p-2 rounded border border-slate-800">${p.code}</pre>
-                </div>
-            `).join('') : `<div class="text-xs text-slate-400 text-center py-4">No code snippets found!</div>`;
-        }
-
+    const vaultContainer = document.getElementById('vaultStream');
+    const posts = fetchedPosts.filter(p => p.code);
+    vaultContainer.innerHTML = posts.length ? posts.map(p => `
+        <div class="glass-panel p-4 rounded-xl space-y-2 border border-slate-800">
+            <h4 class="font-bold text-sm text-slate-100">${p.title}</h4>
+            <pre class="code-font text-xs text-emerald-400 bg-slate-950 p-2 rounded border border-slate-800 overflow-x-auto">${highlightCodeComments(p.code)}</pre>
+        </div>
+    `).join('') : `<div class="text-xs text-slate-400 text-center py-4">No code snippets found!</div>`;
+}
         let currentProfTab = 'uploads';
 
 function switchProfileTab(tabName) {
@@ -972,6 +970,19 @@ async function promptDeletePost(postId) {
     } catch (err) {
         alert("Failed to delete post: " + err.message);
     }
+}
+function highlightCodeComments(codeText) {
+    if (!codeText) return "";
+    
+    const safeCode = codeText
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    return safeCode.replace(
+        (/(\/\/[^\n]*|#[^\n]*)/g), 
+        '<span class="text-slate-500 italic font-normal">$1</span>'
+    );
 }
     </script>
 </body>
