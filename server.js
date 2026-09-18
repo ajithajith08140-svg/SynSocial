@@ -80,36 +80,27 @@ app.post('/run-code', async (req, res) => {
     }
 
     // Java Execution via Piston API
-    // Dynamic Class Name Detection for Java
+    // Java Execution via Judge0 Free API
     if (language === 'java') {
         try {
-            // Extract class name using Regex (default to Main if not found)
-            const classMatch = code.match(/public\s+class\s+([A-Za-z0-9_]+)/);
-            const className = classMatch ? classMatch[1] : 'Main';
-            const fileName = `${className}.java`;
-
-            const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+            const response = await fetch('https://ce.judge0.com/submissions?wait=true', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json' 
+                },
                 body: JSON.stringify({
-                    language: 'java',
-                    version: '15.0.2',
-                    files: [{
-                        name: fileName,
-                        content: code
-                    }],
+                    language_id: 62, // Java (OpenJDK 13.0.1)
+                    source_code: code,
                     stdin: input || ""
                 })
             });
 
             const data = await response.json();
-            
-            if (data.run) {
-                const outputResult = data.run.output || data.run.stderr || "Execution completed with no output.";
-                return res.json({ output: outputResult });
-            } else {
-                return res.json({ output: "Java Execution Error: " + (data.message || "Failed to compile.") });
-            }
+
+            // Extract compiler or runtime output
+            const outputResult = data.stdout || data.compile_output || data.stderr || data.message || "Execution completed with no output.";
+            return res.json({ output: outputResult });
+
         } catch (error) {
             return res.json({ output: "Java Execution API Error: " + error.message });
         }
