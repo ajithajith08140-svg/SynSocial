@@ -546,47 +546,61 @@ int main() {
         }
 
         function buildPostCardHTML(post) {
-            const docPath = post.docData ? (post.docData.startsWith('http') ? post.docData : `${API_URL}/${post.docData}`) : '';
+    const docPath = post.docData ? (post.docData.startsWith('http') ? post.docData : `${API_URL}/${post.docData}`) : '';
 
-            return `
-                <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] px-2 py-0.5 rounded bg-brand-500/20 text-brand-400 font-bold font-mono">${post.tag}</span>
-                            <h3 class="text-lg font-bold mt-1 text-slate-100">${post.title}</h3>
-                            <div class="text-xs text-slate-400">By ${post.author} • ${post.createdAt}</div>
-                        </div>
-                    </div>
-
-                    <p class="text-sm text-slate-300">${post.content}</p>
-
-                    ${post.link ? `
-                    <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
-                        <span class="text-xs text-slate-400 truncate max-w-[70%]"><i class="fa-solid fa-link text-brand-400 mr-2"></i>${post.link}</span>
-                        <a href="${post.link}" target="_blank" class="px-3 py-1 bg-brand-600/30 hover:bg-brand-600 text-brand-400 hover:text-white text-xs rounded-lg font-bold transition-all flex items-center space-x-1">
-                            <span>Visit Link</span>
-                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                        </a>
-                    </div>` : ''}
-
-                    ${post.code ? `
-                    <div class="rounded-xl bg-slate-950 p-3 relative border border-slate-800">
-                        <div class="flex justify-between text-xs text-slate-400 mb-1">
-                            <span>Code Snippet</span>
-                            <button onclick="copyToClipboard(\`${post.code.replace(/`/g, '\\`')}\`)" class="text-brand-400 hover:underline"><i class="fa-regular fa-copy"></i> Copy</button>
-                        </div>
-                        <pre class="code-font text-xs text-emerald-400 overflow-x-auto">${post.code}</pre>
-                    </div>` : ''}
-
-                    ${docPath ? `
-                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
-                        <span class="text-xs text-accent-cyan truncate"><i class="fa-solid fa-file-arrow-down mr-2"></i>${post.docName}</span>
-                        <a href="${docPath}" download="${post.docName}" target="_blank" class="px-3 py-1 bg-brand-600 text-white text-xs rounded-lg font-bold hover:bg-brand-500">Download File</a>
-                    </div>` : ''}
+    return `
+        <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4" id="post-${post.id}">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-[10px] px-2 py-0.5 rounded bg-brand-500/20 text-brand-400 font-bold font-mono">${post.tag}</span>
+                    <h3 class="text-lg font-bold mt-1 text-slate-100">${post.title}</h3>
+                    <div class="text-xs text-slate-400">By ${post.author} • ${post.createdAt}</div>
                 </div>
-            `;
-        }
+            </div>
 
+            <p class="text-sm text-slate-300">${post.content}</p>
+
+            ${post.link ? `
+            <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                <span class="text-xs text-slate-400 truncate max-w-[70%]"><i class="fa-solid fa-link text-brand-400 mr-2"></i>${post.link}</span>
+                <a href="${post.link}" target="_blank" class="px-3 py-1 bg-brand-600/30 hover:bg-brand-600 text-brand-400 hover:text-white text-xs rounded-lg font-bold transition-all flex items-center space-x-1">
+                    <span>Visit Link</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            </div>` : ''}
+
+            ${post.code ? `
+            <div class="rounded-xl bg-slate-950 p-3 relative border border-slate-800">
+                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>Code Snippet</span>
+                    <button onclick="copyToClipboard(\`${post.code.replace(/`/g, '\\`')}\`)" class="text-brand-400 hover:underline"><i class="fa-regular fa-copy"></i> Copy</button>
+                </div>
+                <pre class="code-font text-xs text-emerald-400 overflow-x-auto">${post.code}</pre>
+            </div>` : ''}
+
+            ${docPath ? `
+            <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                <span class="text-xs text-accent-cyan truncate"><i class="fa-solid fa-file-arrow-down mr-2"></i>${post.docName}</span>
+                <a href="${docPath}" download="${post.docName}" target="_blank" class="px-3 py-1 bg-brand-600 text-white text-xs rounded-lg font-bold hover:bg-brand-500">Download File</a>
+            </div>` : ''}
+
+            <!-- Upvote, Bookmark & Delete Actions -->
+            <div class="pt-2 border-t border-slate-800/60 flex items-center gap-3">
+                <button onclick="handleUpvote('${post.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-all">
+                    👍 Upvote (<span id="upvote-count-${post.id}">${post.upvotes || 0}</span>)
+                </button>
+
+                <button onclick="handleBookmark('${post.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-all">
+                    🔖 Bookmark
+                </button>
+
+                <button onclick="promptDeletePost('${post.id}')" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-xs text-red-400 border border-red-500/30 flex items-center gap-1.5 transition-all ml-auto">
+                    🗑️ Delete
+                </button>
+            </div>
+        </div>
+    `;
+}
         async function renderFeed() {
             const postsContainer = document.getElementById('postsStream');
             if (!postsContainer) return;
@@ -614,6 +628,7 @@ int main() {
                     docData: post.docUrl,
                     docName: post.docName,
                     likes: post.likes,
+                    upvotes: post.upvotes || 0,
                     createdAt: new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 })).join('');
 
@@ -831,6 +846,64 @@ try {
         window.onload = function() {
             renderFeed();
         };
+        const BACKEND_URL = 'https://synsocial.onrender.com';
+
+// 1. Handle Upvote
+async function handleUpvote(postId) {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/posts/upvote/${postId}`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById(`upvote-count-${postId}`).innerText = data.upvotes;
+        }
+    } catch (err) {
+        console.error("Upvote Error:", err);
+    }
+}
+
+// 2. Handle Local Storage Bookmark
+function handleBookmark(postId) {
+    let bookmarks = JSON.parse(localStorage.getItem('synsocial_bookmarks') || '[]');
+    if (!bookmarks.includes(postId)) {
+        bookmarks.push(postId);
+        localStorage.setItem('synsocial_bookmarks', JSON.stringify(bookmarks));
+        alert("Post bookmarked successfully!");
+    } else {
+        alert("Post already bookmarked!");
+    }
+}
+
+// 3. Handle Passkey Delete
+async function promptDeletePost(postId) {
+    const userPasskey = prompt("Enter the Passkey/PIN to delete this post:");
+
+    if (!userPasskey) {
+        alert("Delete cancelled or empty passkey!");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/posts/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ postId: postId, passkey: userPasskey })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert("Post deleted successfully!");
+            const postElement = document.getElementById(`post-${postId}`);
+            if (postElement) postElement.remove();
+        } else {
+            alert("Error: " + data.message);
+        }
+    } catch (err) {
+        alert("Failed to delete post: " + err.message);
+    }
+}
     </script>
 </body>
 </html>

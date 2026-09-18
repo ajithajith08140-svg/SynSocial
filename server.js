@@ -44,6 +44,7 @@ const postSchema = new mongoose.Schema({
     code: { type: String, default: "" },
     docUrl: { type: String, default: "" },
     docName: { type: String, default: "" },
+    upvotes: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -191,6 +192,42 @@ function prompt(message) {
         });
     } else {
         executeBinary();
+    }
+});
+// Upvote Post Endpoint
+app.post('/api/posts/upvote/:id', async (req, res) => {
+    try {
+        const post = await Post.findByIdAndUpdate(
+            req.params.id, 
+            { $inc: { upvotes: 1 } }, 
+            { new: true }
+        );
+        res.json({ success: true, upvotes: post.upvotes });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete Post with Passkey Verification Endpoint
+app.post('/api/posts/delete', async (req, res) => {
+    const { postId, passkey } = req.body;
+
+    try {
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(404).json({ success: false, message: "Post not found!" });
+        }
+
+        // Passkey Check
+        if (post.pin !== passkey) {
+            return res.status(401).json({ success: false, message: "Incorrect Passkey! Delete failed." });
+        }
+
+        await Post.findByIdAndDelete(postId);
+        res.json({ success: true, message: "Post deleted successfully!" });
+
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
