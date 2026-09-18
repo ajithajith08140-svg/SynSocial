@@ -1216,7 +1216,7 @@ async function handleAddComment(postId) {
 
     const currentUserName = (typeof userProfile !== 'undefined' && userProfile && userProfile.name) 
         ? userProfile.name 
-        : "Rayeesa"; // Screenshot-la Rayeesa nu irukku
+        : "Rayeesa"; 
 
     try {
         const res = await fetch(`${API_URL}/api/posts/${postId}/comments`, {
