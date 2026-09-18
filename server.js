@@ -68,9 +68,6 @@ app.get('/', (req, res) => {
     res.send("Synsocial API Server is running!");
 });
 
-// C Code Execution Endpoint (with Stdin Support for scanf)
-// C Code Execution Endpoint (with Stdin Support for scanf)
-// Universal Multi-Language Code Execution Endpoint
 // Universal Multi-Language Code Execution Endpoint
 app.post('/run-code', async (req, res) => {
     const { code, input, language } = req.body;
@@ -79,13 +76,15 @@ app.post('/run-code', async (req, res) => {
         return res.status(400).json({ output: "Error: No code provided." });
     }
 
-    // Java Execution via Piston API
     // Java Execution via Judge0 Free API
     if (language === 'java') {
         try {
             let processedCode = code;
 
-            // Automatically rename whatever class name the user typed to 'Main'
+            // Remove 'public' modifier from class definitions to allow class Main rename
+            processedCode = processedCode.replace(/public\s+class\s+([A-Za-z0-9_]+)/g, 'class $1');
+
+            // Automatically rename whatever main class name the user typed to 'Main'
             if (!processedCode.includes('class Main')) {
                 processedCode = processedCode.replace(/class\s+([A-Za-z0-9_]+)/g, 'class Main');
             }
@@ -173,7 +172,9 @@ app.post('/run-code', async (req, res) => {
     } else {
         executeBinary();
     }
-});// Create Post and Save to MongoDB
+});
+
+// Create Post and Save to MongoDB
 app.post('/api/posts/create', upload.single('document'), async (req, res) => {
     try {
         const { title, author, tag, pin, pinHint, content, link, code } = req.body;
