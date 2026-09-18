@@ -564,16 +564,15 @@ int main() {
             </div>` : ''}
 
             ${post.code ? `
-            <div class="rounded-xl bg-slate-950 p-3 relative border border-slate-800">
-                <div class="flex justify-between text-xs text-slate-400 mb-1">
-                    <span class="font-mono text-[11px]">Code Snippet</span>
-                    <button onclick="copyToClipboard(\`${post.code.replace(/`/g, '\\`')}\`)" class="text-brand-400 hover:underline text-xs flex items-center gap-1">
-                        <i class="fa-regular fa-copy"></i> Copy
-                    </button>
-                </div>
-                <pre class="code-font text-xs text-emerald-400 overflow-x-auto p-1">${highlightCodeComments(post.code)}</pre>
-            </div>` : ''}
-
+<div class="rounded-xl bg-slate-950 p-3 relative border border-slate-800">
+    <div class="flex justify-between text-xs text-slate-400 mb-1">
+        <span class="font-mono text-[11px]">Code Snippet</span>
+        <button type="button" onclick="copyToClipboard(decodeURIComponent('${encodeURIComponent(post.code)}'))" class="text-brand-400 hover:underline text-xs flex items-center gap-1 cursor-pointer">
+            <i class="fa-regular fa-copy"></i> Copy
+        </button>
+    </div>
+    <pre class="code-font text-xs text-emerald-400 overflow-x-auto p-1">${highlightCodeComments(post.code)}</pre>
+</div>` : ''}
             ${docPath ? `
             <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
                 <span class="text-xs text-accent-cyan truncate"><i class="fa-solid fa-file-arrow-down mr-2"></i>${post.docName}</span>
@@ -671,9 +670,38 @@ int main() {
         }
 
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text);
-            alert("📋 Code copied to clipboard!");
-        }
+    if (!text) return;
+    
+    // Modern Browser Navigator API
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Code copied to clipboard! 📋');
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            fallbackCopyTextToClipboard(text);
+        });
+    } else {
+        fallbackCopyTextToClipboard(text);
+    }
+}
+
+// Fallback for older browsers or non-HTTPS connections
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        alert('Code copied to clipboard! 📋');
+    } catch (err) {
+        alert('Failed to copy code.');
+    }
+    document.body.removeChild(textArea);
+}
 
         const langTemplates = {
     cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int a = 5, b = 3;\n    int c = a + b;\n    cout << "Value: " << a << b << endl;\n    cout << "Ans: " << c << endl;\n    return 0;\n}`,
