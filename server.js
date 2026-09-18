@@ -70,7 +70,7 @@ app.get('/', (req, res) => {
 
 // Universal Multi-Language Code Execution Endpoint
 app.post('/run-code', async (req, res) => {
-    const { code, input, language } = req.body;
+    let { code, input, language } = req.body;
 
     if (!code) {
         return res.status(400).json({ output: "Error: No code provided." });
@@ -132,6 +132,26 @@ app.post('/run-code', async (req, res) => {
         sourceFile = `temp_${uniqueId}.js`;
         compileCmd = null;
         runCmd = `node ${sourceFile}`;
+
+        // Node.js-la prompt() support panna custom polyfill logic
+        const promptPolyfill = `
+const fs = require('fs');
+let _stdinInputs = [];
+let _stdinIndex = 0;
+
+try {
+    _stdinInputs = fs.readFileSync(0, 'utf-8').trim().split(/\\r?\\n/);
+} catch(e) {}
+
+function prompt(message) {
+    if (message) process.stdout.write(message + "\\n");
+    if (_stdinIndex < _stdinInputs.length) {
+        return _stdinInputs[_stdinIndex++];
+    }
+    return "";
+}
+\n`;
+        code = promptPolyfill + code;
     } else {
         return res.status(400).json({ output: "Error: Unsupported language." });
     }
