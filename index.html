@@ -649,16 +649,10 @@ int main() {
             }
         }
            async function handleCreatePost(e) {
-    // 1. Page refresh / URL-la '?' varuvadhai thadukka
     if (e) e.preventDefault();
 
-    // 2. Event Target moolama direct-a form-a edukkirom (ID mismatch aagadhu)
     const form = e ? e.target : document.getElementById('postForm');
-    
-    if (!form) {
-        showToast('Form element not found!', '❌');
-        return;
-    }
+    if (!form) return;
 
     const formData = new FormData(form);
 
@@ -674,8 +668,16 @@ int main() {
 
         if (res.ok && data.success) {
             showToast('Post published successfully!', '🎉');
-            form.reset(); // Input fields clear panna
-            fetchPosts(); // Refresh feed live
+            form.reset();
+
+            // Check and execute existing load function safely
+            if (typeof fetchPosts === 'function') {
+                fetchPosts();
+            } else if (typeof loadPosts === 'function') {
+                loadPosts();
+            } else {
+                setTimeout(() => window.location.reload(), 1000);
+            }
         } else {
             showToast(data.error || 'Failed to publish post', '❌');
         }
