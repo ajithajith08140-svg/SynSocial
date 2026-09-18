@@ -199,7 +199,6 @@ function prompt(message) {
         executeBinary();
     }
 });
-// Extremely safe Comment Route
 app.post('/api/posts/:id/comments', async (req, res) => {
     try {
         const { id } = req.params;
@@ -215,27 +214,28 @@ app.post('/api/posts/:id/comments', async (req, res) => {
             createdAt: new Date()
         };
 
-        // MongoDB-la direct update query execution
-        const result = await Post.updateOne(
-            { _id: id },
-            { $push: { comments: newComment } }
+        // runValidators: false kudukuradhu moolam old schema validation errors prevent aagum
+        const updatedPost = await Post.findByIdAndUpdate(
+            id,
+            { $push: { comments: newComment } },
+            { new: true, runValidators: false }
         );
 
-        if (result.matchedCount === 0) {
+        if (!updatedPost) {
             return res.status(404).json({ success: false, message: "Post not found" });
         }
 
         return res.status(200).json({ 
             success: true, 
-            message: "Comment added successfully" 
+            message: "Comment added successfully",
+            comments: updatedPost.comments
         });
 
     } catch (error) {
-        console.error("Critical Comment Route Error:", error);
+        console.error("Comment Server Error Log:", error);
         return res.status(500).json({ 
             success: false, 
-            message: "Server internal error", 
-            error: error.message 
+            message: error.message || "Server error" 
         });
     }
 });// Upvote Post Endpoint
