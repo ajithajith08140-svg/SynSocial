@@ -734,17 +734,20 @@ async function runUniversalSandboxCode() {
     outputBox.innerText = "Running code, please wait...";
 
     try {
-        const response = await fetch('/run-code', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify({ 
-                code: code, 
-                input: input, 
-                language: language 
-            })
-        });
+        // Replace '/run-code' with your actual live backend URL:
+const BACKEND_URL = 'https://synsocial.onrender.com'; // <--- Insert your hosted backend domain here
+
+const response = await fetch(`${BACKEND_URL}/run-code`, {
+    method: 'POST',
+    headers: { 
+        'Content-Type': 'application/json' 
+    },
+    body: JSON.stringify({ 
+        code: code, 
+        input: input, 
+        language: language 
+    })
+});
 
         // Response JSON-a parse panna mudiyaadhu-na text-a read panni check panna
         const rawText = await response.text();
