@@ -633,10 +633,7 @@ async function handleComment(e, postId) {
     }
 }
 // Simple local bookmark click handler
-function handleBookmark(postId) {
-    if (!postId) return;
-    showToast('Post saved to bookmarks!', '🔖');
-}
+
         async function renderFeed() {
             const postsContainer = document.getElementById('postsStream');
             if (!postsContainer) return;
@@ -687,19 +684,54 @@ function handleBookmark(postId) {
 
         const data = await res.json();
 
-        if (res.ok && data.success) {
+        if (res.ok && (data.success || data.isBookmarked !== undefined)) {
             showToast(data.isBookmarked ? 'Saved to Bookmarks!' : 'Removed from Bookmarks', '🔖');
             
-            // Feed refresh panni Database data-va render pannuvom
+            // Feed workspace-a refresh panni DB updates sync pannuvom
             if (typeof fetchPosts === 'function') fetchPosts();
             else if (typeof loadPosts === 'function') loadPosts();
+            
+            // Profile bookmark counter & list-a instant-a update pannuvom
+            updateBookmarkProfileUI();
         } else {
             showToast('Failed to bookmark post', '❌');
         }
     } catch (err) {
+        console.error('Bookmark Error:', err);
         showToast('Network error while bookmarking', '❌');
     }
+}       async function updateBookmarkProfileUI() {
+    try {
+        const res = await fetch(`${API_URL}/api/posts`);
+        const posts = await res.json();
+
+        if (Array.isArray(posts)) {
+            // Bookmarked posts matum filter panrom
+            const bookmarkedPosts = posts.filter(p => p.isBookmarked === true);
+
+            // Profile-la Bookmarks Count updates
+            const countEl = document.getElementById('bookmarkCount') || document.getElementById('myBookmarkCount');
+            if (countEl) {
+                countEl.innerText = bookmarkedPosts.length;
+            }
+
+            // Profile-la "My Bookmarked Posts" Container updates
+            const bookmarkListEl = document.getElementById('myBookmarksList') || document.getElementById('bookmarkPostsContainer');
+            if (bookmarkListEl) {
+                if (bookmarkedPosts.length === 0) {
+                    bookmarkListEl.innerHTML = `<p class="text-xs text-slate-500 py-6 text-center">No bookmarked posts yet.</p>`;
+                } else {
+                    bookmarkListEl.innerHTML = bookmarkedPosts.map(post => buildPostCardHTML(post)).join('');
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Profile Bookmark Sync Error:', err);
+    }
 }
+
+// Initial page load appo profile counter load aaga:
+document.addEventListener('DOMContentLoaded', updateBookmarkProfileUI);
           async function handleCreatePost(e) {
     if (e) e.preventDefault();
 
