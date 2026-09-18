@@ -1099,21 +1099,21 @@ function showToast(message, icon = '✨') {
     toastMsg.innerText = message;
     toastIcon.innerText = icon;
 
-    toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+    // Top Animation (-translate-y-20 to translate-y-0)
+    toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
     toast.classList.add('translate-y-0', 'opacity-100');
 
     setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
-        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+        toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none');
     }, 3000);
-}
-    </script>
+}    </script>
     <!-- Toast Container -->
-<div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
-    <div class="glass-panel px-4 py-3 rounded-xl border border-slate-700 shadow-2xl flex items-center space-x-2 text-xs font-semibold text-slate-100 bg-slate-900/90">
+<!-- Toast Container (Top Right Position) -->
+<div id="toast" class="fixed top-5 right-5 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="glass-panel px-4 py-3 rounded-xl border border-slate-700 shadow-2xl flex items-center space-x-2 text-xs font-semibold text-slate-100 bg-slate-900/90 backdrop-blur-md">
         <span id="toast-icon">✨</span>
         <span id="toast-msg">Notification Message</span>
     </div>
-</div>
-</body>
+</div></body>
 </html>
