@@ -483,62 +483,52 @@ int main() {
             }
         }
 
-        async function handleCreatePost(e) {
-            e.preventDefault();
+        async function handleAddComment(postId) {
+    if (!postId || postId === 'undefined') {
+        showToast('Invalid Post ID!', '⚠️');
+        return;
+    }
 
-            const title = document.getElementById('postTitle').value.trim();
-            const author = document.getElementById('postAuthor').value.trim();
-            const tag = document.getElementById('postTag').value;
-            const pin = document.getElementById('postPin').value.trim();
-            const pinHint = document.getElementById('postPinHint').value.trim();
-            const content = document.getElementById('postContent').value.trim();
-            let link = document.getElementById('postLink').value.trim();
-            const code = document.getElementById('postCode').value;
-            const fileInput = document.getElementById('postDocFile');
+    const input = document.getElementById(`comment-input-${postId}`);
+    const text = input ? input.value.trim() : '';
 
-            if (pin.length !== 4 || isNaN(pin)) {
-                alert("Security PIN must be exactly 4 numeric digits!");
-                return;
-            }
+    if (!text) {
+        showToast('Please type a comment!', '⚠️');
+        return;
+    }
 
-            if (link && !link.startsWith('http://') && !link.startsWith('https://')) {
-                link = 'https://' + link;
-            }
+    // Safe Author Fallback
+    const currentUserName = (typeof userProfile !== 'undefined' && userProfile && userProfile.name) 
+        ? userProfile.name 
+        : "Student User";
 
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('author', author);
-            formData.append('tag', tag);
-            formData.append('pin', pin);
-            formData.append('pinHint', pinHint);
-            formData.append('content', content);
-            formData.append('link', link);
-            formData.append('code', code);
+    try {
+        const response = await fetch(`${API_URL}/api/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ 
+                text: text, 
+                author: currentUserName 
+            })
+        });
 
-            if (fileInput.files.length > 0) {
-                formData.append('document', fileInput.files[0]);
-            }
+        const data = await response.json();
 
-            try {
-                const response = await fetch(`${API_URL}/api/posts/create`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    document.getElementById('postForm').reset();
-                    renderFeed();
-                } else {
-                    alert('Failed to save post: ' + result.error);
-                }
-            } catch (err) {
-                console.error('Error saving post to MongoDB:', err);
-                alert('Server unreachable. Make sure node server.js is running.');
-            }
+        if (response.ok) {
+            showToast('Comment added!', '💬');
+            input.value = ''; // Input clear panrom
+            fetchPosts(); // Refresh feed to display comment
+        } else {
+            console.error('Server returned error:', data);
+            showToast(`Error: ${data.message || 'Server error'}`, '❌');
         }
-
+    } catch (err) {
+        console.error('Fetch exception:', err);
+        showToast('Network error while commenting', '❌');
+    }
+}
         function buildPostCardHTML(post) {
     const docPath = post.docData ? (post.docData.startsWith('http') ? post.docData : `${API_URL}/${post.docData}`) : '';
 
