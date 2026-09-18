@@ -15,7 +15,32 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
+
+const handleProfileUpdate = async (req, res) => {
+    try {
+        const { name, course, bio } = req.body;
+        let user = await User.findOne();
+        
+        if (!user) {
+            user = new User({ name, course, bio });
+        } else {
+            user.name = name;
+            user.course = course;
+            user.bio = bio;
+        }
+        
+        await user.save();
+        return res.status(200).json({ message: "Profile Updated Successfully", user });
+    } catch (err) {
+        return res.status(500).json({ message: "Database Error", error: err.message });
+    }
+};
+
+// Supporting both PUT and POST to bypass 405 errors
+app.put('/api/user/profile', handleProfileUpdate);
+app.post('/api/user/profile', handleProfileUpdate);
 app.use(express.urlencoded({ extended: true }));
 
 // 2. Ensure Uploads Directory Exists & Static Server
