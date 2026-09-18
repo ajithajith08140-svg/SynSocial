@@ -195,20 +195,54 @@ app.post('/api/posts/:id/comments', async (req, res) => {
     }
 });
 // Bookmark Toggle API Endpoint
+// 1. Comment API Route Fix
+app.post('/api/posts/comment/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const text = req.body.text || req.body.commentText || req.body.comment;
+
+        if (!text) {
+            return res.status(400).json({ success: false, message: 'Comment text is required' });
+        }
+
+        const post = await Post.findById(id);
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post not found' });
+        }
+
+        if (!post.comments) post.comments = [];
+        
+        // Push object format
+        post.comments.push({ text: text, createdAt: new Date() });
+        await post.save();
+
+        res.json({ success: true, message: 'Comment added', comments: post.comments, post });
+    } catch (err) {
+        console.error('Comment Error:', err);
+        res.status(500).json({ success: false, message: 'Server error adding comment' });
+    }
+});
+
+// 2. Bookmark API Route Fix
 app.post('/api/posts/bookmark/:id', async (req, res) => {
     try {
-        const post = await Post.findById(req.params.id);
-        if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+        const { id } = req.params;
+        const post = await Post.findById(id);
 
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post not found' });
+        }
+
+        // Toggle boolean value
         post.isBookmarked = !post.isBookmarked;
         await post.save();
 
         res.json({ success: true, isBookmarked: post.isBookmarked, post });
     } catch (err) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        console.error('Bookmark Error:', err);
+        res.status(500).json({ success: false, message: 'Server error bookmarking post' });
     }
-});// Universal Multi-Language Code Execution Endpoint
-app.post('/run-code', async (req, res) => {
+});app.post('/run-code', async (req, res) => {
     let { code, input, language } = req.body;
 
     if (!code) {

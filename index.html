@@ -603,36 +603,96 @@ int main() {
         </div>
     `;
 }
+// 1. Comment Submit Handler
 async function handleComment(e, postId) {
-    if (e) e.preventDefault(); // Page refresh-a prevent pannum
+    if (e) e.preventDefault();
 
     const form = e.target;
-    const input = form.querySelector('input[name="commentText"]');
-    const commentText = input ? input.value : '';
+    const input = form.querySelector('input[name="commentText"]') || form.querySelector('input[type="text"]');
+    const text = input ? input.value.trim() : '';
 
-    if (!commentText.trim()) return;
+    if (!text) return;
 
     try {
         const res = await fetch(`${API_URL}/api/posts/comment/${postId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: commentText })
+            body: JSON.stringify({ text: text, commentText: text })
         });
 
         const data = await res.json();
-        if (res.ok) {
+
+        if (res.ok && data.success) {
             showToast('Comment added!', '💬');
             form.reset();
-            if (typeof fetchPosts === 'function') fetchPosts();
-            else if (typeof loadPosts === 'function') loadPosts();
+            fetchPosts(); // Refresh feed workspace to show comments
         } else {
             showToast(data.message || 'Failed to add comment', '❌');
         }
     } catch (err) {
+        console.error('Comment Error:', err);
         showToast('Error adding comment', '❌');
     }
 }
-// Simple local bookmark click handler
+
+// 2. Bookmark Handler with Dynamic Profile UI Sync
+async function handleBookmark(postId) {
+    if (!postId) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/posts/bookmark/${postId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            showToast(data.isBookmarked ? 'Saved to Bookmarks!' : 'Removed from Bookmarks', '🔖');
+            fetchPosts(); // Refresh feed
+            renderProfileBookmarks(); // Update profile counts & list
+        } else {
+            showToast('Failed to bookmark post', '❌');
+        }
+    } catch (err) {
+        console.error('Bookmark Error:', err);
+        showToast('Network error while bookmarking', '❌');
+    }
+}
+
+// 3. Profile UI Bookmarks Renderer
+async function renderProfileBookmarks() {
+    try {
+        const res = await fetch(`${API_URL}/api/posts`);
+        const posts = await res.json();
+
+        if (Array.isArray(posts)) {
+            const bookmarkedPosts = posts.filter(p => p.isBookmarked === true);
+
+            // Update Counter Text in Profile Header
+            const countElements = document.querySelectorAll('#bookmarkCount, .bookmark-count');
+            countElements.forEach(el => el.innerText = bookmarkedPosts.length);
+
+            // Update Bookmarked Posts Container
+            const container = document.getElementById('myBookmarksList') || document.getElementById('bookmarkedPostsContainer');
+            if (container) {
+                if (bookmarkedPosts.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-500 py-8 text-center">No bookmarked posts!</p>`;
+                } else {
+                    container.innerHTML = bookmarkedPosts.map(post => buildPostCardHTML(post)).join('');
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Render profile bookmarks error:', err);
+    }
+}
+
+// Auto sync on DOM load
+document.addEventListener('DOMContentLoaded', () => {
+    fetchPosts();
+    renderProfileBookmarks();
+});// Simple local bookmark click handler
 
         async function renderFeed() {
             const postsContainer = document.getElementById('postsStream');
