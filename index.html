@@ -484,10 +484,7 @@ int main() {
         }
 
         async function handleAddComment(postId) {
-    if (!postId || postId === 'undefined') {
-        showToast('Invalid Post ID!', '⚠️');
-        return;
-    }
+    if (!postId || postId === 'undefined') return;
 
     const input = document.getElementById(`comment-input-${postId}`);
     const text = input ? input.value.trim() : '';
@@ -497,7 +494,11 @@ int main() {
         return;
     }
 
-    // Safe Author Fallback
+    // Find the send button and disable it during API call
+    const sendBtn = event.target;
+    sendBtn.disabled = true;
+    sendBtn.innerText = 'Sending...';
+
     const currentUserName = (typeof userProfile !== 'undefined' && userProfile && userProfile.name) 
         ? userProfile.name 
         : "Student User";
@@ -505,28 +506,23 @@ int main() {
     try {
         const response = await fetch(`${API_URL}/api/posts/${postId}/comments`, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify({ 
-                text: text, 
-                author: currentUserName 
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, author: currentUserName })
         });
-
-        const data = await response.json();
 
         if (response.ok) {
             showToast('Comment added!', '💬');
             input.value = ''; // Input clear panrom
-            fetchPosts(); // Refresh feed to display comment
+            fetchPosts(); // Refresh feed
         } else {
-            console.error('Server returned error:', data);
-            showToast(`Error: ${data.message || 'Server error'}`, '❌');
+            showToast('Failed to add comment', '❌');
         }
     } catch (err) {
-        console.error('Fetch exception:', err);
-        showToast('Network error while commenting', '❌');
+        showToast('Network error', '❌');
+    } finally {
+        // Enable button again
+        sendBtn.disabled = false;
+        sendBtn.innerText = 'Send';
     }
 }
         function buildPostCardHTML(post) {

@@ -199,14 +199,13 @@ function prompt(message) {
         executeBinary();
     }
 });
-// Comment Add Endpoint (Schema Safe Version)
 app.post('/api/posts/:id/comments', async (req, res) => {
     try {
         const { id } = req.params;
         const { text, author } = req.body;
 
         if (!text || !text.trim()) {
-            return res.status(400).json({ message: "Comment text cannot be empty" });
+            return res.status(400).json({ message: "Comment text empty" });
         }
 
         const commentObj = {
@@ -215,28 +214,26 @@ app.post('/api/posts/:id/comments', async (req, res) => {
             createdAt: new Date()
         };
 
-        // $push operator direct-a database-la comment array-a update pannum
         const updatedPost = await Post.findByIdAndUpdate(
             id,
             { $push: { comments: commentObj } },
-            { new: true, upsert: false }
+            { new: true }
         );
 
         if (!updatedPost) {
             return res.status(404).json({ message: "Post not found" });
         }
 
-        res.status(200).json({ 
+        // Return exact response cleanly
+        return res.status(200).json({ 
+            success: true,
             message: "Comment added successfully", 
             comments: updatedPost.comments 
         });
 
     } catch (error) {
-        console.error("Comment Post Error:", error);
-        res.status(500).json({ 
-            message: "Server error while adding comment", 
-            error: error.message 
-        });
+        console.error("Comment Error:", error);
+        return res.status(500).json({ message: "Server error", error: error.message });
     }
 });// Upvote Post Endpoint
 app.post('/api/posts/upvote/:id', async (req, res) => {
