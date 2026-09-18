@@ -616,7 +616,7 @@ int main() {
                     author: post.author,
                     tag: post.tag,
                     pin: post.pin,
-                    pinHint: post.pinHint,
+                    pinHint: post.pinHint || '',
                     content: post.content,
                     link: post.link,
                     code: post.code,
@@ -961,32 +961,52 @@ function handleBookmark(postId) {
 }
 
 // 3. Handle Passkey Delete
-async function promptDeletePost(postId) {
-    const userPasskey = prompt("Enter the Passkey/PIN to delete this post:");
-
-    if (!userPasskey) {
-        alert("Delete cancelled or empty passkey!");
+function promptDeletePost(postId) {
+    // Post ID vechu Target Post-a find panrom
+    const targetPost = fetchedPosts.find(p => (p._id || p.id) === postId);
+    
+    if (!targetPost) {
+        alert("Post not found!");
         return;
     }
 
+    // PIN Hint Display
+    const hintMessage = targetPost.pinHint 
+        ? `🔐 Security PIN Hint: "${targetPost.pinHint}"` 
+        : "No hint provided for this post.";
+
+    const enteredPin = prompt(`Delete Request:\n${hintMessage}\n\nEnter 4-digit PIN to delete this post:`);
+
+    if (enteredPin === null) return; // User canceled
+
+    if (!enteredPin.trim()) {
+        alert("PIN required to delete post!");
+        return;
+    }
+
+    // Execute Delete Request to Backend
+    executeDeletePost(postId, enteredPin.trim());
+}
+
+async function executeDeletePost(postId, pin) {
     try {
-        const response = await fetch(`${BACKEND_URL}/api/posts/delete`, {
-            method: 'POST',
+        const response = await fetch(`${API_URL}/api/posts/${postId}`, {
+            method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ postId: postId, passkey: userPasskey })
+            body: JSON.stringify({ pin })
         });
 
         const data = await response.json();
 
-        if (data.success) {
-            alert("Post deleted successfully!");
-            const postElement = document.getElementById(`post-${postId}`);
-            if (postElement) postElement.remove();
+        if (response.ok) {
+            alert('Post deleted successfully! 🗑️');
+            fetchPosts(); // Refresh feed
         } else {
-            alert("Error: " + data.message);
+            alert(`Delete Failed: ${data.message || 'Incorrect PIN!'}`);
         }
     } catch (err) {
-        alert("Failed to delete post: " + err.message);
+        console.error('Delete error:', err);
+        alert('Server error while deleting post.');
     }
 }
 function highlightCodeComments(codeText) {
