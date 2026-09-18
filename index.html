@@ -197,184 +197,171 @@
         </section>
 
         <!-- VIEW 2: SEARCH PAGE -->
-        <section id="view-search" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-            <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-                <h2 class="text-xl font-extrabold text-slate-100 flex items-center space-x-2">
-                    <i class="fa-solid fa-magnifying-glass text-brand-400"></i>
-                    <span>Advanced Resource Search Hub</span>
-                </h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div class="md:col-span-2 relative">
-                        <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-500"></i>
-                        <input type="text" id="dedicatedSearchInput" oninput="executeDedicatedSearch()" placeholder="Search title, content, links, author..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-500">
-                    </div>
-                    <div>
-                        <select id="filterTag" onchange="executeDedicatedSearch()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-500">
-                            <option value="ALL">All Subjects</option>
-                            <option value="Programming">Programming</option>
-                            <option value="DataStructures">DSA</option>
-                            <option value="WebDev">Web Dev</option>
-                            <option value="Database">DBMS</option>
-                        </select>
-                    </div>
-                </div>
+        <!-- VIEW 2: SEARCH PAGE -->
+<section id="view-search" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+    <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800 space-y-4">
+        <h2 class="text-lg sm:text-xl font-extrabold text-slate-100 flex items-center space-x-2">
+            <i class="fa-solid fa-magnifying-glass text-brand-400"></i>
+            <span>Advanced Resource Search Hub</span>
+        </h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2 relative">
+                <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-500"></i>
+                <input type="text" id="dedicatedSearchInput" oninput="executeDedicatedSearch()" placeholder="Search title, content, links, author..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs sm:text-sm focus:outline-none focus:border-brand-500">
             </div>
-
-            <div id="searchResultsStream" class="space-y-4 max-w-4xl mx-auto"></div>
-        </section>
-
-        <!-- VIEW 3: FEED WORKSPACE PAGE -->
-        <section id="view-feed" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="grid lg:grid-cols-12 gap-8">
-                
-                <div class="lg:col-span-5 space-y-6">
-                    <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 sticky top-24">
-                        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-                            <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
-                                <i class="fa-solid fa-pen-to-square text-brand-400"></i>
-                                <span>Create Secured Post</span>
-                            </h2>
-                            <span class="text-xs bg-brand-500/20 text-brand-400 px-2.5 py-1 rounded-md font-mono">PIN Security</span>
-                        </div>
-
-                        <form id="postForm" onsubmit="handleCreatePost(event)" class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-400 mb-1">Post Title *</label>
-                                <input type="text" id="postTitle" required placeholder="e.g., C++ Memory Allocation Notes" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-500">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-400 mb-1">Author Name *</label>
-                                <input type="text" id="postAuthor" required placeholder="Your Name" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-500">
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-400 mb-1">Subject Tag *</label>
-                                    <select id="postTag" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
-                                        <option value="Programming">Programming</option>
-                                        <option value="DataStructures">DSA</option>
-                                        <option value="WebDev">Web Dev</option>
-                                        <option value="Database">DBMS</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-400 mb-1">Security PIN (4 Digits) *</label>
-                                    <input type="password" id="postPin" maxlength="4" required placeholder="1234" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500 font-mono">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-400 mb-1">PIN Hint (For Recovery) *</label>
-                                <input type="text" id="postPinHint" required placeholder="e.g., My birth year" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-400 mb-1">Description *</label>
-                                <textarea id="postContent" required rows="2" placeholder="Explain your doubt or write notes..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-brand-500 resize-none"></textarea>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-400 mb-1">Reference Link / URL (Optional)</label>
-                                <input type="url" id="postLink" placeholder="https://example.com or GitHub URL" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-400 mb-1">Code Snippet (Optional)</label>
-                                <textarea id="postCode" rows="2" placeholder="Paste code here..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs code-font focus:outline-none focus:border-brand-500 resize-none"></textarea>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-400 mb-1">Attach File / Document (PDF, Image, Text)</label>
-                                <input type="file" id="postDocFile" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
-                            </div>
-
-                            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-brand-600 to-accent-violet text-white font-bold text-sm hover:opacity-90 transition-all shadow-md shadow-brand-600/30 flex items-center justify-center space-x-2">
-                                <i class="fa-solid fa-lock"></i>
-                                <span>Publish Protected Post</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-7 space-y-4">
-                    <div id="postsStream" class="space-y-4"></div>
-                </div>
-
+            <div>
+                <select id="filterTag" onchange="executeDedicatedSearch()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs sm:text-sm focus:outline-none focus:border-brand-500">
+                    <option value="ALL">All Subjects</option>
+                    <option value="Programming">Programming</option>
+                    <option value="DataStructures">DSA</option>
+                    <option value="WebDev">Web Dev</option>
+                    <option value="Database">DBMS</option>
+                </select>
             </div>
-        </section>
-
-        <!-- VIEW 4: CODE VAULT PAGE -->
-        <section id="view-vault" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-            <div class="space-y-2">
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-100 flex items-center space-x-3">
-                    <i class="fa-solid fa-box-archive text-accent-cyan"></i>
-                    <span>Code Vault & Universal Sandbox</span>
-                </h1>
-            </div>
-
-            <div class="grid lg:grid-cols-12 gap-8">
-                <div class="lg:col-span-7 space-y-4" id="vaultStream"></div>
-
-                <div class="lg:col-span-5 space-y-4">
-                    <!-- MULTI-LANGUAGE RUNNER PANEL -->
-<div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 sticky top-24">
-    <div class="flex items-center justify-between">
-        <h3 class="font-bold text-slate-100 flex items-center space-x-2">
-            <i class="fa-solid fa-terminal text-accent-emerald"></i>
-            <span>Multi-Language Runner</span>
-        </h3>
-        <select id="languageSelect" onchange="loadLangTemplate()" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-emerald-400 focus:outline-none">
-            <option value="cpp">C++ (GCC)</option>
-            <option value="c">C</option>
-            <option value="python">Python 3</option>
-            <option value="java">Java</option>
-            <option value="javascript">JavaScript</option>
-        </select>
+        </div>
     </div>
 
-    <!-- Code Input Textarea -->
-    <textarea id="sandboxCode" rows="8" class="w-full p-3 rounded-xl bg-slate-950 text-emerald-400 border border-slate-800 code-font text-xs focus:outline-none focus:border-accent-emerald resize-none">#include <iostream>
+    <div id="searchResultsStream" class="space-y-4 max-w-4xl mx-auto"></div>
+</section>
+
+        <!-- VIEW 3: FEED WORKSPACE PAGE -->
+        <!-- VIEW 3: FEED WORKSPACE PAGE -->
+<section id="view-feed" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        
+        <!-- Post Create Form -->
+        <div class="lg:col-span-5 order-1 lg:order-1 space-y-6">
+            <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800 space-y-4 lg:sticky lg:top-24">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-100 flex items-center space-x-2">
+                        <i class="fa-solid fa-pen-to-square text-brand-400"></i>
+                        <span>Create Secured Post</span>
+                    </h2>
+                    <span class="text-[10px] sm:text-xs bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-md font-mono">PIN Security</span>
+                </div>
+
+                <form id="postForm" onsubmit="handleCreatePost(event)" class="space-y-3 sm:space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Post Title *</label>
+                        <input type="text" id="postTitle" required placeholder="e.g., C++ Memory Allocation Notes" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs sm:text-sm focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Author Name *</label>
+                        <input type="text" id="postAuthor" required placeholder="Your Name" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs sm:text-sm focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Subject Tag *</label>
+                            <select id="postTag" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
+                                <option value="Programming">Programming</option>
+                                <option value="DataStructures">DSA</option>
+                                <option value="WebDev">Web Dev</option>
+                                <option value="Database">DBMS</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Security PIN (4 Digits) *</label>
+                            <input type="password" id="postPin" maxlength="4" required placeholder="1234" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500 font-mono">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">PIN Hint (For Recovery) *</label>
+                        <input type="text" id="postPinHint" required placeholder="e.g., My birth year" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Description *</label>
+                        <textarea id="postContent" required rows="2" placeholder="Explain your doubt or write notes..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs sm:text-sm focus:outline-none focus:border-brand-500 resize-none"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Reference Link / URL (Optional)</label>
+                        <input type="url" id="postLink" placeholder="https://example.com" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Code Snippet (Optional)</label>
+                        <textarea id="postCode" rows="2" placeholder="Paste code here..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs code-font focus:outline-none focus:border-brand-500 resize-none"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Attach Document</label>
+                        <input type="file" id="postDocFile" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-brand-600 to-accent-violet text-white font-bold text-xs sm:text-sm hover:opacity-90 transition-all shadow-md shadow-brand-600/30 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>Publish Protected Post</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Feed Stream -->
+        <div class="lg:col-span-7 order-2 lg:order-2 space-y-4">
+            <div id="postsStream" class="space-y-4"></div>
+        </div>
+
+    </div>
+</section>
+        <!-- VIEW 4: CODE VAULT PAGE -->
+        <!-- VIEW 4: CODE VAULT PAGE -->
+<section id="view-vault" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+    <div class="space-y-1">
+        <h1 class="text-xl sm:text-3xl font-extrabold text-slate-100 flex items-center space-x-2 sm:space-x-3">
+            <i class="fa-solid fa-box-archive text-accent-cyan"></i>
+            <span>Code Vault & Universal Sandbox</span>
+        </h1>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        <!-- Live Code Runner -->
+        <div class="lg:col-span-6 order-1 lg:order-2 space-y-4">
+            <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800 space-y-4 lg:sticky lg:top-24">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-xs sm:text-base text-slate-100 flex items-center space-x-2">
+                        <i class="fa-solid fa-terminal text-accent-emerald"></i>
+                        <span>Multi-Language Runner</span>
+                    </h3>
+                    <select id="languageSelect" onchange="loadLangTemplate()" class="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-[11px] font-mono text-emerald-400 focus:outline-none">
+                        <option value="cpp">C++ (GCC)</option>
+                        <option value="c">C</option>
+                        <option value="python">Python 3</option>
+                        <option value="java">Java</option>
+                        <option value="javascript">JavaScript</option>
+                    </select>
+                </div>
+
+                <textarea id="sandboxCode" rows="7" class="w-full p-3 rounded-xl bg-slate-950 text-emerald-400 border border-slate-800 code-font text-xs focus:outline-none focus:border-accent-emerald resize-none">#include <iostream>
 using namespace std;
 
 int main() {
-    int a = 5, b = 3;
-    int c = a + b;
-    cout << "Value: " << a << b << endl;
-    cout << "Ans: " << c << endl;
+    cout << "Hello SynSocial" << endl;
     return 0;
 }</textarea>
-    
-    <!-- Program Input Section -->
-    <div class="mt-4 space-y-3">
-        <div>
-            <label for="stdinInput" class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center space-x-1.5">
-                <i class="fa-solid fa-terminal text-accent-emerald text-xs"></i>
-                <span>Program Input (stdin):</span>
-            </label>
-            <textarea id="stdinInput" rows="3" 
-                placeholder="Enter inputs line-by-line (e.g.&#10;3&#10;2 4&#10;5 0&#10;3 4)" 
-                class="w-full p-3 rounded-xl bg-slate-900 text-emerald-400 placeholder-slate-500 border border-slate-700/80 code-font text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-inner resize-none transition-all"></textarea>
+                
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-semibold text-slate-300">Program Input (stdin):</label>
+                    <textarea id="stdinInput" rows="2" placeholder="Inputs line-by-line" class="w-full p-2.5 rounded-xl bg-slate-900 text-emerald-400 placeholder-slate-500 border border-slate-700/80 code-font text-xs focus:outline-none resize-none"></textarea>
+                </div>
+
+                <button onclick="checkCodeAndRun()" class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-500 text-slate-950 font-bold text-xs sm:text-sm transition-all flex items-center justify-center space-x-2 shadow-lg">
+                    <i class="fa-solid fa-play text-xs"></i>
+                    <span>Execute Code Online</span>
+                </button>
+
+                <pre id="outputBox" class="w-full p-3 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[90px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
+            </div>
         </div>
 
-        <button onclick="checkCodeAndRun()" id="runBtn" 
-            class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-500 text-slate-950 font-bold text-sm transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-emerald-950/20 active:scale-[0.98]">
-            <i class="fa-solid fa-play text-xs"></i>
-            <span>Execute Code Online</span>
-        </button>
+        <!-- Saved Snippets Feed -->
+        <div class="lg:col-span-6 order-2 lg:order-1 space-y-4" id="vaultStream"></div>
     </div>
-    
-    <!-- Output Display Box -->
-    <pre id="outputBox" class="w-full p-3.5 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[120px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
-</div>
-                        
-                        <pre id="sandboxOutput" class="w-full p-3.5 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[120px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
-                    </div>
-                </div>
-            </div>
-        </section>
-
+</section>
         <!-- VIEW 5: PROFILE DASHBOARD PAGE -->
         <section id="view-profile" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
             <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800 relative overflow-hidden">
@@ -556,22 +543,22 @@ int main() {
     const docPath = post.docData ? (post.docData.startsWith('http') ? post.docData : `${API_URL}/${post.docData}`) : '';
 
     return `
-        <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4" id="post-${post.id}">
+        <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800 space-y-4" id="post-${post.id}">
             <div class="flex justify-between items-start">
                 <div>
                     <span class="text-[10px] px-2 py-0.5 rounded bg-brand-500/20 text-brand-400 font-bold font-mono">${post.tag}</span>
-                    <h3 class="text-lg font-bold mt-1 text-slate-100">${post.title}</h3>
-                    <div class="text-xs text-slate-400">By ${post.author} • ${post.createdAt}</div>
+                    <h3 class="text-base sm:text-lg font-bold mt-1 text-slate-100">${post.title}</h3>
+                    <div class="text-[11px] sm:text-xs text-slate-400">By ${post.author} • ${post.createdAt}</div>
                 </div>
             </div>
 
-            <p class="text-sm text-slate-300">${post.content}</p>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">${post.content}</p>
 
             ${post.link ? `
-            <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
-                <span class="text-xs text-slate-400 truncate max-w-[70%]"><i class="fa-solid fa-link text-brand-400 mr-2"></i>${post.link}</span>
-                <a href="${post.link}" target="_blank" class="px-3 py-1 bg-brand-600/30 hover:bg-brand-600 text-brand-400 hover:text-white text-xs rounded-lg font-bold transition-all flex items-center space-x-1">
-                    <span>Visit Link</span>
+            <div class="p-2.5 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
+                <span class="text-xs text-slate-400 truncate max-w-[70%]"><i class="fa-solid fa-link text-brand-400 mr-1.5"></i>${post.link}</span>
+                <a href="${post.link}" target="_blank" class="px-2.5 py-1 bg-brand-600/30 hover:bg-brand-600 text-brand-400 hover:text-white text-xs rounded-lg font-bold transition-all flex items-center space-x-1 shrink-0">
+                    <span>Visit</span>
                     <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                 </a>
             </div>` : ''}
@@ -579,28 +566,31 @@ int main() {
             ${post.code ? `
             <div class="rounded-xl bg-slate-950 p-3 relative border border-slate-800">
                 <div class="flex justify-between text-xs text-slate-400 mb-1">
-                    <span>Code Snippet</span>
-                    <button onclick="copyToClipboard(\`${post.code.replace(/`/g, '\\`')}\`)" class="text-brand-400 hover:underline"><i class="fa-regular fa-copy"></i> Copy</button>
+                    <span class="font-mono text-[11px]">Code Snippet</span>
+                    <button onclick="copyToClipboard(\`${post.code.replace(/`/g, '\\`')}\`)" class="text-brand-400 hover:underline text-xs flex items-center gap-1">
+                        <i class="fa-regular fa-copy"></i> Copy
+                    </button>
                 </div>
-                <pre class="code-font text-xs text-emerald-400 overflow-x-auto">${highlightCodeComments(post.code)}</pre>
+                <pre class="code-font text-xs text-emerald-400 overflow-x-auto p-1">${highlightCodeComments(post.code)}</pre>
             </div>` : ''}
 
             ${docPath ? `
-            <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
                 <span class="text-xs text-accent-cyan truncate"><i class="fa-solid fa-file-arrow-down mr-2"></i>${post.docName}</span>
-                <a href="${docPath}" download="${post.docName}" target="_blank" class="px-3 py-1 bg-brand-600 text-white text-xs rounded-lg font-bold hover:bg-brand-500">Download File</a>
+                <a href="${docPath}" download="${post.docName}" target="_blank" class="px-3 py-1 bg-brand-600 text-white text-xs rounded-lg font-bold hover:bg-brand-500 shrink-0">Download</a>
             </div>` : ''}
 
-            <div class="pt-2 border-t border-slate-800/60 flex items-center gap-3">
-                <button onclick="handleUpvote('${post.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-all">
+            <!-- Mobile & Laptop Responsive Action Bar -->
+            <div class="pt-3 border-t border-slate-800/60 flex flex-wrap items-center gap-2 sm:gap-3">
+                <button onclick="handleUpvote('${post.id}')" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-[11px] sm:text-xs text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-all">
                     👍 Upvote (<span id="upvote-count-${post.id}">${post.upvotes || 0}</span>)
                 </button>
 
-                <button onclick="handleBookmark('${post.id}')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-all">
+                <button onclick="handleBookmark('${post.id}')" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-[11px] sm:text-xs text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-all">
                     🔖 Bookmark
                 </button>
 
-                <button onclick="promptDeletePost('${post.id}')" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-xs text-red-400 border border-red-500/30 flex items-center gap-1.5 transition-all ml-auto">
+                <button onclick="promptDeletePost('${post.id}')" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-[11px] sm:text-xs text-red-400 border border-red-500/30 flex items-center gap-1.5 transition-all ml-auto">
                     🗑️ Delete
                 </button>
             </div>
