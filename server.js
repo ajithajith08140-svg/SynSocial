@@ -228,6 +228,7 @@ app.post('/api/posts/:id/comments', async (req, res) => {
     }
 });
 // Upvote Post Endpoint
+// Upvote Post Endpoint
 app.post('/api/posts/upvote/:id', async (req, res) => {
     try {
         const post = await Post.findByIdAndUpdate(
@@ -235,38 +236,42 @@ app.post('/api/posts/upvote/:id', async (req, res) => {
             { $inc: { upvotes: 1 } }, 
             { new: true }
         );
-        res.json({ success: true, upvotes: post.upvotes });
+        if (!post) {
+            return res.status(404).json({ success: false, message: "Post not found" });
+        }
+        return res.json({ success: true, upvotes: post.upvotes });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        return res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// Delete Post with Passkey Verification Endpoint
+// Delete Post with Passkey Verification Endpoint & Hint
 app.delete('/api/posts/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { pin } = req.body;
+        const { pin } = req.body || {};
 
         const post = await Post.findById(id);
 
         if (!post) {
-            return res.status(404).json({ message: "Post not found!" });
+            return res.status(404).json({ success: false, message: "Post not found!" });
         }
 
         // Compare PIN
-        if (post.pin !== pin) {
-            return res.status(401).json({ message: "Incorrect PIN!" });
+        if (post.pin && post.pin !== pin) {
+            // PIN Wrong-a irundha PIN Hint-oda clear response tharrurom
+            const hintMsg = post.pinHint ? `Incorrect PIN! Hint: ${post.pinHint}` : "Incorrect PIN!";
+            return res.status(401).json({ success: false, message: hintMsg });
         }
 
         await Post.findByIdAndDelete(id);
-        res.status(200).json({ message: "Post deleted successfully" });
+        return res.status(200).json({ success: true, message: "Post deleted successfully" });
 
     } catch (error) {
         console.error("Delete Endpoint Error:", error);
-        res.status(500).json({ message: "Server error during deletion", error: error.message });
+        return res.status(500).json({ success: false, message: "Server error during deletion", error: error.message });
     }
-});
-// Create Post and Save to MongoDB
+});// Create Post and Save to MongoDB
 app.post('/api/posts/create', upload.single('document'), async (req, res) => {
     try {
         const { title, author, tag, pin, pinHint, content, link, code } = req.body;

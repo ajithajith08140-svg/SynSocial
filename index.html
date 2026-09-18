@@ -987,50 +987,56 @@ function updateMetrics() {
     renderProfile();
 }        const BACKEND_URL = 'https://synsocial.onrender.com';
 
-// 1. Handle Upvote
-// 1. Upvote Function (Backend Path: /api/posts/upvote/:id)
+// Upvote Function
 async function handleUpvote(postId) {
     if (!postId) return;
     try {
         const res = await fetch(`${API_URL}/api/posts/upvote/${postId}`, { 
-            method: 'POST' 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
         });
         const data = await res.json();
+        
         if (res.ok && data.success) {
             showToast('Upvoted!', '👍');
-            fetchPosts();
+            fetchPosts(); // Feed refresh
         } else {
-            showToast('Failed to upvote', '❌');
+            showToast(data.message || 'Failed to upvote', '❌');
         }
     } catch (err) {
-        showToast('Network error', '❌');
+        showToast('Network error while upvoting', '❌');
     }
 }
 
-// 2. Delete Function with PIN Verification (Backend Path: DELETE /api/posts/:id)
+// Delete Function with PIN & Hint display
 async function handleDeletePost(postId) {
     if (!postId) return;
-    const pin = prompt("Enter 4-digit Security PIN to delete:");
-    if (!pin) return;
+    
+    const userPin = prompt("Enter 4-digit Security PIN to delete this post:");
+    if (!userPin) return; // User cancel panta exit aayidum
 
     try {
         const res = await fetch(`${API_URL}/api/posts/${postId}`, { 
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pin: pin })
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ pin: userPin.trim() })
         });
+        
         const data = await res.json();
-        if (res.ok) {
-            showToast('Post deleted!', '🗑️');
-            fetchPosts();
+        
+        if (res.ok && data.success) {
+            showToast('Post deleted successfully!', '🗑️');
+            fetchPosts(); // Feed refresh
         } else {
+            // Wrong PIN podumbodhu PIN Hint oda popup / toast kaattum
             showToast(data.message || 'Incorrect PIN!', '❌');
         }
     } catch (err) {
         showToast('Server error during deletion', '❌');
     }
 }
-
 // 3. Bookmark Function
 function handleBookmark(postId) {
     showToast('Bookmarked!', '🔖');
