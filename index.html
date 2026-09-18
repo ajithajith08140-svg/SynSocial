@@ -695,6 +695,25 @@ function checkCodeAndRun() {
     runUniversalSandboxCode();
 }
 
+// 1. Live Terminal Emulation Formatter Function
+function formatTerminalOutput(stdout, stdinText) {
+    if (!stdout) return "Execution completed with no output.";
+    if (!stdinText || !stdinText.trim()) return stdout;
+
+    const inputs = stdinText.trim().split(/\r?\n/);
+    let inputIndex = 0;
+
+    // Prompt messages ("Enter first number: ") pakkathula input numbers-a join panna
+    return stdout.replace(/([:?]\s*)(?=[A-Z0-9]|$)/gi, (match) => {
+        if (inputIndex < inputs.length) {
+            const currentInput = inputs[inputIndex++];
+            return `${match}${currentInput}\n`;
+        }
+        return match;
+    });
+}
+
+// 2. Unga Sandbox Execution Function
 async function runUniversalSandboxCode() {
     const codeEl = document.getElementById('sandboxCode');
     const inputEl = document.getElementById('stdinInput');
@@ -716,37 +735,25 @@ async function runUniversalSandboxCode() {
         return;
     }
 
-    outputBox.innerText = "Executing code on server...";
-    if (runBtn) runBtn.disabled = true;
-
+    // Backend-ukku API call panni output vaanguvaam
     try {
-        const response = await fetch('https://synsocial.onrender.com/run-code', {
+        const response = await fetch('/run-code', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                code: code,
-                input: input,
-                language: language
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, input, language })
         });
 
         const data = await response.json();
+        const rawOutput = data.output || '';
 
-        if (data.output) {
-            outputBox.innerText = data.output;
-        } else {
-            outputBox.innerText = "Execution completed with no output.";
-        }
+        // Formatter function-a call panni outputBox-la display panrom
+        const finalFormattedOutput = formatTerminalOutput(rawOutput, input);
+        outputBox.innerText = finalFormattedOutput;
 
-    } catch (error) {
-        outputBox.innerText = "Error connecting to backend: " + error.message;
-    } finally {
-        if (runBtn) runBtn.disabled = false;
+    } catch (err) {
+        outputBox.innerText = "Error: " + err.message;
     }
 }
-
         function renderVault() {
             const vaultContainer = document.getElementById('vaultStream');
             const posts = fetchedPosts.filter(p => p.code);
