@@ -527,11 +527,11 @@ int main() {
         showToast('Network error while commenting', '❌');
     }
 }
-      function buildPostCardHTML(post) {
+      //1. Post Card HTML Generator (Used for Feed, Search Hub, and Profile Bookmarks)
+function buildPostCardHTML(post) {
     const id = post._id || post.id || '';
     const comments = Array.isArray(post.comments) ? post.comments : [];
     
-    // Formatting date safely
     let formattedDate = 'Just now';
     if (post.createdAt) {
         const d = new Date(post.createdAt);
@@ -540,12 +540,11 @@ int main() {
         }
     }
 
-    // Escape object string safely for handleBookmark
-    const postJsonString = JSON.stringify(post).replace(/"/g, '&quot;');
+    const docUrl = post.docUrl || post.docData || '';
+    const docName = post.docName || 'Document';
 
     return `
         <div class="glass-card p-5 rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-xl mb-4 space-y-4">
-            <!-- Header Section -->
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <span class="inline-block px-2.5 py-0.5 text-[10px] font-semibold text-brand-400 bg-brand-500/10 rounded-full border border-brand-500/20 mb-2">
@@ -557,12 +556,11 @@ int main() {
                     </p>
                 </div>
                 
-                <!-- Action Buttons -->
                 <div class="flex items-center gap-2 shrink-0">
                     <button type="button" onclick="handleUpvote('${id}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">
-                        🔥 Upvote (${post.upvotes || 0})
+                        🔥 Upvote (${post.upvotes || post.likes || 0})
                     </button>
-                    <button type="button" onclick="handleBookmark('${id}', ${postJsonString})" class="px-3 py-1.5 rounded-lg ${post.isBookmarked ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-amber-400'} text-xs font-semibold transition">
+                    <button type="button" onclick="handleBookmark('${id}')" class="px-3 py-1.5 rounded-lg ${post.isBookmarked ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-amber-400'} text-xs font-semibold transition">
                         🔖 ${post.isBookmarked ? 'Bookmarked' : 'Bookmark'}
                     </button>
                     <button type="button" onclick="handleDeletePost('${id}')" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition">
@@ -571,29 +569,26 @@ int main() {
                 </div>
             </div>
 
-            <!-- Description / Content -->
             <p class="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">${post.content || ''}</p>
 
-            <!-- Attachments & External Link -->
             <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-800/60">
                 ${post.link ? `
                     <a href="${post.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-brand-400 border border-slate-700 rounded-lg text-xs font-medium transition">
-                        🔗 Open Link (${post.link})
+                        🔗 Open Reference Link
                     </a>
                 ` : ''}
 
-                ${post.docUrl ? `
-                    <a href="${post.docUrl}" target="_blank" download class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 rounded-lg text-xs font-medium transition">
-                        📄 Download (${post.docName || 'Document'})
+                ${docUrl ? `
+                    <a href="${docUrl}" target="_blank" download class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 rounded-lg text-xs font-medium transition">
+                        📄 Download (${docName})
                     </a>
                 ` : ''}
             </div>
 
-            <!-- Comments Section -->
             <div class="pt-3 border-t border-slate-800/40 space-y-2">
                 <p class="text-xs font-semibold text-slate-400">Comments (${comments.length})</p>
                 <div class="space-y-1">
-                    ${comments.map(c => `<div class="bg-slate-950 p-2 rounded text-xs text-slate-300">${typeof c === 'object' ? c.text : c}</div>`).join('')}
+                    ${comments.map(c => `<div class="bg-slate-950 p-2 rounded text-xs text-slate-300">${typeof c === 'object' ? (c.text || '') : c}</div>`).join('')}
                 </div>
                 <form onsubmit="handleComment(event, '${id}')" class="flex gap-2 pt-1">
                     <input type="text" name="commentText" required placeholder="Write a comment..." class="flex-1 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none">
@@ -603,10 +598,52 @@ int main() {
         </div>
     `;
 }
+async function fetchPosts() {
+    try {
+        const res = await fetch(`${API_URL}/api/posts`);
+        const posts = await res.json();
+
+        if (Array.isArray(posts)) {
+            // Render Feed Workspace Container
+            const feedContainer = document.getElementById('postsContainer') || document.getElementById('feedContainer');
+            if (feedContainer) {
+                feedContainer.innerHTML = posts.map(post => buildPostCardHTML(post)).join('');
+            }
+
+            // Render Search Hub Container
+            const searchContainer = document.getElementById('searchResultsContainer') || document.getElementById('searchHubPosts');
+            if (searchContainer) {
+                searchContainer.innerHTML = posts.map(post => buildPostCardHTML(post)).join('');
+            }
+
+            // Update Home & Profile Dynamic Stats
+            updateAppStats(posts);
+        }
+    } catch (err) {
+        console.error('Fetch posts error:', err);
+    }
+}
+function updateAppStats(posts) {
+    const totalNotes = posts.filter(p => p.docUrl || p.docData).length;
+    const totalUpvotes = posts.reduce((acc, p) => acc + (p.upvotes || p.likes || 0), 0);
+    const bookmarkedPosts = posts.filter(p => p.isBookmarked === true);
+
+    // Update Profile Bookmarks Counter & List
+    const profileBookmarkCount = document.getElementById('bookmarkCount') || document.getElementById('myBookmarkCount');
+    if (profileBookmarkCount) profileBookmarkCount.innerText = bookmarkedPosts.length;
+
+    const profileBookmarksList = document.getElementById('myBookmarksList') || document.getElementById('bookmarkedPostsContainer');
+    if (profileBookmarksList) {
+        if (bookmarkedPosts.length === 0) {
+            profileBookmarksList.innerHTML = `<p class="text-xs text-slate-500 py-6 text-center">No bookmarked posts!</p>`;
+        } else {
+            profileBookmarksList.innerHTML = bookmarkedPosts.map(post => buildPostCardHTML(post)).join('');
+        }
+    }
+}
 // 1. Comment Submit Handler
 async function handleComment(e, postId) {
     if (e) e.preventDefault();
-
     const form = e.target;
     const input = form.querySelector('input[name="commentText"]') || form.querySelector('input[type="text"]');
     const text = input ? input.value.trim() : '';
@@ -617,49 +654,23 @@ async function handleComment(e, postId) {
         const res = await fetch(`${API_URL}/api/posts/comment/${postId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text, commentText: text })
+            body: JSON.stringify({ text: text })
         });
-
         const data = await res.json();
 
         if (res.ok && data.success) {
             showToast('Comment added!', '💬');
             form.reset();
-            fetchPosts(); // Refresh feed workspace to show comments
+            fetchPosts();
         } else {
             showToast(data.message || 'Failed to add comment', '❌');
         }
     } catch (err) {
-        console.error('Comment Error:', err);
         showToast('Error adding comment', '❌');
     }
 }
-
 // 2. Bookmark Handler with Dynamic Profile UI Sync
-async function handleBookmark(postId) {
-    if (!postId) return;
-
-    try {
-        const res = await fetch(`${API_URL}/api/posts/bookmark/${postId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-            showToast(data.isBookmarked ? 'Saved to Bookmarks!' : 'Removed from Bookmarks', '🔖');
-            fetchPosts(); // Refresh feed
-            renderProfileBookmarks(); // Update profile counts & list
-        } else {
-            showToast('Failed to bookmark post', '❌');
-        }
-    } catch (err) {
-        console.error('Bookmark Error:', err);
-        showToast('Network error while bookmarking', '❌');
-    }
-}
-
+a
 // 3. Profile UI Bookmarks Renderer
 async function renderProfileBookmarks() {
     try {
@@ -735,32 +746,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         async function handleBookmark(postId) {
     if (!postId) return;
-
     try {
-        const res = await fetch(`${API_URL}/api/posts/bookmark/${postId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-
+        const res = await fetch(`${API_URL}/api/posts/bookmark/${postId}`, { method: 'POST' });
         const data = await res.json();
-
-        if (res.ok && (data.success || data.isBookmarked !== undefined)) {
+        if (res.ok && data.success) {
             showToast(data.isBookmarked ? 'Saved to Bookmarks!' : 'Removed from Bookmarks', '🔖');
-            
-            // Feed workspace-a refresh panni DB updates sync pannuvom
-            if (typeof fetchPosts === 'function') fetchPosts();
-            else if (typeof loadPosts === 'function') loadPosts();
-            
-            // Profile bookmark counter & list-a instant-a update pannuvom
-            updateBookmarkProfileUI();
-        } else {
-            showToast('Failed to bookmark post', '❌');
+            fetchPosts();
         }
     } catch (err) {
-        console.error('Bookmark Error:', err);
         showToast('Network error while bookmarking', '❌');
     }
-}       async function updateBookmarkProfileUI() {
+}
+
+async function updateBookmarkProfileUI() {
     try {
         const res = await fetch(`${API_URL}/api/posts`);
         const posts = await res.json();
@@ -1169,28 +1167,23 @@ function updateMetrics() {
 
 // 1. Upvote Handler
 async function handleUpvote(postId) {
-    if (!postId) {
-        showToast('Invalid Post ID', '❌');
-        return;
-    }
+    if (!postId) return;
     try {
-        const res = await fetch(`${API_URL}/api/posts/upvote/${postId}`, { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
+        const res = await fetch(`${API_URL}/api/posts/upvote/${postId}`, { method: 'POST' });
         const data = await res.json();
-        
         if (res.ok && data.success) {
             showToast('Upvoted!', '👍');
-            if (typeof fetchPosts === 'function') fetchPosts();
-            else if (typeof loadPosts === 'function') loadPosts();
-        } else {
-            showToast(data.message || 'Failed to upvote', '❌');
+            fetchPosts();
         }
     } catch (err) {
         showToast('Network error while upvoting', '❌');
     }
 }
+
+// 5. DOM Initialization Fix (Prevents ReferenceError)
+document.addEventListener('DOMContentLoaded', () => {
+    fetchPosts();
+});
 // 2. Delete Handler (Fixes PIN String Match & Delete execution)
 async function handleDeletePost(postId) {
     if (!postId) {

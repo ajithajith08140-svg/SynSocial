@@ -32,7 +32,7 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log("MongoDB Connected Successfully!"))
     .catch(err => console.error("MongoDB Connection Error:", err));
 
-// 4. Mongoose Schema Definition
+// 4. Mongoose Schema Definition (Includes isBookmarked)
 const postSchema = new mongoose.Schema({
     title: String,
     author: String,
@@ -45,6 +45,7 @@ const postSchema = new mongoose.Schema({
     docUrl: String,
     docName: String,
     upvotes: { type: Number, default: 0 },
+    isBookmarked: { type: Boolean, default: false },
     comments: [
         {
             text: String,
@@ -53,6 +54,7 @@ const postSchema = new mongoose.Schema({
         }
     ]
 }, { timestamps: true });
+
 const Post = mongoose.model('Post', postSchema);
 
 // 5. Configure Multer Storage
@@ -136,7 +138,7 @@ app.post('/api/posts/upvote/:id', async (req, res) => {
     }
 });
 
-// Delete Post with Passkey Verification Endpoint
+// Delete Post Endpoint
 app.delete('/api/posts/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -148,7 +150,6 @@ app.delete('/api/posts/:id', async (req, res) => {
             return res.status(404).json({ success: false, message: "Post not found!" });
         }
 
-        // String comparison for PIN matching
         const enteredPin = pin ? String(pin).trim() : "";
         const storedPin = post.pin ? String(post.pin).trim() : "";
 
@@ -166,42 +167,13 @@ app.delete('/api/posts/:id', async (req, res) => {
     }
 });
 
-// Add Comment Endpoint
-app.post('/api/posts/:id/comments', async (req, res) => {
+// Single Unified Comment Route (Supports both frontend API paths)
+const handleAddComment = async (req, res) => {
     try {
         const { id } = req.params;
-        const { text, author } = req.body;
+        const commentText = req.body.text || req.body.commentText || req.body.comment;
 
-        if (!text || !text.trim()) {
-            return res.status(200).json({ success: true });
-        }
-
-        const newComment = {
-            text: text.trim(),
-            author: author || "Student User",
-            createdAt: new Date()
-        };
-
-        await Post.updateOne(
-            { _id: id },
-            { $push: { comments: newComment } }
-        );
-
-        return res.status(200).send({ success: true, message: "OK" });
-
-    } catch (error) {
-        console.error("Comment route catch:", error);
-        return res.status(200).send({ success: true, message: "Handled" });
-    }
-});
-// Bookmark Toggle API Endpoint
-// 1. Comment API Route Fix
-app.post('/api/posts/comment/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const text = req.body.text || req.body.commentText || req.body.comment;
-
-        if (!text) {
+        if (!commentText || !commentText.trim()) {
             return res.status(400).json({ success: false, message: 'Comment text is required' });
         }
 
@@ -211,19 +183,25 @@ app.post('/api/posts/comment/:id', async (req, res) => {
         }
 
         if (!post.comments) post.comments = [];
-        
-        // Push object format
-        post.comments.push({ text: text, createdAt: new Date() });
-        await post.save();
 
-        res.json({ success: true, message: 'Comment added', comments: post.comments, post });
+        post.comments.push({
+            text: commentText.trim(),
+            author: req.body.author || "Student User",
+            createdAt: new Date()
+        });
+
+        await post.save();
+        res.status(200).json({ success: true, message: 'Comment added successfully', comments: post.comments, post });
     } catch (err) {
         console.error('Comment Error:', err);
         res.status(500).json({ success: false, message: 'Server error adding comment' });
     }
-});
+};
 
-// 2. Bookmark API Route Fix
+app.post('/api/posts/:id/comments', handleAddComment);
+app.post('/api/posts/comment/:id', handleAddComment);
+
+// Bookmark Toggle Route
 app.post('/api/posts/bookmark/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -233,7 +211,6 @@ app.post('/api/posts/bookmark/:id', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Post not found' });
         }
 
-        // Toggle boolean value
         post.isBookmarked = !post.isBookmarked;
         await post.save();
 
@@ -242,7 +219,10 @@ app.post('/api/posts/bookmark/:id', async (req, res) => {
         console.error('Bookmark Error:', err);
         res.status(500).json({ success: false, message: 'Server error bookmarking post' });
     }
-});app.post('/run-code', async (req, res) => {
+});
+
+// Code Execution Runner Endpoint
+app.post('/run-code', async (req, res) => {
     let { code, input, language } = req.body;
 
     if (!code) {
