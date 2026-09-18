@@ -214,25 +214,25 @@ app.post('/api/posts/:id/comments', async (req, res) => {
             createdAt: new Date()
         };
 
-        // runValidators: false kudukuradhu moolam old schema validation errors prevent aagum
-        const updatedPost = await Post.findByIdAndUpdate(
+        // Strict validation rules-a bypass panni atomic update pannum
+        const result = await Post.findByIdAndUpdate(
             id,
             { $push: { comments: newComment } },
             { new: true, runValidators: false }
         );
 
-        if (!updatedPost) {
+        if (!result) {
             return res.status(404).json({ success: false, message: "Post not found" });
         }
 
+        // Clean JSON response
         return res.status(200).json({ 
             success: true, 
-            message: "Comment added successfully",
-            comments: updatedPost.comments
+            message: "Comment added successfully" 
         });
 
     } catch (error) {
-        console.error("Comment Server Error Log:", error);
+        console.error("Backend Error:", error);
         return res.status(500).json({ 
             success: false, 
             message: error.message || "Server error" 

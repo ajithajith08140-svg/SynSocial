@@ -502,22 +502,20 @@ int main() {
         const response = await fetch(`${API_URL}/api/posts/${postId}/comments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, author: currentUserName })
+            body: JSON.stringify({ text: text, author: currentUserName })
         });
 
-        const data = await response.json();
-
-        if (response.ok && data.success) {
+        // Response HTTP Status 200/201 -a irundhale Comment Added Toast Kaattum
+        if (response.ok) {
             showToast('Comment added!', '💬');
-            input.value = '';
-            fetchPosts();
+            if (input) input.value = '';
+            fetchPosts(); // Live feed sync
         } else {
-            // Backend-la irundhu varra exact error text-a kaattum
-            showToast(data.message || 'Server Error!', '❌');
-            console.error('Backend Detail Error:', data);
+            const data = await response.json().catch(() => ({}));
+            showToast(data.message || 'Failed to add comment', '❌');
         }
     } catch (err) {
-        console.error('Fetch Exception:', err);
+        console.error("Fetch Error:", err);
         showToast('Network error while commenting', '❌');
     }
 }
