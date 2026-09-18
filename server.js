@@ -83,6 +83,9 @@ app.post('/run-code', async (req, res) => {
     // Java Execution via Judge0 Free API
     if (language === 'java') {
         try {
+            // Remove 'public' keyword from class declarations to prevent file-name mismatch errors
+            const processedCode = code.replace(/public\s+class\s+([A-Za-z0-9_]+)/g, 'class $1');
+
             const response = await fetch('https://ce.judge0.com/submissions?wait=true', {
                 method: 'POST',
                 headers: { 
@@ -90,14 +93,12 @@ app.post('/run-code', async (req, res) => {
                 },
                 body: JSON.stringify({
                     language_id: 62, // Java (OpenJDK 13.0.1)
-                    source_code: code,
+                    source_code: processedCode,
                     stdin: input || ""
                 })
             });
 
             const data = await response.json();
-
-            // Extract compiler or runtime output
             const outputResult = data.stdout || data.compile_output || data.stderr || data.message || "Execution completed with no output.";
             return res.json({ output: outputResult });
 
