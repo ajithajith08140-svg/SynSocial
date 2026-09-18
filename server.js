@@ -199,41 +199,36 @@ function prompt(message) {
         executeBinary();
     }
 });
-// Comment add panra endpoint
-// Comment Add Endpoint Fix
+// Comment Add Endpoint (Schema Safe Version)
 app.post('/api/posts/:id/comments', async (req, res) => {
     try {
         const { id } = req.params;
         const { text, author } = req.body;
 
-        if (!text || text.trim() === "") {
+        if (!text || !text.trim()) {
             return res.status(400).json({ message: "Comment text cannot be empty" });
         }
 
-        // Validate Post ID
-        const post = await Post.findById(id);
-        if (!post) {
-            return res.status(404).json({ message: "Post not found" });
-        }
-
-        // Create new comment object
-        const newComment = {
+        const commentObj = {
             text: text.trim(),
             author: author || "Student User",
             createdAt: new Date()
         };
 
-        // Schema protection - Ensure comments array exists
-        if (!Array.isArray(post.comments)) {
-            post.comments = [];
-        }
+        // $push operator direct-a database-la comment array-a update pannum
+        const updatedPost = await Post.findByIdAndUpdate(
+            id,
+            { $push: { comments: commentObj } },
+            { new: true, upsert: false }
+        );
 
-        post.comments.push(newComment);
-        await post.save();
+        if (!updatedPost) {
+            return res.status(404).json({ message: "Post not found" });
+        }
 
         res.status(200).json({ 
             message: "Comment added successfully", 
-            comments: post.comments 
+            comments: updatedPost.comments 
         });
 
     } catch (error) {
