@@ -829,6 +829,71 @@ document.addEventListener('DOMContentLoaded', updateBookmarkProfileUI);
         showToast('Network error while publishing post', '❌');
     }
 }
+function formatDate(dateString) {
+    if (!dateString) return "Just now";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Just now";
+    
+    // Exact Date & Time format (e.g., Sep 19, 2026 • 01:13 AM)
+    return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+    }) + ' • ' + date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+}
+function buildProfileCardHTML(post) {
+    const isSaved = post.isBookmarked || false;
+    const authorName = post.author || "Anonymous";
+    const postTitle = post.title || "Untitled Post";
+    const upvotesCount = post.upvotes || 0;
+    
+    // Download File Button Logic
+    let downloadBtnHTML = '';
+    if (post.fileData || post.fileName) {
+        const fileName = post.fileName || 'Download File';
+        downloadBtnHTML = `
+            <a href="${post.fileData || '#'}" download="${fileName}" class="px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/40 text-brand-400 border border-brand-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all">
+                <i class="fa-solid fa-file-arrow-down"></i>
+                <span>${fileName}</span>
+            </a>
+        `;
+    }
+
+    // Reference Link Button Logic
+    let linkBtnHTML = '';
+    if (post.link) {
+        linkBtnHTML = `
+            <a href="${post.link}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all">
+                <i class="fa-solid fa-link"></i>
+                <span>Open Link</span>
+            </a>
+        `;
+    }
+
+    return `
+        <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md hover:border-slate-700 transition-all">
+            <div class="space-y-1">
+                <h4 class="text-base font-bold text-slate-100">${postTitle}</h4>
+                <p class="text-xs text-slate-400">
+                    By <span class="text-brand-400 font-semibold">${authorName}</span>
+                </p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2">
+                ${downloadBtnHTML}
+                ${linkBtnHTML}
+                
+                <span class="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-xs font-bold flex items-center space-x-1">
+                    <i class="fa-solid fa-fire text-amber-500"></i>
+                    <span>${upvotesCount}</span>
+                </span>
+            </div>
+        </div>
+    `;
+}
         function executeDedicatedSearch() {
             const stream = document.getElementById('searchResultsStream');
             if (!stream) return;
@@ -1032,36 +1097,34 @@ function switchProfileTab(tabName) {
 
 function renderProfile() {
     const uploadsContainer = document.getElementById('profile-tab-uploads');
-    
-    if (document.getElementById('profileDisplayName')) document.getElementById('profileDisplayName').innerText = userProfile.name;
-    if (document.getElementById('nav-profile-name')) document.getElementById('nav-profile-name').innerText = userProfile.name;
-    if (document.getElementById('profileDisplayCourse')) document.getElementById('profileDisplayCourse').innerText = userProfile.course;
-    if (document.getElementById('profileDisplayBio')) document.getElementById('profileDisplayBio').innerText = userProfile.bio;
+    const currentUserName = (userProfile.name || "").trim().toLowerCase();
 
-    if (!uploadsContainer) return;
-
-    const currentUserName = userProfile.name.trim().toLowerCase();
+    // Filtering
     const myUploads = fetchedPosts.filter(p => (p.author || "").trim().toLowerCase() === currentUserName);
     const savedPosts = fetchedPosts.filter(p => p.isBookmarked === true);
 
-    const myUpvotes = myUploads.reduce((acc, p) => acc + (p.upvotes || 0), 0);
+    const totalUpvotes = myUploads.reduce((acc, p) => acc + (p.upvotes || 0), 0);
 
+    // Update Counts
     if (document.getElementById('prof-stat-posts')) document.getElementById('prof-stat-posts').innerText = myUploads.length;
-    if (document.getElementById('prof-stat-code')) document.getElementById('prof-stat-code').innerText = myUpvotes;
+    if (document.getElementById('prof-stat-code')) document.getElementById('prof-stat-code').innerText = totalUpvotes;
     if (document.getElementById('prof-stat-docs')) document.getElementById('prof-stat-docs').innerText = savedPosts.length;
+
+    if (!uploadsContainer) return;
 
     const targetPosts = currentProfTab === 'uploads' ? myUploads : savedPosts;
 
     if (targetPosts.length === 0) {
-        uploadsContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-6 glass-panel rounded-xl border border-slate-800">
-            No ${currentProfTab === 'uploads' ? 'uploads found' : 'bookmarked posts'}!
-        </div>`;
+        uploadsContainer.innerHTML = `
+            <div class="text-xs text-slate-400 text-center py-8 bg-slate-900/40 rounded-xl border border-slate-800">
+                No ${currentProfTab === 'uploads' ? 'uploads' : 'bookmarks'} available!
+            </div>`;
         return;
     }
 
-    uploadsContainer.innerHTML = targetPosts.map(post => buildPostCardHTML(post)).join('');
+    // Renders Simple Clean Card
+    uploadsContainer.innerHTML = targetPosts.map(post => buildProfileCardHTML(post)).join('');
 }
-
 // Profile Edit Modal with Prompt (Name, Course & Bio)
 function openProfileModal() {
     const newName = prompt("Enter your Name:", userProfile.name);
