@@ -648,11 +648,18 @@ int main() {
                 console.error('Error fetching posts from MongoDB:', err);
             }
         }
-            async function handleCreatePost(e) {
-    // 1. Page refresh aagamaradhukku e.preventDefault() MUST!
+           async function handleCreatePost(e) {
+    // 1. Page refresh / URL-la '?' varuvadhai thadukka
     if (e) e.preventDefault();
 
-    const form = document.getElementById('createPostForm');
+    // 2. Event Target moolama direct-a form-a edukkirom (ID mismatch aagadhu)
+    const form = e ? e.target : document.getElementById('postForm');
+    
+    if (!form) {
+        showToast('Form element not found!', '❌');
+        return;
+    }
+
     const formData = new FormData(form);
 
     try {
@@ -660,15 +667,15 @@ int main() {
 
         const res = await fetch(`${API_URL}/api/posts/create`, {
             method: 'POST',
-            body: formData // File upload irukkradhala direct FormData anuppuroom
+            body: formData
         });
 
         const data = await res.json();
 
         if (res.ok && data.success) {
             showToast('Post published successfully!', '🎉');
-            form.reset(); // Form inputs clear panna
-            fetchPosts(); // Feed reload panna
+            form.reset(); // Input fields clear panna
+            fetchPosts(); // Refresh feed live
         } else {
             showToast(data.error || 'Failed to publish post', '❌');
         }
