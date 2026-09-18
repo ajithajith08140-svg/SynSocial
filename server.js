@@ -34,20 +34,25 @@ mongoose.connect(MONGO_URI)
 
 // 4. Mongoose Schema Definition
 const postSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    author: { type: String, required: true },
-    tag: { type: String, required: true },
-    pin: { type: String, required: true },
-    pinHint: { type: String, required: true },
-    content: { type: String, required: true },
-    link: { type: String, default: "" },
-    code: { type: String, default: "" },
-    docUrl: { type: String, default: "" },
-    docName: { type: String, default: "" },
+    title: String,
+    author: String,
+    tag: String,
+    pin: String,
+    pinHint: String,
+    content: String,
+    link: String,
+    code: String,
+    docUrl: String,
+    docName: String,
     upvotes: { type: Number, default: 0 },
-    createdAt: { type: Date, default: Date.now }
-});
-
+    comments: [
+        {
+            text: String,
+            author: String,
+            createdAt: { type: Date, default: Date.now }
+        }
+    ]
+}, { timestamps: true });
 const Post = mongoose.model('Post', postSchema);
 
 // 5. Configure Multer Storage
@@ -195,36 +200,50 @@ function prompt(message) {
     }
 });
 // Comment add panra endpoint
+// Comment Add Endpoint Fix
 app.post('/api/posts/:id/comments', async (req, res) => {
     try {
         const { id } = req.params;
         const { text, author } = req.body;
 
-        if (!text) {
-            return res.status(400).json({ message: "Comment text is required" });
+        if (!text || text.trim() === "") {
+            return res.status(400).json({ message: "Comment text cannot be empty" });
         }
 
+        // Validate Post ID
         const post = await Post.findById(id);
         if (!post) {
             return res.status(404).json({ message: "Post not found" });
         }
 
+        // Create new comment object
         const newComment = {
-            text,
-            author: author || "Student",
+            text: text.trim(),
+            author: author || "Student User",
             createdAt: new Date()
         };
 
-        post.comments = post.comments || [];
+        // Schema protection - Ensure comments array exists
+        if (!Array.isArray(post.comments)) {
+            post.comments = [];
+        }
+
         post.comments.push(newComment);
         await post.save();
 
-        res.status(200).json({ message: "Comment added successfully", comments: post.comments });
+        res.status(200).json({ 
+            message: "Comment added successfully", 
+            comments: post.comments 
+        });
+
     } catch (error) {
-        res.status(500).json({ message: "Error adding comment", error: error.message });
+        console.error("Comment Post Error:", error);
+        res.status(500).json({ 
+            message: "Server error while adding comment", 
+            error: error.message 
+        });
     }
-});
-// Upvote Post Endpoint
+});// Upvote Post Endpoint
 app.post('/api/posts/upvote/:id', async (req, res) => {
     try {
         const post = await Post.findByIdAndUpdate(
