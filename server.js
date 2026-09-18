@@ -74,6 +74,127 @@ app.get('/', (req, res) => {
     res.send("Synsocial API Server is running!");
 });
 
+// Fetch All Posts
+app.get('/api/posts', async (req, res) => {
+    try {
+        const posts = await Post.find().sort({ createdAt: -1 });
+        res.json(posts);
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Create Post and Save to MongoDB
+app.post('/api/posts/create', upload.single('document'), async (req, res) => {
+    try {
+        const { title, author, tag, pin, pinHint, content, link, code } = req.body;
+
+        let docUrl = "";
+        let docName = "";
+
+        if (req.file) {
+            docUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            docName = req.file.originalname;
+        }
+
+        const newPost = new Post({
+            title,
+            author,
+            tag,
+            pin: pin ? String(pin).trim() : "",
+            pinHint,
+            content,
+            link,
+            code,
+            docUrl,
+            docName
+        });
+
+        const savedPost = await newPost.save();
+        res.status(201).json({ success: true, post: savedPost });
+    } catch (err) {
+        console.error('Error saving post:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Upvote Post Endpoint
+app.post('/api/posts/upvote/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const post = await Post.findByIdAndUpdate(
+            id, 
+            { $inc: { upvotes: 1 } }, 
+            { new: true }
+        );
+        if (!post) {
+            return res.status(404).json({ success: false, message: "Post not found!" });
+        }
+        return res.json({ success: true, upvotes: post.upvotes });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete Post with Passkey Verification Endpoint
+app.delete('/api/posts/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { pin } = req.body || {};
+
+        const post = await Post.findById(id);
+
+        if (!post) {
+            return res.status(404).json({ success: false, message: "Post not found!" });
+        }
+
+        // String comparison for PIN matching
+        const enteredPin = pin ? String(pin).trim() : "";
+        const storedPin = post.pin ? String(post.pin).trim() : "";
+
+        if (storedPin && storedPin !== enteredPin) {
+            const hintMsg = post.pinHint ? `Incorrect PIN! Hint: ${post.pinHint}` : "Incorrect PIN!";
+            return res.status(401).json({ success: false, message: hintMsg });
+        }
+
+        await Post.findByIdAndDelete(id);
+        return res.status(200).json({ success: true, message: "Post deleted successfully" });
+
+    } catch (error) {
+        console.error("Delete Endpoint Error:", error);
+        return res.status(500).json({ success: false, message: "Server error during deletion", error: error.message });
+    }
+});
+
+// Add Comment Endpoint
+app.post('/api/posts/:id/comments', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { text, author } = req.body;
+
+        if (!text || !text.trim()) {
+            return res.status(200).json({ success: true });
+        }
+
+        const newComment = {
+            text: text.trim(),
+            author: author || "Student User",
+            createdAt: new Date()
+        };
+
+        await Post.updateOne(
+            { _id: id },
+            { $push: { comments: newComment } }
+        );
+
+        return res.status(200).send({ success: true, message: "OK" });
+
+    } catch (error) {
+        console.error("Comment route catch:", error);
+        return res.status(200).send({ success: true, message: "Handled" });
+    }
+});
+
 // Universal Multi-Language Code Execution Endpoint
 app.post('/run-code', async (req, res) => {
     let { code, input, language } = req.body;
@@ -82,26 +203,19 @@ app.post('/run-code', async (req, res) => {
         return res.status(400).json({ output: "Error: No code provided." });
     }
 
-    // Java Execution via Judge0 Free API
     if (language === 'java') {
         try {
             let processedCode = code;
-
-            // Remove 'public' modifier from class definitions to allow class Main rename
             processedCode = processedCode.replace(/public\s+class\s+([A-Za-z0-9_]+)/g, 'class $1');
-
-            // Automatically rename whatever main class name the user typed to 'Main'
             if (!processedCode.includes('class Main')) {
                 processedCode = processedCode.replace(/class\s+([A-Za-z0-9_]+)/g, 'class Main');
             }
 
             const response = await fetch('https://ce.judge0.com/submissions?wait=true', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json' 
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    language_id: 62, // Java (OpenJDK 13.0.1)
+                    language_id: 62,
                     source_code: processedCode,
                     stdin: input || ""
                 })
@@ -116,7 +230,6 @@ app.post('/run-code', async (req, res) => {
         }
     }
 
-    // Local Execution for C, C++, Python, JavaScript
     const uniqueId = Date.now() + '_' + Math.floor(Math.random() * 1000);
     let sourceFile, compileCmd, runCmd;
 
@@ -139,16 +252,13 @@ app.post('/run-code', async (req, res) => {
         compileCmd = null;
         runCmd = `node ${sourceFile}`;
 
-        // Node.js-la prompt() support panna custom polyfill logic
         const promptPolyfill = `
 const fs = require('fs');
 let _stdinInputs = [];
 let _stdinIndex = 0;
-
 try {
     _stdinInputs = fs.readFileSync(0, 'utf-8').trim().split(/\\r?\\n/);
 } catch(e) {}
-
 function prompt(message) {
     if (message) process.stdout.write(message + "\\n");
     if (_stdinIndex < _stdinInputs.length) {
@@ -197,121 +307,6 @@ function prompt(message) {
         });
     } else {
         executeBinary();
-    }
-});
-app.post('/api/posts/:id/comments', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { text, author } = req.body;
-
-        if (!text || !text.trim()) {
-            return res.status(200).json({ success: true });
-        }
-
-        const newComment = {
-            text: text.trim(),
-            author: author || "Student User",
-            createdAt: new Date()
-        };
-
-        // Direct Native Update
-        await Post.updateOne(
-            { _id: id },
-            { $push: { comments: newComment } }
-        );
-
-        return res.status(200).send({ success: true, message: "OK" });
-
-    } catch (error) {
-        console.error("Comment route catch:", error);
-        return res.status(200).send({ success: true, message: "Handled" });
-    }
-});
-// Upvote Post Endpoint
-// Upvote Post Endpoint
-app.post('/api/posts/upvote/:id', async (req, res) => {
-    try {
-        const post = await Post.findByIdAndUpdate(
-            req.params.id, 
-            { $inc: { upvotes: 1 } }, 
-            { new: true }
-        );
-        if (!post) {
-            return res.status(404).json({ success: false, message: "Post not found" });
-        }
-        return res.json({ success: true, upvotes: post.upvotes });
-    } catch (err) {
-        return res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// Delete Post with Passkey Verification Endpoint & Hint
-app.delete('/api/posts/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { pin } = req.body || {};
-
-        const post = await Post.findById(id);
-
-        if (!post) {
-            return res.status(404).json({ success: false, message: "Post not found!" });
-        }
-
-        // Compare PIN
-        if (post.pin && post.pin !== pin) {
-            // PIN Wrong-a irundha PIN Hint-oda clear response tharrurom
-            const hintMsg = post.pinHint ? `Incorrect PIN! Hint: ${post.pinHint}` : "Incorrect PIN!";
-            return res.status(401).json({ success: false, message: hintMsg });
-        }
-
-        await Post.findByIdAndDelete(id);
-        return res.status(200).json({ success: true, message: "Post deleted successfully" });
-
-    } catch (error) {
-        console.error("Delete Endpoint Error:", error);
-        return res.status(500).json({ success: false, message: "Server error during deletion", error: error.message });
-    }
-});// Create Post and Save to MongoDB
-app.post('/api/posts/create', upload.single('document'), async (req, res) => {
-    try {
-        const { title, author, tag, pin, pinHint, content, link, code } = req.body;
-
-        let docUrl = "";
-        let docName = "";
-
-        if (req.file) {
-            docUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-            docName = req.file.originalname;
-        }
-
-        const newPost = new Post({
-            title,
-            author,
-            tag,
-            pin,
-            pinHint,
-            content,
-            link,
-            code,
-            docUrl,
-            docName
-        });
-
-        const savedPost = await newPost.save();
-        res.status(201).json({ success: true, post: savedPost });
-    } catch (err) {
-        console.error('Error saving post:', err);
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// Fetch All Posts
-app.get('/api/posts', async (req, res) => {
-    try {
-        const posts = await Post.find().sort({ createdAt: -1 });
-        res.json(posts);
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
     }
 });
 

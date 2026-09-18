@@ -987,7 +987,8 @@ function updateMetrics() {
     renderProfile();
 }        const BACKEND_URL = 'https://synsocial.onrender.com';
 
-// Upvote Function
+
+// 1. Upvote Handler
 async function handleUpvote(postId) {
     if (!postId) return;
     try {
@@ -999,7 +1000,7 @@ async function handleUpvote(postId) {
         
         if (res.ok && data.success) {
             showToast('Upvoted!', '👍');
-            fetchPosts(); // Feed refresh
+            fetchPosts(); // Reload feed
         } else {
             showToast(data.message || 'Failed to upvote', '❌');
         }
@@ -1008,12 +1009,12 @@ async function handleUpvote(postId) {
     }
 }
 
-// Delete Function with PIN & Hint display
+// 2. Delete Handler (Fixes PIN String Match & Delete execution)
 async function handleDeletePost(postId) {
     if (!postId) return;
     
-    const userPin = prompt("Enter 4-digit Security PIN to delete this post:");
-    if (!userPin) return; // User cancel panta exit aayidum
+    const userPin = prompt("Enter Security PIN to delete this post:");
+    if (userPin === null) return; // Cancel pressed
 
     try {
         const res = await fetch(`${API_URL}/api/posts/${postId}`, { 
@@ -1028,9 +1029,9 @@ async function handleDeletePost(postId) {
         
         if (res.ok && data.success) {
             showToast('Post deleted successfully!', '🗑️');
-            fetchPosts(); // Feed refresh
+            fetchPosts(); // Reload feed
         } else {
-            // Wrong PIN podumbodhu PIN Hint oda popup / toast kaattum
+            // Hint popup/toast message display
             showToast(data.message || 'Incorrect PIN!', '❌');
         }
     } catch (err) {
