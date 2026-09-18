@@ -83,8 +83,12 @@ app.post('/run-code', async (req, res) => {
     // Java Execution via Judge0 Free API
     if (language === 'java') {
         try {
-            // Remove 'public' keyword from class declarations to prevent file-name mismatch errors
-            const processedCode = code.replace(/public\s+class\s+([A-Za-z0-9_]+)/g, 'class $1');
+            let processedCode = code;
+
+            // Automatically rename whatever class name the user typed to 'Main'
+            if (!processedCode.includes('class Main')) {
+                processedCode = processedCode.replace(/class\s+([A-Za-z0-9_]+)/g, 'class Main');
+            }
 
             const response = await fetch('https://ce.judge0.com/submissions?wait=true', {
                 method: 'POST',
