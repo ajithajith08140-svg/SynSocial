@@ -194,7 +194,25 @@ app.post('/api/posts/:id/comments', async (req, res) => {
         return res.status(200).send({ success: true, message: "Handled" });
     }
 });
+// Bookmark Toggle API Endpoint
+app.post('/api/posts/bookmark/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const post = await Post.findById(id);
+        
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post not found' });
+        }
 
+        // Bookmark status-a db-la toggle pannoom
+        post.isBookmarked = !post.isBookmarked;
+        await post.save();
+
+        res.json({ success: true, isBookmarked: post.isBookmarked, post });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server error bookmarking post' });
+    }
+});
 // Universal Multi-Language Code Execution Endpoint
 app.post('/run-code', async (req, res) => {
     let { code, input, language } = req.body;

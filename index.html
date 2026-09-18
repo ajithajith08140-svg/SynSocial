@@ -530,7 +530,10 @@ int main() {
       function buildPostCardHTML(post) {
     const id = post._id || post.id || '';
     
-    // Date formatting safely
+    // Bookmark status check
+    const bookmarks = getSavedBookmarks();
+    const isBookmarked = bookmarks.some(b => (b._id || b.id) === id);
+    
     let formattedDate = 'Just now';
     if (post.createdAt) {
         const d = new Date(post.createdAt);
@@ -539,9 +542,11 @@ int main() {
         }
     }
 
+    // Escape object string safely for handleBookmark
+    const postJsonString = JSON.stringify(post).replace(/"/g, '&quot;');
+
     return `
         <div class="glass-card p-5 rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-xl mb-4 space-y-4">
-            <!-- Header Section -->
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <span class="inline-block px-2.5 py-0.5 text-[10px] font-semibold text-brand-400 bg-brand-500/10 rounded-full border border-brand-500/20 mb-2">
@@ -553,13 +558,12 @@ int main() {
                     </p>
                 </div>
                 
-                <!-- Action Buttons: Upvote, Bookmark & Delete -->
                 <div class="flex items-center gap-2 shrink-0">
                     <button type="button" onclick="handleUpvote('${id}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">
                         🔥 Upvote (${post.upvotes || 0})
                     </button>
-                    <button type="button" onclick="handleBookmark('${id}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-semibold transition">
-                        🔖 Bookmark
+                    <button type="button" onclick="handleBookmark('${id}', ${postJsonString})" class="px-3 py-1.5 rounded-lg ${isBookmarked ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-amber-400'} text-xs font-semibold transition">
+                        🔖 ${isBookmarked ? 'Bookmarked' : 'Bookmark'}
                     </button>
                     <button type="button" onclick="handleDeletePost('${id}')" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition">
                         🗑️ Delete
@@ -567,29 +571,62 @@ int main() {
                 </div>
             </div>
 
-            <!-- Description / Content Section -->
             <p class="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">${post.content || ''}</p>
 
-            <!-- Attachments & Links Container -->
+            <!-- Attachments & Links -->
             <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-800/60">
-                <!-- 1. External Reference Link (If Provided) -->
                 ${post.link ? `
                     <a href="${post.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-brand-400 border border-slate-700 rounded-lg text-xs font-medium transition">
                         🔗 Open Reference Link
                     </a>
                 ` : ''}
 
-                <!-- 2. Document Download Link (If Uploaded) -->
                 ${post.docUrl ? `
                     <a href="${post.docUrl}" target="_blank" download class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 rounded-lg text-xs font-medium transition">
                         📄 Download Attachment (${post.docName || 'Document'})
                     </a>
                 ` : ''}
             </div>
+
+            <!-- Comment Form Section -->
+            <div class="pt-3 border-t border-slate-800/40">
+                <form onsubmit="handleComment(event, '${id}')" class="flex gap-2">
+                    <input type="text" name="commentText" required placeholder="Write a comment..." class="flex-1 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                    <button type="submit" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-lg transition">Send</button>
+                </form>
+            </div>
         </div>
     `;
 }
+async function handleComment(e, postId) {
+    if (e) e.preventDefault(); // Page refresh-a prevent pannum
 
+    const form = e.target;
+    const input = form.querySelector('input[name="commentText"]');
+    const commentText = input ? input.value : '';
+
+    if (!commentText.trim()) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/posts/comment/${postId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: commentText })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            showToast('Comment added!', '💬');
+            form.reset();
+            if (typeof fetchPosts === 'function') fetchPosts();
+            else if (typeof loadPosts === 'function') loadPosts();
+        } else {
+            showToast(data.message || 'Failed to add comment', '❌');
+        }
+    } catch (err) {
+        showToast('Error adding comment', '❌');
+    }
+}
 // Simple local bookmark click handler
 function handleBookmark(postId) {
     if (!postId) return;
@@ -633,6 +670,30 @@ function handleBookmark(postId) {
                 console.error('Error fetching posts from MongoDB:', err);
             }
         }
+        async function handleBookmark(postId) {
+    if (!postId) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/posts/bookmark/${postId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            showToast(data.isBookmarked ? 'Saved to Bookmarks!' : 'Removed from Bookmarks', '🔖');
+            
+            // Feed refresh panni Database data-va render pannuvom
+            if (typeof fetchPosts === 'function') fetchPosts();
+            else if (typeof loadPosts === 'function') loadPosts();
+        } else {
+            showToast('Failed to bookmark post', '❌');
+        }
+    } catch (err) {
+        showToast('Network error while bookmarking', '❌');
+    }
+}
           async function handleCreatePost(e) {
     if (e) e.preventDefault();
 
