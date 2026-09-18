@@ -409,13 +409,15 @@ int main() {
 
             <div class="space-y-4">
                 <div class="flex items-center space-x-2 border-b border-slate-800 pb-2">
-                    <button onclick="switchProfileTab('uploads')" id="prof-tab-btn-uploads" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md">
-                        <i class="fa-solid fa-folder-open mr-1.5"></i> My Uploads
-                    </button>
-                    <button onclick="switchProfileTab('saved')" id="prof-tab-btn-saved" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
-                        <i class="fa-solid fa-bookmark mr-1.5"></i> Bookmarked Posts
-                    </button>
-                </div>
+    <button onclick="switchProfileTab('uploads')" id="prof-tab-btn-uploads" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md">
+        <i class="fa-solid fa-folder-open mr-1.5"></i> My Uploads
+    </button>
+    <button onclick="switchProfileTab('saved')" id="prof-tab-btn-saved" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
+        <i class="fa-solid fa-bookmark mr-1.5"></i> Bookmarked Posts
+    </button>
+</div>
+
+<div id="profile-tab-uploads" class="space-y-3 mt-4"></div>
 
                 <div id="profile-tab-uploads" class="space-y-3"></div>
             </div>
@@ -424,7 +426,7 @@ int main() {
     </main>
 
     <script>
-
+ let currentProfTab = 'uploads';
         let userProfile = JSON.parse(localStorage.getItem('synsocial_user_profile')) || {
     name: "Student User",
     course: "Computer Science & Engineering",
@@ -440,6 +442,7 @@ int main() {
             { quote: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.", author: "Martin Fowler" }
         ];
 
+        
         let quoteIndex = 0;
         function rotateQuotes() {
             const q = quotesList[quoteIndex];
@@ -1007,19 +1010,56 @@ try {
         </div>
     `).join('') : `<div class="text-xs text-slate-400 text-center py-4">No code snippets found!</div>`;
 }
-        let currentProfTab = 'uploads';
+       
 
 function switchProfileTab(tabName) {
     currentProfTab = tabName;
-    document.getElementById('prof-tab-btn-uploads').className = tabName === 'uploads' 
-        ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
-        : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
-    
-    document.getElementById('prof-tab-btn-saved').className = tabName === 'saved' 
-        ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
-        : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+    const uploadsBtn = document.getElementById('prof-tab-btn-uploads');
+    const savedBtn = document.getElementById('prof-tab-btn-saved');
+
+    if (uploadsBtn && savedBtn) {
+        uploadsBtn.className = tabName === 'uploads' 
+            ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
+            : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+        
+        savedBtn.className = tabName === 'saved' 
+            ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
+            : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+    }
         
     renderProfile();
+}
+
+function renderProfile() {
+    const uploadsContainer = document.getElementById('profile-tab-uploads');
+    
+    if (document.getElementById('profileDisplayName')) document.getElementById('profileDisplayName').innerText = userProfile.name;
+    if (document.getElementById('nav-profile-name')) document.getElementById('nav-profile-name').innerText = userProfile.name;
+    if (document.getElementById('profileDisplayCourse')) document.getElementById('profileDisplayCourse').innerText = userProfile.course;
+    if (document.getElementById('profileDisplayBio')) document.getElementById('profileDisplayBio').innerText = userProfile.bio;
+
+    if (!uploadsContainer) return;
+
+    const currentUserName = userProfile.name.trim().toLowerCase();
+    const myUploads = fetchedPosts.filter(p => (p.author || "").trim().toLowerCase() === currentUserName);
+    const savedPosts = fetchedPosts.filter(p => p.isBookmarked === true);
+
+    const myUpvotes = myUploads.reduce((acc, p) => acc + (p.upvotes || 0), 0);
+
+    if (document.getElementById('prof-stat-posts')) document.getElementById('prof-stat-posts').innerText = myUploads.length;
+    if (document.getElementById('prof-stat-code')) document.getElementById('prof-stat-code').innerText = myUpvotes;
+    if (document.getElementById('prof-stat-docs')) document.getElementById('prof-stat-docs').innerText = savedPosts.length;
+
+    const targetPosts = currentProfTab === 'uploads' ? myUploads : savedPosts;
+
+    if (targetPosts.length === 0) {
+        uploadsContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-6 glass-panel rounded-xl border border-slate-800">
+            No ${currentProfTab === 'uploads' ? 'uploads found' : 'bookmarked posts'}!
+        </div>`;
+        return;
+    }
+
+    uploadsContainer.innerHTML = targetPosts.map(post => buildPostCardHTML(post)).join('');
 }
 
 // Profile Edit Modal with Prompt (Name, Course & Bio)
@@ -1090,65 +1130,6 @@ async function handleAddComment(postId) {
         if (input) input.value = '';
         fetchPosts();
     }
-}function renderProfile() {
-    const uploadsContainer = document.getElementById('profile-tab-uploads');
-    
-    // Load stored Profile Details
-    const storedProfile = JSON.parse(localStorage.getItem('synsocial_user_profile')) || userProfile;
-    
-    if (document.getElementById('profileDisplayName')) {
-        document.getElementById('profileDisplayName').innerText = storedProfile.name;
-    }
-    if (document.getElementById('nav-profile-name')) {
-        document.getElementById('nav-profile-name').innerText = storedProfile.name;
-    }
-    if (document.getElementById('profileDisplayCourse')) {
-        document.getElementById('profileDisplayCourse').innerText = storedProfile.course;
-    }
-    if (document.getElementById('profileDisplayBio')) {
-        document.getElementById('profileDisplayBio').innerText = storedProfile.bio;
-    }
-
-    if (!uploadsContainer) return;
-
-    const currentUserName = storedProfile.name.trim().toLowerCase();
-
-    // 1. My Uploads Filter: Matches current Profile Name OR Post Author Name
-    const myUploads = fetchedPosts.filter(p => {
-        const postAuthor = (p.author || "").trim().toLowerCase();
-        return postAuthor === currentUserName;
-    });
-
-    // 2. Bookmarks Filter
-    const savedIds = JSON.parse(localStorage.getItem('synsocial_bookmarks') || '[]');
-    const savedPosts = fetchedPosts.filter(p => savedIds.includes(p._id || p.id));
-
-    // 3. Upvotes calculation for user posts
-    const myUpvotes = myUploads.reduce((acc, p) => acc + (p.upvotes || 0), 0);
-
-    document.getElementById('prof-stat-posts').innerText = myUploads.length;
-    document.getElementById('prof-stat-code').innerText = myUpvotes;
-    document.getElementById('prof-stat-docs').innerText = savedPosts.length;
-
-    const targetPosts = currentProfTab === 'uploads' ? myUploads : savedPosts;
-
-    if (targetPosts.length === 0) {
-        uploadsContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-6 glass-panel rounded-xl border border-slate-800">
-            No ${currentProfTab === 'uploads' ? 'uploads found for ' + storedProfile.name : 'bookmarked posts'}!
-        </div>`;
-        return;
-    }
-
-    uploadsContainer.innerHTML = targetPosts.map(post => `
-        <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
-            <div>
-                <span class="text-[10px] px-2 py-0.5 rounded bg-brand-500/20 text-brand-400 font-bold font-mono">${post.tag}</span>
-                <h4 class="font-bold text-sm text-slate-100 mt-1">${post.title}</h4>
-                <p class="text-xs text-slate-400">${post.content}</p>
-                <div class="text-[11px] text-slate-500 mt-1">Author: ${post.author} • 👍 ${post.upvotes || 0} Upvotes</div>
-            </div>
-        </div>
-    `).join('');
 }
 function updateMetrics() {
     const savedIds = JSON.parse(localStorage.getItem('synsocial_bookmarks') || '[]');
