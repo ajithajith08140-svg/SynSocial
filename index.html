@@ -719,39 +719,52 @@ async function runUniversalSandboxCode() {
     const inputEl = document.getElementById('stdinInput');
     const languageSelect = document.getElementById('languageSelect');
     const outputBox = document.getElementById('outputBox');
-    const runBtn = document.getElementById('runBtn');
 
-    if (!codeEl || !outputBox) {
-        console.error("Missing required elements: sandboxCode or outputBox ID not found!");
-        return;
-    }
+    if (!codeEl || !outputBox) return;
 
     const code = codeEl.value || '';
     const input = inputEl ? inputEl.value : '';
-    const language = languageSelect ? languageSelect.value : 'c';
+    const language = languageSelect ? languageSelect.value.toLowerCase() : 'java';
 
     if (!code.trim()) {
         outputBox.innerText = "Error: Code box is empty!";
         return;
     }
 
-    // Backend-ukku API call panni output vaanguvaam
+    outputBox.innerText = "Running code, please wait...";
+
     try {
         const response = await fetch('/run-code', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code, input, language })
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ 
+                code: code, 
+                input: input, 
+                language: language 
+            })
         });
 
-        const data = await response.json();
-        const rawOutput = data.output || '';
+        // Response JSON-a parse panna mudiyaadhu-na text-a read panni check panna
+        const rawText = await response.text();
+        
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch (e) {
+            outputBox.innerText = "Server Error (Non-JSON Response):\n" + rawText;
+            return;
+        }
 
-        // Formatter function-a call panni outputBox-la display panrom
+        const rawOutput = data.output || "No output returned.";
+        
+        // Live Terminal Formatting logic call
         const finalFormattedOutput = formatTerminalOutput(rawOutput, input);
         outputBox.innerText = finalFormattedOutput;
 
     } catch (err) {
-        outputBox.innerText = "Error: " + err.message;
+        outputBox.innerText = "Execution Error: " + err.message;
     }
 }
         function renderVault() {
