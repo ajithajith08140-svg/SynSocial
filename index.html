@@ -519,7 +519,7 @@ int main() {
         showToast('Network error while commenting', '❌');
     }
 }
-       function buildPostCardHTML(post) {
+      function buildPostCardHTML(post) {
     // Comments array safeguard
     const comments = Array.isArray(post.comments) ? post.comments : [];
     const commentCount = comments.length;
@@ -547,10 +547,13 @@ int main() {
                     </p>
                 </div>
                 
-                <!-- Upvote & Action Buttons -->
+                <!-- Upvote, Bookmark & Delete Buttons -->
                 <div class="flex items-center gap-2 shrink-0">
                     <button type="button" onclick="handleUpvote('${post.id}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition">
                         👍 Upvote (${post.upvotes || 0})
+                    </button>
+                    <button type="button" onclick="handleBookmark('${post.id}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition">
+                        🔖 Bookmark
                     </button>
                     <button type="button" onclick="handleDeletePost('${post.id}')" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition">
                         🗑️ Delete
@@ -582,7 +585,7 @@ int main() {
                     </div>
                 ` : ''}
 
-                <!-- Comment Input Box (FULL WIDTH FIXED STYLING) -->
+                <!-- Comment Input Box -->
                 <div class="flex items-center gap-2 w-full pt-1">
                     <input type="text" 
                            id="comment-input-${post.id}" 
