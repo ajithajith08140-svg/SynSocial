@@ -648,7 +648,35 @@ int main() {
                 console.error('Error fetching posts from MongoDB:', err);
             }
         }
+            async function handleCreatePost(e) {
+    // 1. Page refresh aagamaradhukku e.preventDefault() MUST!
+    if (e) e.preventDefault();
 
+    const form = document.getElementById('createPostForm');
+    const formData = new FormData(form);
+
+    try {
+        showToast('Publishing post...', '⏳');
+
+        const res = await fetch(`${API_URL}/api/posts/create`, {
+            method: 'POST',
+            body: formData // File upload irukkradhala direct FormData anuppuroom
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            showToast('Post published successfully!', '🎉');
+            form.reset(); // Form inputs clear panna
+            fetchPosts(); // Feed reload panna
+        } else {
+            showToast(data.error || 'Failed to publish post', '❌');
+        }
+    } catch (err) {
+        console.error('Create Post Error:', err);
+        showToast('Network error while publishing post', '❌');
+    }
+}
         function executeDedicatedSearch() {
             const stream = document.getElementById('searchResultsStream');
             if (!stream) return;
