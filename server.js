@@ -71,17 +71,54 @@ app.get('/', (req, res) => {
 // C Code Execution Endpoint (with Stdin Support for scanf)
 // C Code Execution Endpoint (with Stdin Support for scanf)
 // Universal Multi-Language Code Execution Endpoint
-app.post('/run-code', (req, res) => {
+// Universal Multi-Language Code Execution Endpoint
+app.post('/run-code', async (req, res) => {
     const { code, input, language } = req.body;
 
     if (!code) {
         return res.status(400).json({ output: "Error: No code provided." });
     }
 
+    // Java Execution via Piston API
+    // Dynamic Class Name Detection for Java
+    if (language === 'java') {
+        try {
+            // Extract class name using Regex (default to Main if not found)
+            const classMatch = code.match(/public\s+class\s+([A-Za-z0-9_]+)/);
+            const className = classMatch ? classMatch[1] : 'Main';
+            const fileName = `${className}.java`;
+
+            const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    language: 'java',
+                    version: '15.0.2',
+                    files: [{
+                        name: fileName,
+                        content: code
+                    }],
+                    stdin: input || ""
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.run) {
+                const outputResult = data.run.output || data.run.stderr || "Execution completed with no output.";
+                return res.json({ output: outputResult });
+            } else {
+                return res.json({ output: "Java Execution Error: " + (data.message || "Failed to compile.") });
+            }
+        } catch (error) {
+            return res.json({ output: "Java Execution API Error: " + error.message });
+        }
+    }
+
+    // Local Execution for C, C++, Python, JavaScript
     const uniqueId = Date.now() + '_' + Math.floor(Math.random() * 1000);
     let sourceFile, compileCmd, runCmd;
 
-    // Language Wise Configuration
     if (language === 'cpp' || language === 'cpp17') {
         sourceFile = `temp_${uniqueId}.cpp`;
         const outputFile = `temp_${uniqueId}`;
@@ -94,7 +131,7 @@ app.post('/run-code', (req, res) => {
         runCmd = `./${outputFile}`;
     } else if (language === 'python') {
         sourceFile = `temp_${uniqueId}.py`;
-        compileCmd = null; // No compilation needed for Python
+        compileCmd = null;
         runCmd = `python3 ${sourceFile}`;
     } else if (language === 'javascript') {
         sourceFile = `temp_${uniqueId}.js`;
@@ -112,10 +149,8 @@ app.post('/run-code', (req, res) => {
         }
     };
 
-    // 1. Write Code to File
     fs.writeFileSync(sourceFile, code);
 
-    // Helper to execute code with stdin & 3-sec timeout
     const executeBinary = () => {
         const child = exec(runCmd, { timeout: 3000 }, (runErr, runStdout, runStderr) => {
             cleanupFiles();
@@ -131,7 +166,6 @@ app.post('/run-code', (req, res) => {
         child.stdin.end();
     };
 
-    // 2. Compile if needed (C/C++), else directly execute (Python/JS)
     if (compileCmd) {
         exec(compileCmd, (compileErr, stdout, stderr) => {
             if (compileErr) {

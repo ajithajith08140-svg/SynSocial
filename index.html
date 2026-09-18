@@ -318,49 +318,55 @@
                 <div class="lg:col-span-7 space-y-4" id="vaultStream"></div>
 
                 <div class="lg:col-span-5 space-y-4">
-                    <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 sticky top-24">
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-bold text-slate-100 flex items-center space-x-2">
-                                <i class="fa-solid fa-terminal text-accent-emerald"></i>
-                                <span>Multi-Language Runner</span>
-                            </h3>
-                            <select id="sandboxLang" onchange="loadLangTemplate()" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-emerald-400 focus:outline-none">
-                                <option value="cpp">C++ (GCC)</option>
-                                <option value="c">C</option>
-                                <option value="python">Python 3</option>
-                                <option value="java">Java</option>
-                                <option value="javascript">JavaScript</option>
-                            </select>
-                        </div>
+                    <!-- MULTI-LANGUAGE RUNNER PANEL -->
+<div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 sticky top-24">
+    <div class="flex items-center justify-between">
+        <h3 class="font-bold text-slate-100 flex items-center space-x-2">
+            <i class="fa-solid fa-terminal text-accent-emerald"></i>
+            <span>Multi-Language Runner</span>
+        </h3>
+        <select id="languageSelect" onchange="loadLangTemplate()" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-emerald-400 focus:outline-none">
+            <option value="cpp">C++ (GCC)</option>
+            <option value="c">C</option>
+            <option value="python">Python 3</option>
+            <option value="java">Java</option>
+            <option value="javascript">JavaScript</option>
+        </select>
+    </div>
 
-                        <textarea id="sandboxCode" rows="8" class="w-full p-3 rounded-xl bg-slate-950 text-emerald-400 border border-slate-800 code-font text-xs focus:outline-none focus:border-accent-emerald resize-none">#include &lt;iostream&gt;
+    <!-- Code Input Textarea -->
+    <textarea id="sandboxCode" rows="8" class="w-full p-3 rounded-xl bg-slate-950 text-emerald-400 border border-slate-800 code-font text-xs focus:outline-none focus:border-accent-emerald resize-none">#include <iostream>
 using namespace std;
 
 int main() {
     int a = 5, b = 3;
     int c = a + b;
-    cout &lt;&lt; "Value: " &lt;&lt; a &lt;&lt; b &lt;&lt; endl;
-    cout &lt;&lt; "Ans: " &lt;&lt; c &lt;&lt; endl;
+    cout << "Value: " << a << b << endl;
+    cout << "Ans: " << c << endl;
     return 0;
 }</textarea>
-                        
-                        <!-- Clean Input UI with High Visibility -->
-<div class="mt-4 space-y-3">
-    <div>
-        <label for="stdinInput" class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center space-x-1.5">
-            <i class="fa-solid fa-terminal text-accent-emerald text-xs"></i>
-            <span>Program Input (stdin):</span>
-        </label>
-        <textarea id="stdinInput" rows="3" 
-            placeholder="Enter inputs line-by-line (e.g.&#10;3&#10;2 4&#10;5 0&#10;3 4)" 
-            class="w-full p-3 rounded-xl bg-slate-900 text-emerald-400 placeholder-slate-500 border border-slate-700/80 code-font text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-inner resize-none transition-all"></textarea>
-    </div>
+    
+    <!-- Program Input Section -->
+    <div class="mt-4 space-y-3">
+        <div>
+            <label for="stdinInput" class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center space-x-1.5">
+                <i class="fa-solid fa-terminal text-accent-emerald text-xs"></i>
+                <span>Program Input (stdin):</span>
+            </label>
+            <textarea id="stdinInput" rows="3" 
+                placeholder="Enter inputs line-by-line (e.g.&#10;3&#10;2 4&#10;5 0&#10;3 4)" 
+                class="w-full p-3 rounded-xl bg-slate-900 text-emerald-400 placeholder-slate-500 border border-slate-700/80 code-font text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-inner resize-none transition-all"></textarea>
+        </div>
 
-    <button onclick="runUniversalSandboxCode()" id="runBtn" 
-    class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-500 text-slate-950 font-bold text-sm transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-emerald-950/20 active:scale-[0.98]">
-    <i class="fa-solid fa-play text-xs"></i>
-    <span>Execute Code Online</span>
-</button>
+        <button onclick="checkCodeAndRun()" id="runBtn" 
+            class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-500 text-slate-950 font-bold text-sm transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-emerald-950/20 active:scale-[0.98]">
+            <i class="fa-solid fa-play text-xs"></i>
+            <span>Execute Code Online</span>
+        </button>
+    </div>
+    
+    <!-- Output Display Box -->
+    <pre id="outputBox" class="w-full p-3.5 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[120px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
 </div>
                         
                         <pre id="sandboxOutput" class="w-full p-3.5 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[120px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
@@ -659,38 +665,37 @@ int main() {
         }
 
         const langTemplates = {
-            cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int a = 5, b = 3;\n    int c = a + b;\n    cout << "Value: " << a << b << endl;\n    cout << "Ans: " << c << endl;\n    return 0;\n}`,
-            c: `#include <stdio.h>\n\nint main() {\n    int a = 5, b = 3;\n    printf("Value: %d%d\\n", a, b);\n    printf("Ans: %d\\n", a + b);\n    return 0;\n}`,
-            python: `a = 5\nb = 3\nc = a + b\nprint(f"Value: {a}{b}")\nprint(f"Ans:{c}")`,
-            java: `public class Main {\n    public static void main(String[] args) {\n        int a = 5, b = 3;\n        System.out.println("Value: " + a + b);\n        System.out.println("Ans: " + (a + b));\n    }\n}`,
-            javascript: `let a = 5, b = 3;\nlet c = a + b;\nconsole.log("Value: " + a + b);\nconsole.log("Ans: " + c);`
-        };
+    cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int a = 5, b = 3;\n    int c = a + b;\n    cout << "Value: " << a << b << endl;\n    cout << "Ans: " << c << endl;\n    return 0;\n}`,
+    c: `#include <stdio.h>\n\nint main() {\n    int a = 5, b = 3;\n    printf("Value: %d%d\\n", a, b);\n    printf("Ans: %d\\n", a + b);\n    return 0;\n}`,
+    python: `a = 5\nb = 3\nc = a + b\nprint(f"Value: {a}{b}")\nprint(f"Ans: {c}")`,
+    java: `public class Main {\n    public static void main(String[] args) {\n        int a = 5, b = 3;\n        System.out.println("Value: " + a + b);\n        System.out.println("Ans: " + (a + b));\n    }\n}`,
+    javascript: `let a = 5, b = 3;\nlet c = a + b;\nconsole.log("Value: " + a + b);\nconsole.log("Ans: " + c);`
+};
 
-        function loadLangTemplate() {
-            const lang = document.getElementById('sandboxLang').value;
-            document.getElementById('sandboxCode').value = langTemplates[lang] || '';
-        }
-// User Code-la input functions irukaa nu check panni alert kaattum Wrapper
+function loadLangTemplate() {
+    const langSelect = document.getElementById('languageSelect');
+    const codeArea = document.getElementById('sandboxCode');
+    
+    if (langSelect && codeArea) {
+        const selectedLang = langSelect.value;
+        codeArea.value = langTemplates[selectedLang] || '';
+    }
+}
 
-// 1. Stdin Check & Alert Wrapper
 function checkCodeAndRun() {
     const code = document.getElementById('sandboxCode').value;
     const customInput = document.getElementById('stdinInput').value.trim();
 
-    // Scan for input keywords in C, C++, Python, Java, JS
     const needsInput = /scanf|cin|input\(|Scanner|readline/g.test(code);
 
     if (needsInput && !customInput) {
         alert("⚠️ Notice: Your code requires inputs (scanf / cin / input). Please enter the values in the 'Program Input (stdin)' box before running.");
     }
 
-    // Call execution
     runUniversalSandboxCode();
 }
 
-// 2. Main Execution Function with Universal Language Support
 async function runUniversalSandboxCode() {
-    // Optional chaining (?.) use pannuvadhaala element illanaalum error adikaadhu
     const codeEl = document.getElementById('sandboxCode');
     const inputEl = document.getElementById('stdinInput');
     const languageSelect = document.getElementById('languageSelect');
@@ -698,7 +703,7 @@ async function runUniversalSandboxCode() {
     const runBtn = document.getElementById('runBtn');
 
     if (!codeEl || !outputBox) {
-        console.error("Missing required elements: sandboxCode or outputBox ID not found in HTML!");
+        console.error("Missing required elements: sandboxCode or outputBox ID not found!");
         return;
     }
 
@@ -711,12 +716,10 @@ async function runUniversalSandboxCode() {
         return;
     }
 
-    // 1. UI Status Update
     outputBox.innerText = "Executing code on server...";
     if (runBtn) runBtn.disabled = true;
 
     try {
-        // 2. Exact Render Backend Endpoint /run-code
         const response = await fetch('https://synsocial.onrender.com/run-code', {
             method: 'POST',
             headers: {
@@ -731,7 +734,6 @@ async function runUniversalSandboxCode() {
 
         const data = await response.json();
 
-        // 3. Render Output
         if (data.output) {
             outputBox.innerText = data.output;
         } else {
@@ -744,7 +746,6 @@ async function runUniversalSandboxCode() {
         if (runBtn) runBtn.disabled = false;
     }
 }
-
 
         function renderVault() {
             const vaultContainer = document.getElementById('vaultStream');
