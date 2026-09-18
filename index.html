@@ -520,11 +520,10 @@ int main() {
     }
 }
       function buildPostCardHTML(post) {
-    // Comments array safeguard
+    const id = post._id || post.id;
     const comments = Array.isArray(post.comments) ? post.comments : [];
     const commentCount = comments.length;
 
-    // Render individual comment items
     const commentsListHTML = comments.map(c => `
         <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80 text-xs text-slate-300">
             <div class="font-bold text-slate-100 mb-0.5">${c.author || 'Student User'}</div>
@@ -549,26 +548,35 @@ int main() {
                 
                 <!-- Action Buttons: Upvote, Bookmark, Delete -->
                 <div class="flex items-center gap-2 shrink-0">
-                    <button type="button" onclick="handleUpvote('${post._id || post.id}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition">
-                        📌 Upvote (${post.upvotes || 0})
+                    <button type="button" onclick="handleUpvote('${id}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition">
+                        🔥 Upvote (${post.upvotes || 0})
                     </button>
-                    <button type="button" onclick="handleBookmark('${post._id || post.id}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition">
+                    <button type="button" onclick="handleBookmark('${id}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition">
                         🔖 Bookmark
                     </button>
-                    <button type="button" onclick="handleDeletePost('${post._id || post.id}')" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition">
+                    <button type="button" onclick="handleDeletePost('${id}')" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition">
                         🗑️ Delete
                     </button>
                 </div>
             </div>
 
-            <!-- Post Description -->
-            <p class="text-xs text-slate-300 leading-relaxed">${post.content || post.description || ''}</p>
+            <!-- Content -->
+            <p class="text-xs text-slate-300 leading-relaxed">${post.content || ''}</p>
 
-            <!-- Document / Reference Link Download Option -->
-            ${(post.link || post.fileUrl) ? `
-                <div class="pt-1 flex items-center gap-2">
-                    <a href="${post.fileUrl || post.link}" target="_blank" download class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 rounded-lg text-xs font-medium transition">
-                        📥 Download Attached File / View Link
+            <!-- External Reference Link -->
+            ${post.link ? `
+                <div class="pt-1">
+                    <a href="${post.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs text-brand-400 hover:underline font-medium">
+                        🔗 ${post.link}
+                    </a>
+                </div>
+            ` : ''}
+
+            <!-- Uploaded Document File Download Option -->
+            ${post.docUrl ? `
+                <div class="pt-1">
+                    <a href="${post.docUrl}" target="_blank" download class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 rounded-lg text-xs font-medium transition">
+                        📄 Download Document (${post.docName || 'File'})
                     </a>
                 </div>
             ` : ''}
@@ -579,7 +587,6 @@ int main() {
                     💬 Comments (${commentCount})
                 </div>
 
-                <!-- Existing Comments List -->
                 ${commentCount > 0 ? `
                     <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
                         ${commentsListHTML}
@@ -589,12 +596,12 @@ int main() {
                 <!-- Comment Input Box -->
                 <div class="flex items-center gap-2 w-full pt-1">
                     <input type="text" 
-                           id="comment-input-${post._id || post.id}" 
+                           id="comment-input-${id}" 
                            placeholder="Write a comment..." 
                            class="w-full min-w-0 flex-1 px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
                     
                     <button type="button" 
-                            onclick="handleAddComment('${post._id || post.id}')" 
+                            onclick="handleAddComment('${id}')" 
                             class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-lg shrink-0 transition">
                         Send
                     </button>
@@ -981,32 +988,53 @@ function updateMetrics() {
 }        const BACKEND_URL = 'https://synsocial.onrender.com';
 
 // 1. Handle Upvote
+// 1. Upvote Function (Backend Path: /api/posts/upvote/:id)
 async function handleUpvote(postId) {
+    if (!postId) return;
     try {
-        const response = await fetch(`${BACKEND_URL}/api/posts/upvote/${postId}`, {
-            method: 'POST'
+        const res = await fetch(`${API_URL}/api/posts/upvote/${postId}`, { 
+            method: 'POST' 
         });
-        const data = await response.json();
-        if (data.success) {
-            document.getElementById(`upvote-count-${postId}`).innerText = data.upvotes;
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast('Upvoted!', '👍');
+            fetchPosts();
+        } else {
+            showToast('Failed to upvote', '❌');
         }
     } catch (err) {
-        console.error("Upvote Error:", err);
+        showToast('Network error', '❌');
     }
 }
 
-// 2. Handle Local Storage Bookmark
+// 2. Delete Function with PIN Verification (Backend Path: DELETE /api/posts/:id)
+async function handleDeletePost(postId) {
+    if (!postId) return;
+    const pin = prompt("Enter 4-digit Security PIN to delete:");
+    if (!pin) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/posts/${postId}`, { 
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: pin })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('Post deleted!', '🗑️');
+            fetchPosts();
+        } else {
+            showToast(data.message || 'Incorrect PIN!', '❌');
+        }
+    } catch (err) {
+        showToast('Server error during deletion', '❌');
+    }
+}
+
+// 3. Bookmark Function
 function handleBookmark(postId) {
-    let bookmarks = JSON.parse(localStorage.getItem('synsocial_bookmarks') || '[]');
-    if (!bookmarks.includes(postId)) {
-        bookmarks.push(postId);
-        localStorage.setItem('synsocial_bookmarks', JSON.stringify(bookmarks));
-        alert("Post bookmarked successfully!");
-    } else {
-        alert("Post already bookmarked!");
-    }
+    showToast('Bookmarked!', '🔖');
 }
-
 // 3. Handle Passkey Delete
 function promptDeletePost(postId) {
     // Post ID vechu Target Post-a find panrom
