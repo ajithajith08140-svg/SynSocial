@@ -194,6 +194,36 @@ function prompt(message) {
         executeBinary();
     }
 });
+// Comment add panra endpoint
+app.post('/api/posts/:id/comments', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { text, author } = req.body;
+
+        if (!text) {
+            return res.status(400).json({ message: "Comment text is required" });
+        }
+
+        const post = await Post.findById(id);
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+
+        const newComment = {
+            text,
+            author: author || "Student",
+            createdAt: new Date()
+        };
+
+        post.comments = post.comments || [];
+        post.comments.push(newComment);
+        await post.save();
+
+        res.status(200).json({ message: "Comment added successfully", comments: post.comments });
+    } catch (error) {
+        res.status(500).json({ message: "Error adding comment", error: error.message });
+    }
+});
 // Upvote Post Endpoint
 app.post('/api/posts/upvote/:id', async (req, res) => {
     try {
