@@ -742,6 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createdAt: post.createdAt
 })).join('');
                 updateMetrics();
+                fetchprofileStats(); // Update profile stats after rendering feed
 
             } catch (err) {
                 console.error('Error fetching posts from MongoDB:', err);
@@ -1148,7 +1149,57 @@ function openProfileModal() {
 
     renderProfile();
 }
+async function saveProfile(event) {
+    if (event) event.preventDefault();
 
+    const updatedData = {
+        name: (document.getElementById('edit-name-input') || document.getElementById('profileNameInput')).value.trim(),
+        course: (document.getElementById('edit-course-input') || document.getElementById('profileCourseInput')).value.trim(),
+        bio: (document.getElementById('edit-bio-input') || document.getElementById('profileBioInput')).value.trim()
+    };
+
+    try {
+        // Backend MongoDB API call
+        const response = await fetch('/api/user/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            userProfile = data.user || updatedData; // Global state update
+
+            // DOM UI Update
+            if (document.getElementById('profileDisplayName')) document.getElementById('profileDisplayName').innerText = userProfile.name;
+            if (document.getElementById('nav-profile-name')) document.getElementById('nav-profile-name').innerText = userProfile.name;
+            if (document.getElementById('profileDisplayCourse')) document.getElementById('profileDisplayCourse').innerText = userProfile.course;
+            if (document.getElementById('profileDisplayBio')) document.getElementById('profileDisplayBio').innerText = userProfile.bio;
+
+            // Modal Close
+            const editModal = document.getElementById('edit-profile-modal') || document.getElementById('editProfileModal');
+            if (editModal) editModal.classList.add('hidden');
+
+            renderProfile();
+            renderFeed();
+        } else {
+            console.error('Failed to update profile in MongoDB');
+        }
+    } catch (err) {
+        console.error('Error saving profile:', err);
+    }
+}
+async function fetchUserProfile() {
+    try {
+        const res = await fetch('/api/user/profile');
+        if (res.ok) {
+            userProfile = await res.json();
+            renderProfile();
+        }
+    } catch (err) {
+        console.error('Error loading profile:', err);
+    }
+}
 function toggleCommentBox(postId) {
     const box = document.getElementById(`comment-box-${postId}`);
     if (box) box.classList.toggle('hidden');
@@ -1348,6 +1399,9 @@ function showToast(message, icon = '✨') {
         toast.classList.remove('translate-y-0', 'opacity-100');
         toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none');
     }, 3000);
+    document.addEventListener('DOMContentLoaded', () => {
+    fetchUserProfile();
+});
 }    </script>
     
 
