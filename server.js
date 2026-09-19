@@ -25,7 +25,6 @@ if (!fs.existsSync(uploadsPath)) {
     fs.mkdirSync(uploadsPath, { recursive: true });
 }
 app.use('/uploads', express.static(uploadsPath));
-
 // 3. Database Connection Setup
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
@@ -155,32 +154,33 @@ app.post('/api/posts/create', upload.single('document'), async (req, res) => {
         let docName = "";
 
         if (req.file) {
-            docUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            // Use relative path or host fallback dynamically
+            const host = req.get('host');
+            const protocol = req.protocol;
+            docUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
             docName = req.file.originalname;
         }
 
         const newPost = new Post({
-            title,
-            author,
-            tag,
+            title: title || "Untitled Post",
+            author: author || "Student User",
+            tag: tag || "General",
             pin: pin ? String(pin).trim() : "",
-            pinHint,
-            content,
-            link,
-            code,
+            pinHint: pinHint || "",
+            content: content || "",
+            link: link || "",
+            code: code || "",
             docUrl,
             docName
         });
 
         const savedPost = await newPost.save();
-        res.status(201).json({ success: true, post: savedPost });
+        return res.status(201).json({ success: true, post: savedPost });
     } catch (err) {
         console.error('Error saving post:', err);
-        res.status(500).json({ success: false, error: err.message });
+        return res.status(500).json({ success: false, error: err.message });
     }
-});
-
-// Upvote Post Endpoint
+});// Upvote Post Endpoint
 app.post('/api/posts/upvote/:id', async (req, res) => {
     try {
         const { id } = req.params;

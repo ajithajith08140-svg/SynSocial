@@ -650,45 +650,36 @@ fetch(`https://synsocial.onrender.com/api/posts/${postId}/comment`, {
         let currentUploadedFileData = null;
         let currentUploadedFileName = "";
 
-        async function handleCreatePost(event) {
+       async function handleCreatePost(event) {
     if (event) event.preventDefault();
-
     const form = event.target;
     const formData = new FormData(form);
-    
-    // Code snippet manual-aa handle panradhukku
-    const codeSnippet = document.getElementById('post-code-input')?.value || "";
-    formData.append('code', codeSnippet);
-
-    // If file input field name is NOT 'document', map it explicitly for Multer:
-    const fileInput = form.querySelector('input[type="file"]');
-    if (fileInput && fileInput.files[0]) {
-        formData.append('document', fileInput.files[0]);
-    }
 
     try {
-        // FIX 1: Path updated to /api/posts/create
-        // FIX 2: Content-Type header vaikka koodadhu (Browser auto-set multipart/form-data with boundary)
         const res = await fetch(`${API_URL}/api/posts/create`, {
             method: 'POST',
-            body: formData 
+            body: formData
         });
 
-        if (res.ok) {
-            showToast('Post published successfully!', '🚀');
-            currentUploadedFileData = null;
-            currentUploadedFileName = "";
-            form.reset();
-            if (document.getElementById('post-code-input')) {
-                document.getElementById('post-code-input').value = '';
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+            const data = await res.json();
+            // Post successfully saved to backend
+if (res.ok && data.success) {
+    showToast('Post published successfully!', '🚀');
+    
+    // Server-la irundhu vandha new post-a top-la render panna
+    const feedContainer = document.getElementById('feed-container');
+    const newPostHTML = renderPostCard(data.post);
+    
+    // Top-la insert panradhu
+    feedContainer.insertAdjacentHTML('afterbegin', newPostHTML); 
+} else {
+                showToast(data.message || 'Failed to create post', '❌');
             }
-
-            fetchPosts();
-            renderFeed();
         } else {
-            const errorData = await res.json();
-            console.error("Server Response Error:", errorData);
-            showToast('Failed to create post', '❌');
+            console.error("Server returned non-JSON response:", await res.text());
+            showToast('Server starting up, please try again in 10 seconds!', '⚠️');
         }
     } catch (err) {
         console.error("Failed to upload post:", err);
@@ -696,18 +687,21 @@ fetch(`https://synsocial.onrender.com/api/posts/${postId}/comment`, {
     }
 }
         async function fetchPosts() {
-            try {
-                const res = await fetch(`${API_URL}/api/posts`);
-                fetchedPosts = await res.json();
+    try {
+        const res = await fetch(`${API_URL}/api/posts`);
+        const posts = await res.json();
+        
+        const feedContainer = document.getElementById('feed-container');
+        feedContainer.innerHTML = ''; // Container clear panradhu
 
-                if (Array.isArray(fetchedPosts)) {
-                    renderFeed();
-                    updateAppStats(fetchedPosts);
-                }
-            } catch (err) {
-                console.error('Fetch posts error:', err);
-            }
-        }
+        // Ovvoru post-kum renderPostCard call aagum
+        posts.forEach(post => {
+            feedContainer.innerHTML += renderPostCard(post);
+        });
+    } catch (err) {
+        console.error("Error fetching feed:", err);
+    }
+}
 
         async function renderFeed() {
             const postsContainer = document.getElementById('postsStream');
@@ -802,6 +796,19 @@ fetch(`https://synsocial.onrender.com/api/posts/${postId}/comment`, {
             }
         }
 
+function renderPostCard(post) {
+    return `
+        <div class="post-card" id="post-${post._id}">
+            <h3>${post.title}</h3>
+            <p>${post.content}</p>
+
+            <!-- Function calls wrapped in single quotes -->
+            <button onclick="upvotePost('${post._id}')">Upvote (${post.upvotes})</button>
+            <button onclick="toggleBookmark('${post._id}')">Bookmark</button>
+            <button onclick="deletePost('${post._id}')">Delete</button>
+        </div>
+    `;
+}
         async function handleBookmark(postId) {
             if (!postId) return;
             try {
@@ -1201,6 +1208,15 @@ fetch(`https://synsocial.onrender.com/api/posts/${postId}/comment`, {
                 '<span class="text-slate-500 italic font-normal">$1</span>'
             );
         }
+        function filterPosts(searchTerm) {
+    const filtered = allPosts.filter(p => 
+        p.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        p.tag.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const feedContainer = document.getElementById('feed-container');
+    feedContainer.innerHTML = filtered.map(post => renderPostCard(post)).join('');
+}
 
         function showToast(message, icon = '✨') {
             const toast = document.getElementById('toast');
