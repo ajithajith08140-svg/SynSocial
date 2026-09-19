@@ -705,54 +705,120 @@ function createPostCard(post) {
 }        let currentUploadedFileData = null;
         let currentUploadedFileName = "";
 
-    async function handleCreatePost(event) {
-    if (event) event.preventDefault();
-    const form = event.target;
+    async function handleCreatePost(e) {
+    e.preventDefault();
+    const form = e.target;
     const formData = new FormData(form);
 
     try {
-        const res = await fetch(`${API_URL}/api/posts/create`, {
+        const res = await fetch(`${API_URL}/api/posts`, {
             method: 'POST',
             body: formData
         });
 
         const data = await res.json();
         if (res.ok && data.success) {
-            alert('Post Published Successfully! 🚀');
+            showToast("Post published successfully!", "success");
             form.reset();
-            
-            // Immediately re-fetch feed and profile statistics
-            await fetchPosts();
-            if (typeof fetchProfileStats === 'function') {
-                fetchProfileStats();
-            }
+            fetchPosts();
         } else {
-            alert('Failed to create post: ' + (data.error || data.message));
+            showToast(data.error || "Failed to publish post", "error");
         }
     } catch (err) {
-        console.error("Failed to upload post:", err);
-        alert("Error uploading post! Check console.");
+        showToast("Server Connection Error!", "error");
     }
 }
      
 async function fetchPosts() {
     try {
         const res = await fetch(`${API_URL}/api/posts`);
-        allPostsData = await res.json();
+        globalPosts = await res.json();
 
         const feedContainer = document.getElementById('feed-container');
-        if (feedContainer && Array.isArray(allPostsData)) {
-            feedContainer.innerHTML = allPostsData.length > 0 
-                ? allPostsData.map(post => renderPostCard(post)).join('') 
-                : '<p class="text-xs text-slate-500 text-center py-6">No posts found in the feed!</p>';
+        if (feedContainer) {
+            feedContainer.innerHTML = globalPosts.length > 0 
+                ? globalPosts.map(p => renderCard(p)).join('') 
+                : '<p class="text-xs text-slate-500 text-center py-6">No posts found!</p>';
         }
-
-        renderSearchHub(allPostsData);
-        fetchProfileStats();
+        renderSearch(globalPosts);
+        fetchProfile();
     } catch (err) {
-        console.error("Error fetching feed:", err);
+        console.error("Fetch Error:", err);
     }
-}      
+}
+function renderCard(post) {
+    if (!post || !post._id) return '';
+
+    // Code Snippet Section
+    const codeBlock = post.code && post.code.trim() !== '' 
+        ? `<div class="relative mt-2">
+             <button onclick="copyCode(\`${encodeURIComponent(post.code)}\`)" class="absolute top-2 right-2 px-2 py-1 text-[10px] bg-slate-800 text-slate-300 rounded hover:bg-slate-700">📋 Copy</button>
+             <pre class="bg-slate-950 p-3 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto border border-slate-800"><code>${escapeHtml(post.code)}</code></pre>
+           </div>` 
+        : '';
+
+    // File Download Section
+    const docPath = post.docUrl ? `${API_URL}/${post.docUrl}` : '';
+    const docBlock = docPath 
+        ? `<div class="mt-2">
+             <a href="${docPath}" target="_blank" download class="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-slate-800 text-indigo-400 rounded-lg border border-slate-700 hover:bg-slate-700">
+                📄 Download Attached File
+             </a>
+           </div>` 
+        : '';
+
+    return `
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3 mb-4" id="post-${post._id}">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="text-base font-bold text-slate-100">${escapeHtml(post.title)}</h3>
+                    <p class="text-xs text-slate-400">By <span class="text-indigo-400">${escapeHtml(post.author)}</span> • <span class="text-brand-400">${escapeHtml(post.tag)}</span></p>
+                </div>
+                <button onclick="deletePost('${post._id}')" class="text-xs text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-md border border-rose-500/20 hover:bg-rose-500/20">
+                    🗑️ Delete
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-300">${escapeHtml(post.content)}</p>
+            ${codeBlock}
+            ${docBlock}
+
+            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+                <button onclick="upvotePost('${post._id}')" class="px-3 py-1 text-xs bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20">
+                    🔥 Upvote (${post.upvotes || 0})
+                </button>
+                <button onclick="bookmarkPost('${post._id}')" class="px-3 py-1 text-xs bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20">
+                    ${post.isBookmarked ? '🔖 Bookmarked' : '📑 Bookmark'}
+                </button>
+            </div>
+        </div>
+    `;
+}
+function renderSearch(posts) {
+    const searchResBox = document.getElementById('search-results-container') || document.getElementById('searchHubResults');
+    if (!searchResBox) return;
+
+    searchResBox.innerHTML = posts.length > 0 
+        ? posts.map(p => renderCard(p)).join('') 
+        : '<p class="text-xs text-slate-500 text-center py-6">No matching resources found!</p>';
+}  
+async function fetchProfile() {
+    try {
+        const res = await fetch(`${API_URL}/api/profile/stats?author=Rayeesa`);
+        const stats = await res.json();
+
+        if (document.getElementById('stat-uploads')) document.getElementById('stat-uploads').innerText = stats.myUploadsCount || 0;
+        if (document.getElementById('stat-upvotes')) document.getElementById('stat-upvotes').innerText = stats.upvotesReceived || 0;
+        if (document.getElementById('stat-bookmarks')) document.getElementById('stat-bookmarks').innerText = stats.bookmarksCount || 0;
+
+        const uploadsBox = document.getElementById('my-uploads-list');
+        if (uploadsBox) {
+            uploadsBox.innerHTML = (stats.uploads || []).map(p => renderCard(p)).join('') || '<p class="text-xs text-slate-500 py-4">No uploads!</p>';
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
   function renderFeed() {
     fetchPosts();
     fetchProfileStats(); // Fixed casing typo
@@ -877,10 +943,9 @@ function renderPostCard(post) {
         </div>
     `;
 }
-function copyCodeSnippet(encodedCode) {
-    const code = decodeURIComponent(encodedCode);
-    navigator.clipboard.writeText(code);
-    showToast("Code snippet copied to clipboard! 📋", "success");
+function copyCode(encoded) {
+    navigator.clipboard.writeText(decodeURIComponent(encoded));
+    showToast("Code copied to clipboard!", "success");
 }
 async function handleBookmark(postId) {
     if (!postId) return;
@@ -893,7 +958,34 @@ async function handleBookmark(postId) {
     } catch (err) {
         console.error("Bookmark Error:", err);
     }
-}      
+}    
+async function upvotePost(id) {
+    await fetch(`${API_URL}/api/posts/${id}/upvote`, { method: 'PUT' });
+    showToast("Upvoted post!", "success");
+    fetchPosts();
+}
+async function bookmarkPost(id) {
+    await fetch(`${API_URL}/api/posts/${id}/bookmark`, { method: 'PUT' });
+    showToast("Bookmark updated!", "success");
+    fetchPosts();
+}  
+async function deletePost(id) {
+    const pin = prompt("Enter 4-Digit Security PIN:");
+    if (!pin) return;
+
+    const res = await fetch(`${API_URL}/api/posts/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+        showToast("Post deleted!", "success");
+        fetchPosts();
+    } else {
+        showToast(data.message || "Invalid PIN", "error");
+    }
+}
 async function handleDeletePost(postId) {
     const userPin = prompt("Enter 4-Digit Security PIN to delete this post:");
     if (!userPin) return;
@@ -1329,40 +1421,33 @@ function createCompactProfileCard(item) {
                 '<span class="text-slate-500 italic font-normal">$1</span>'
             );
         }
-        function filterPosts(searchTerm) {
-    const filtered = allPosts.filter(p => 
-        p.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        p.tag.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+        function filterPosts() {
+    const query = (document.getElementById('search-input') || {}).value || '';
+    const tag = (document.getElementById('search-tag-select') || {}).value || 'All';
 
-    const feedContainer = document.getElementById('feed-container');
-    feedContainer.innerHTML = filtered.map(post => renderPostCard(post)).join('');
+    const filtered = globalPosts.filter(p => {
+        const matchesQuery = p.title.toLowerCase().includes(query.toLowerCase()) || p.content.toLowerCase().includes(query.toLowerCase());
+        const matchesTag = tag === 'All' || p.tag === tag;
+        return matchesQuery && matchesTag;
+    });
+
+    renderSearch(filtered);
 }
-
-        function showToast(message, type = 'success') {
-    let container = document.getElementById('toast-container');
+       function showToast(message, type = 'success') {
+    let container = document.getElementById('toast-box');
     if (!container) {
         container = document.createElement('div');
-        container.id = 'toast-container';
+        container.id = 'toast-box';
         container.className = 'fixed bottom-5 right-5 z-50 space-y-2';
         document.body.appendChild(container);
     }
-
     const toast = document.createElement('div');
-    toast.className = `px-4 py-2.5 rounded-lg text-xs font-semibold text-white shadow-xl transition-all duration-300 transform translate-y-2 opacity-0 flex items-center gap-2 ${
+    toast.className = `px-4 py-2.5 rounded-lg text-xs font-bold text-white shadow-2xl flex items-center gap-2 transition-all duration-300 ${
         type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
     }`;
-    toast.innerHTML = `<span>${type === 'success' ? '✅' : '⚠️'}</span> <span>${message}</span>`;
-    
+    toast.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> <span>${message}</span>`;
     container.appendChild(toast);
-    setTimeout(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-    }, 10);
-
-    setTimeout(() => {
-        toast.classList.add('opacity-0');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    setTimeout(() => toast.remove(), 3000);
 }
         document.addEventListener('DOMContentLoaded', () => {
     fetchPosts();
