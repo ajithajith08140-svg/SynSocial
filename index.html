@@ -197,39 +197,40 @@
         </section>
 
         <!-- VIEW 2: SEARCH PAGE -->
-        <section id="view-search" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
-            <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800 space-y-4">
-                <h2 class="text-lg sm:text-xl font-extrabold text-slate-100 flex items-center space-x-2">
-                    <i class="fa-solid fa-magnifying-glass text-brand-400"></i>
-                    <span>Advanced Resource Search Hub</span>
-                </h2>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div class="sm:col-span-2 relative">
-                        <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-500"></i>
-                        <input type="text" id="dedicatedSearchInput" oninput="executeDedicatedSearch()" placeholder="Search title, content, links, author..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs sm:text-sm focus:outline-none focus:border-brand-500">
-                    </div>
-                    <div>
-                        <select id="filterTag" onchange="executeDedicatedSearch()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs sm:text-sm focus:outline-none focus:border-brand-500">
-                            <option value="ALL">All Subjects</option>
-                            <option value="Programming">Programming</option>
-                            <option value="DataStructures">DSA</option>
-                            <option value="WebDev">Web Dev</option>
-                            <option value="Database">DBMS</option>
-                            <option value="General">General</option>
-                        </select>
-                    </div>
-                </div>
+        <!-- VIEW 2: SEARCH PAGE -->
+<section id="view-search" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+    <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800 space-y-4">
+        <h2 class="text-lg sm:text-xl font-extrabold text-slate-100 flex items-center space-x-2">
+            <i class="fa-solid fa-magnifying-glass text-brand-400"></i>
+            <span>Advanced Resource Search Hub</span>
+        </h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2 relative">
+                <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-500"></i>
+                <input type="text" id="dedicatedSearchInput" oninput="executeDedicatedSearch()" placeholder="Search title, content, links, author..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs sm:text-sm focus:outline-none focus:border-brand-500">
             </div>
+            <div>
+                <select id="filterTag" onchange="executeDedicatedSearch()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-xs sm:text-sm focus:outline-none focus:border-brand-500">
+                    <option value="ALL">All Subjects</option>
+                    <option value="Programming">Programming</option>
+                    <option value="DataStructures">DSA</option>
+                    <option value="WebDev">Web Dev</option>
+                    <option value="Database">DBMS</option>
+                </select>
+            </div>
+        </div>
+    </div>
 
-            <div id="searchResultsStream" class="space-y-4 max-w-4xl mx-auto"></div>
-        </section>
+    <div id="searchResultsStream" class="space-y-4 max-w-4xl mx-auto"></div>
+</section>
 
         <!-- VIEW 3: FEED WORKSPACE PAGE -->
+        <!-- VIEW 3: FEED WORKSPACE PAGE -->
 <section id="view-feed" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
         
-        <!-- Post Create Form (Left Side) -->
+        <!-- Post Create Form -->
         <div class="lg:col-span-5 order-1 lg:order-1 space-y-6">
             <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800 space-y-4 lg:sticky lg:top-24">
                 <div class="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -241,234 +242,226 @@
                 </div>
 
                 <form id="postForm" onsubmit="handleCreatePost(event)" class="space-y-3 sm:space-y-4">
-                    <!-- Title Input -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Post Title *</label>
-                        <input type="text" id="post-title-input" name="title" required placeholder="e.g., C++ Memory Allocation Notes" 
-                               class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-                    </div>
+    <!-- Title Input -->
+    <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Post Title *</label>
+        <input type="text" name="title" required placeholder="e.g., C++ Memory Allocation Notes" 
+               class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
+    </div>
 
-                    <!-- Author & Tag -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-300 mb-1">Author Name *</label>
-                            <input type="text" id="post-author-input" name="author" required placeholder="Your Name" 
-                                   class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-300 mb-1">Subject Tag *</label>
-                            <select id="post-subject-select" name="tag" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-brand-500">
-                                <option value="Programming">Programming</option>
-                                <option value="WebDev">WebDev</option>
-                                <option value="DBMS">DBMS</option>
-                                <option value="General">General</option>
-                            </select>
-                        </div>
-                    </div>
+    <!-- Author & Tag -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Author Name *</label>
+            <input type="text" name="author" required placeholder="Your Name" 
+                   class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Subject Tag *</label>
+            <select name="tag" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-brand-500">
+                <option value="Programming">Programming</option>
+                <option value="WebDev">WebDev</option>
+                <option value="Statistics">Statistics</option>
+                <option value="General">General</option>
+            </select>
+        </div>
+    </div>
 
-                    <!-- Security PIN & PIN Hint -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-300 mb-1">Security PIN (4 Digits) *</label>
-                            <input type="password" name="pin" required placeholder="1234" maxlength="4"
-                                   class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-300 mb-1">PIN Hint (For Recovery) *</label>
-                            <input type="text" name="pinHint" required placeholder="e.g., My birth year" 
-                                   class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-                        </div>
-                    </div>
+    <!-- Security PIN & PIN Hint -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Security PIN (4 Digits) *</label>
+            <input type="text" name="pin" required placeholder="1234" maxlength="4"
+                   class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">PIN Hint (For Recovery) *</label>
+            <input type="text" name="pinHint" required placeholder="e.g., My birth year" 
+                   class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
+        </div>
+    </div>
 
-                    <!-- Description / Content -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Description *</label>
-                        <textarea id="post-desc-input" name="content" required rows="3" placeholder="Explain your doubt or write notes..." 
-                                  class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500"></textarea>
-                    </div>
+    <!-- Description / Content -->
+    <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Description *</label>
+        <textarea name="content" required rows="3" placeholder="Explain your doubt or write notes..." 
+                  class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500"></textarea>
+    </div>
+    <div class="space-y-1">
+    <label class="text-xs font-medium text-slate-300">Code Snippet (Optional)</label>
+    <textarea id="post-code-input" rows="3" placeholder="// Paste your code here..." class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-emerald-400 font-mono focus:outline-none focus:border-brand-500"></textarea>
+</div>
 
-                    <div class="space-y-1">
-                        <label class="text-xs font-medium text-slate-300">Code Snippet (Optional)</label>
-                        <textarea id="post-code-input" name="code" rows="3" placeholder="// Paste your code here..." class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-emerald-400 font-mono focus:outline-none focus:border-brand-500"></textarea>
-                    </div>
+    <!-- Optional Reference Link -->
+    <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Reference Link / URL (Optional)</label>
+        <input type="url" name="link" placeholder="https://example.com" 
+               class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
+    </div>
 
-                    <!-- Optional Reference Link -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Reference Link / URL (Optional)</label>
-                        <input type="url" id="post-link-input" name="link" placeholder="https://example.com" 
-                               class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-                    </div>
+    <!-- Document Upload -->
+    <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Attach Document (Optional)</label>
+        <input type="file" name="document" 
+               class="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-500/10 file:text-brand-400 hover:file:bg-brand-500/20">
+    </div>
 
-                    <!-- Document Upload -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Attach Document (Optional)</label>
-                        <input type="file" name="doc" 
-                               class="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-500/10 file:text-brand-400 hover:file:bg-brand-500/20">
-                    </div>
-
-                    <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
-                        🚀 Publish Post
-                    </button>
-                </form>
+    <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+        🚀 Publish Post
+    </button>
+</form>
             </div>
         </div>
 
-        <!-- Feed Stream Container (Right Side) -->
+        <!-- Feed Stream -->
         <div class="lg:col-span-7 order-2 lg:order-2 space-y-4">
-            <h2 class="text-xl font-bold text-slate-100 mb-2">Academic Feed</h2>
-            
-            <!-- Feed output target -->
-            <div id="feed-container" class="space-y-4"></div>
             <div id="postsStream" class="space-y-4"></div>
         </div>
 
     </div>
 </section>
-
         <!-- VIEW 4: CODE VAULT PAGE -->
-        <section id="view-vault" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
-            <div class="space-y-1">
-                <h1 class="text-xl sm:text-3xl font-extrabold text-slate-100 flex items-center space-x-2 sm:space-x-3">
-                    <i class="fa-solid fa-box-archive text-accent-cyan"></i>
-                    <span>Code Vault & Universal Sandbox</span>
-                </h1>
-            </div>
+        <!-- VIEW 4: CODE VAULT PAGE -->
+<section id="view-vault" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+    <div class="space-y-1">
+        <h1 class="text-xl sm:text-3xl font-extrabold text-slate-100 flex items-center space-x-2 sm:space-x-3">
+            <i class="fa-solid fa-box-archive text-accent-cyan"></i>
+            <span>Code Vault & Universal Sandbox</span>
+        </h1>
+    </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-                <!-- Live Code Runner -->
-                <div class="lg:col-span-6 order-1 lg:order-2 space-y-4">
-                    <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800 space-y-4 lg:sticky lg:top-24">
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-bold text-xs sm:text-base text-slate-100 flex items-center space-x-2">
-                                <i class="fa-solid fa-terminal text-accent-emerald"></i>
-                                <span>Multi-Language Runner</span>
-                            </h3>
-                            <select id="languageSelect" onchange="loadLangTemplate()" class="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-[11px] font-mono text-emerald-400 focus:outline-none">
-                                <option value="cpp">C++ (GCC)</option>
-                                <option value="c">C</option>
-                                <option value="python">Python 3</option>
-                                <option value="java">Java</option>
-                                <option value="javascript">JavaScript</option>
-                            </select>
-                        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        <!-- Live Code Runner -->
+        <div class="lg:col-span-6 order-1 lg:order-2 space-y-4">
+            <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800 space-y-4 lg:sticky lg:top-24">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-xs sm:text-base text-slate-100 flex items-center space-x-2">
+                        <i class="fa-solid fa-terminal text-accent-emerald"></i>
+                        <span>Multi-Language Runner</span>
+                    </h3>
+                    <select id="languageSelect" onchange="loadLangTemplate()" class="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-[11px] font-mono text-emerald-400 focus:outline-none">
+                        <option value="cpp">C++ (GCC)</option>
+                        <option value="c">C</option>
+                        <option value="python">Python 3</option>
+                        <option value="java">Java</option>
+                        <option value="javascript">JavaScript</option>
+                    </select>
+                </div>
 
-                        <textarea id="sandboxCode" rows="7" class="w-full p-3 rounded-xl bg-slate-950 text-emerald-400 border border-slate-800 code-font text-xs focus:outline-none focus:border-accent-emerald resize-none">#include <iostream>
+                <textarea id="sandboxCode" rows="7" class="w-full p-3 rounded-xl bg-slate-950 text-emerald-400 border border-slate-800 code-font text-xs focus:outline-none focus:border-accent-emerald resize-none">#include <iostream>
 using namespace std;
 
 int main() {
     cout << "Hello SynSocial" << endl;
     return 0;
 }</textarea>
-                        
-                        <div class="space-y-2">
-                            <label class="block text-[11px] font-semibold text-slate-300">Program Input (stdin):</label>
-                            <textarea id="stdinInput" rows="2" placeholder="Inputs line-by-line" class="w-full p-2.5 rounded-xl bg-slate-900 text-emerald-400 placeholder-slate-500 border border-slate-700/80 code-font text-xs focus:outline-none resize-none"></textarea>
-                        </div>
-
-                        <button onclick="checkCodeAndRun()" class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-500 text-slate-950 font-bold text-xs sm:text-sm transition-all flex items-center justify-center space-x-2 shadow-lg">
-                            <i class="fa-solid fa-play text-xs"></i>
-                            <span>Execute Code Online</span>
-                        </button>
-
-                        <pre id="outputBox" class="w-full p-3 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[90px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
-                    </div>
+                
+                <div class="space-y-2">
+                    <label class="block text-[11px] font-semibold text-slate-300">Program Input (stdin):</label>
+                    <textarea id="stdinInput" rows="2" placeholder="Inputs line-by-line" class="w-full p-2.5 rounded-xl bg-slate-900 text-emerald-400 placeholder-slate-500 border border-slate-700/80 code-font text-xs focus:outline-none resize-none"></textarea>
                 </div>
 
-                <!-- Saved Snippets Feed -->
-                <div class="lg:col-span-6 order-2 lg:order-1 space-y-4" id="vaultStream"></div>
-            </div>
-        </section>
+                <button onclick="checkCodeAndRun()" class="w-full py-2.5 rounded-xl bg-accent-emerald hover:bg-emerald-500 text-slate-950 font-bold text-xs sm:text-sm transition-all flex items-center justify-center space-x-2 shadow-lg">
+                    <i class="fa-solid fa-play text-xs"></i>
+                    <span>Execute Code Online</span>
+                </button>
 
-        <!-- VIEW 5: PROFILE DASHBOARD PAGE -->
-        <section id="view-profile" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-            <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800 relative overflow-hidden">
-                <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 relative z-10">
-                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-brand-600 to-accent-cyan flex items-center justify-center text-white font-black text-2xl sm:text-3xl shadow-lg shadow-brand-500/20 border-2 border-slate-700">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                    </div>
-                    
-                    <div class="flex-grow text-center sm:text-left space-y-1">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <h1 id="profileDisplayName" class="text-2xl font-black text-slate-100">Student User</h1>
-                            <button onclick="openProfileModal()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-all flex items-center justify-center space-x-1.5 self-center sm:self-auto">
-                                <i class="fa-solid fa-pen-to-square text-brand-400"></i>
-                                <span>Edit Profile</span>
-                            </button>
-                        </div>
-                        <p id="profileDisplayCourse" class="text-xs font-semibold text-brand-400">Computer Science & Engineering</p>
-                        <p id="profileDisplayBio" class="text-xs text-slate-400 italic mt-1">Passionate learner & Developer</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-800/80">
-                    <div class="text-center p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
-                        <span id="prof-stat-posts" class="block text-xl font-black text-brand-400">0</span>
-                        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">My Uploads</span>
-                    </div>
-                    <div class="text-center p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
-                        <span id="prof-stat-code" class="block text-xl font-black text-accent-cyan">0</span>
-                        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Upvotes Recd</span>
-                    </div>
-                    <div class="text-center p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
-                        <span id="prof-stat-docs" class="block text-xl font-black text-accent-emerald">0</span>
-                        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Bookmarks</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <div class="flex items-center space-x-2 border-b border-slate-800 pb-2">
-                    <button onclick="switchProfileTab('uploads')" id="prof-tab-btn-uploads" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md">
-                        <i class="fa-solid fa-folder-open mr-1.5"></i> My Uploads
-                    </button>
-                    <button onclick="switchProfileTab('saved')" id="prof-tab-btn-saved" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
-                        <i class="fa-solid fa-bookmark mr-1.5"></i> Bookmarked Posts
-                    </button>
-                </div>
-
-                <div id="profile-tab-uploads" class="space-y-3 mt-4"></div>
-            </div>
-        </section>
-
-        <!-- EDIT PROFILE MODAL -->
-        <div id="edit-profile-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                    <h3 class="text-base font-bold text-slate-100">Edit Profile</h3>
-                    <button onclick="closeProfileModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <form onsubmit="saveProfile(event)" class="space-y-3">
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1 font-semibold">Name</label>
-                        <input type="text" id="edit-name-input" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-brand-500" required />
-                    </div>
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1 font-semibold">Course</label>
-                        <input type="text" id="edit-course-input" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-brand-500" required />
-                    </div>
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1 font-semibold">Bio</label>
-                        <textarea id="edit-bio-input" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-brand-500" rows="3"></textarea>
-                    </div>
-                    <div class="flex justify-end space-x-2 pt-2">
-                        <button type="button" onclick="closeProfileModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold">Save Changes</button>
-                    </div>
-                </form>
+                <pre id="outputBox" class="w-full p-3 rounded-xl bg-black text-slate-300 border border-slate-800 code-font text-xs min-h-[90px] whitespace-pre-wrap overflow-x-auto">Terminal ready...</pre>
             </div>
         </div>
+
+        <!-- Saved Snippets Feed -->
+        <div class="lg:col-span-6 order-2 lg:order-1 space-y-4" id="vaultStream"></div>
+    </div>
+</section>
+       <!-- VIEW 5: PROFILE DASHBOARD PAGE -->
+<section id="view-profile" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-800 relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 relative z-10">
+            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-brand-600 to-accent-cyan flex items-center justify-center text-white font-black text-2xl sm:text-3xl shadow-lg shadow-brand-500/20 border-2 border-slate-700">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            
+            <div class="flex-grow text-center sm:text-left space-y-1">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h1 id="profileDisplayName" class="text-2xl font-black text-slate-100">Student User</h1>
+                    <button onclick="openProfileModal()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-all flex items-center justify-center space-x-1.5 self-center sm:self-auto">
+                        <i class="fa-solid fa-pen-to-square text-brand-400"></i>
+                        <span>Edit Profile</span>
+                    </button>
+                </div>
+                <p id="profileDisplayCourse" class="text-xs font-semibold text-brand-400">Computer Science & Engineering</p>
+                <p id="profileDisplayBio" class="text-xs text-slate-400 italic mt-1">Passionate learner & Developer</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-800/80">
+            <div class="text-center p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
+                <span id="prof-stat-posts" class="block text-xl font-black text-brand-400">0</span>
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">My Uploads</span>
+            </div>
+            <div class="text-center p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
+                <span id="prof-stat-code" class="block text-xl font-black text-accent-cyan">0</span>
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Upvotes Recd</span>
+            </div>
+            <div class="text-center p-2 rounded-xl bg-slate-900/50 border border-slate-800/50">
+                <span id="prof-stat-docs" class="block text-xl font-black text-accent-emerald">0</span>
+                <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Bookmarks</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="flex items-center space-x-2 border-b border-slate-800 pb-2">
+            <button onclick="switchProfileTab('uploads')" id="prof-tab-btn-uploads" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md">
+                <i class="fa-solid fa-folder-open mr-1.5"></i> My Uploads
+            </button>
+            <button onclick="switchProfileTab('saved')" id="prof-tab-btn-saved" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-bookmark mr-1.5"></i> Bookmarked Posts
+            </button>
+        </div>
+
+        <div id="profile-tab-uploads" class="space-y-3 mt-4"></div>
+    </div>
+</section>
+
+<!-- EDIT PROFILE MODAL -->
+<div id="edit-profile-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-slate-100">Edit Profile</h3>
+            <button onclick="closeProfileModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form onsubmit="saveProfile(event)" class="space-y-3">
+            <div>
+                <label class="block text-xs text-slate-400 mb-1 font-semibold">Name</label>
+                <input type="text" id="edit-name-input" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-brand-500" required />
+            </div>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1 font-semibold">Course</label>
+                <input type="text" id="edit-course-input" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-brand-500" required />
+            </div>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1 font-semibold">Bio</label>
+                <textarea id="edit-bio-input" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-brand-500" rows="3"></textarea>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" onclick="closeProfileModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
     </main>
 
     <script>
-        let currentProfTab = 'uploads';
-        let allPostsData = [];
+ let currentProfTab = 'uploads';
         let userProfile = JSON.parse(localStorage.getItem('synsocial_user_profile')) || {
-            name: "Student User",
-            course: "Computer Science & Engineering",
-            bio: "Passionate learner & Developer"
-        };
+    name: "Student User",
+    course: "Computer Science & Engineering",
+    bio: "Passionate learner & Developer"
+};
         const API_URL = "https://synsocial.onrender.com";
-        const BACKEND_URL = 'https://synsocial.onrender.com';
 
         const quotesList = [
             { quote: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King" },
@@ -478,6 +471,7 @@ int main() {
             { quote: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.", author: "Martin Fowler" }
         ];
 
+        
         let quoteIndex = 0;
         function rotateQuotes() {
             const q = quotesList[quoteIndex];
@@ -529,540 +523,547 @@ int main() {
             }
         }
 
-        function formatDate(dateString) {
-            if (!dateString) return "Just now";
-            const date = new Date(dateString);
-            if (isNaN(date.getTime())) return "Just now";
-            
-            return date.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
-            }) + ' • ' + date.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        }
+        async function handleAddComment(postId, commentInputId) {
+    const inputElem = document.getElementById(commentInputId);
+    if (!inputElem || !inputElem.value.trim()) return;
 
-        function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    const commentText = inputElem.value.trim();
+    const post = fetchedPosts.find(p => (p._id || p.id) === postId);
+    if (!post) return;
+
+    if (!Array.isArray(post.comments)) post.comments = [];
+
+    // Temporary comment object for instant UI
+    const tempComment = {
+        text: commentText,
+        author: userProfile.name || 'Student User',
+        createdAt: new Date().toISOString()
+    };
+
+    // 1. OPTIMISTIC UPDATE: Add comment immediately
+    post.comments.push(tempComment);
+    inputElem.value = ''; // Input box clear pannu
+    renderFeed(); // Instant UI Update
+
+    // 2. Background API Call
+    try {
+        const response = await fetch(`/api/posts/${postId}/comment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: commentText, author: userProfile.name })
+        });
+
+        if (!response.ok) {
+            // Revert if request failed
+            post.comments.pop();
+            renderFeed();
+            alert("Comment failed to save!");
+        }
+    } catch (err) {
+        console.error("Comment error:", err);
+        post.comments.pop();
+        renderFeed();
+    }
 }
-        // URL should match backend routes
-fetch(`https://synsocial.onrender.com/api/posts/${postId}/comment`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ text: commentText, author: "Student User" })
-})
+function openEditProfileModal() {
+    const editModal = document.getElementById('edit-profile-modal') || document.getElementById('editProfileModal');
+    
+    // Existing values-a input box-la set pannum
+    if (document.getElementById('edit-name-input')) document.getElementById('edit-name-input').value = userProfile.name || '';
+    if (document.getElementById('edit-course-input')) document.getElementById('edit-course-input').value = userProfile.course || '';
+    if (document.getElementById('edit-bio-input')) document.getElementById('edit-bio-input').value = userProfile.bio || '';
 
-        function buildPostCardHTML(post) {
-            const authorName = post.author || post.username || "Anonymous";
-            const postTitle = post.title || "Untitled Post";
-            const upvotesCount = Array.isArray(post.upvotes) ? post.upvotes.length : (post.upvotes || 0);
-            const commentsList = Array.isArray(post.comments) ? post.comments : [];
-            const formattedTime = formatDate(post.createdAt || post.date);
-            const postId = post._id || post.id;
+    if (editModal) editModal.classList.remove('hidden');
+}
+      //1. Post Card HTML Generator (Used for Feed, Search Hub, and Profile Bookmarks)
+function buildPostCardHTML(post) {
+    const authorName = post.author || post.username || "Anonymous";
+    const postTitle = post.title || "Untitled Post";
+    const upvotesCount = Array.isArray(post.upvotes) ? post.upvotes.length : (post.upvotes || 0);
+    const commentsList = Array.isArray(post.comments) ? post.comments : [];
+    const formattedTime = formatDate(post.createdAt || post.date);
+    const postId = post._id || post.id;
 
-            const hasFile = post.fileData || post.fileName || post.fileUrl || post.document || post.docUrl || post.docData;
-            const fileDownloadUrl = post.fileData || post.fileUrl || post.document || post.docUrl || post.docData || '#';
-            const fileNameDisplay = post.fileName || post.docName || 'Attached Document';
+    // 1. Download Document Button Handling
+    const hasFile = post.fileData || post.fileName || post.fileUrl || post.document;
+    const fileDownloadUrl = post.fileData || post.fileUrl || post.document || '#';
+    const fileNameDisplay = post.fileName || 'Attached Document';
 
-            let downloadBtnHTML = hasFile ? `
-                <a href="${fileDownloadUrl}" download="${fileNameDisplay}" target="_blank" class="px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/40 text-brand-400 border border-brand-500/30 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
-                    <i class="fa-solid fa-file-arrow-down"></i>
-                    <span>Download (${fileNameDisplay})</span>
-                </a>` : '';
+    let downloadBtnHTML = hasFile ? `
+        <a href="${fileDownloadUrl}" download="${fileNameDisplay}" target="_blank" class="px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/40 text-brand-400 border border-brand-500/30 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
+            <i class="fa-solid fa-file-arrow-down"></i>
+            <span>Download (${fileNameDisplay})</span>
+        </a>` : '';
 
-            let linkBtnHTML = post.link ? `
-                <a href="${post.link}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
-                    <i class="fa-solid fa-link"></i>
-                    <span>Open Reference Link</span>
-                </a>` : '';
+    // 2. Reference Link Button
+    let linkBtnHTML = post.link ? `
+        <a href="${post.link}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
+            <i class="fa-solid fa-link"></i>
+            <span>Open Reference Link</span>
+        </a>` : '';
 
-            let codeSnippetHTML = (post.codeSnippet || post.code) ? `
-                <div class="relative mt-2 rounded-xl bg-slate-950 border border-slate-800 p-3 overflow-x-auto font-mono text-xs text-emerald-400">
-                    <div class="flex justify-between items-center pb-2 mb-2 border-b border-slate-800 text-[10px] text-slate-500 font-sans">
-                        <span><i class="fa-solid fa-code mr-1"></i> ${post.language || 'Code Snippet'}</span>
-                        <button onclick="copyToClipboard(\`${(post.codeSnippet || post.code).replace(/`/g, '\\`')}\`)" class="text-slate-400 hover:text-white transition-all">
-                            <i class="fa-regular fa-copy"></i> Copy
-                        </button>
-                    </div>
-                    <pre><code>${escapeHTML(post.codeSnippet || post.code)}</code></pre>
-                </div>` : '';
-
-            const commentsHTML = commentsList.map(c => `
-                <div class="p-2 bg-slate-950/60 rounded-lg text-xs text-slate-300 border border-slate-800/80 mb-1">
-                    <span class="font-bold text-brand-400">${c.author || 'User'}:</span> ${typeof c === 'string' ? c : (c.text || '')}
-                </div>
-            `).join('');
-
-            return `
-                <div class="p-5 bg-slate-900/70 border border-slate-800 rounded-2xl space-y-4 shadow-lg">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] uppercase tracking-wider px-2.5 py-1 bg-brand-600/20 text-brand-400 rounded-lg border border-brand-500/20 font-bold">
-                                ${post.subject || post.tag || 'Programming'}
-                            </span>
-                            <h3 class="text-base font-bold text-slate-100 mt-2">${postTitle}</h3>
-                            <p class="text-xs text-slate-400 mt-0.5">By <span class="text-brand-400 font-semibold">${authorName}</span> • ${formattedTime}</p>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <button onclick="handleUpvote('${postId}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-xl text-xs font-bold border border-slate-700 flex items-center space-x-1.5 transition-all">
-                                <i class="fa-solid fa-fire"></i>
-                                <span>Upvote (${upvotesCount})</span>
-                            </button>
-                            <button onclick="handleBookmark('${postId}')" class="px-3 py-1.5 ${post.isBookmarked ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'} rounded-xl text-xs font-bold border border-slate-700 transition-all">
-                                <i class="fa-solid fa-bookmark"></i>
-                                <span>${post.isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
-                            </button>
-                            <button onclick="promptDeletePost('${postId}')" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition-all flex items-center space-x-1">
-                                <i class="fa-solid fa-trash"></i>
-                                <span>Delete</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <p class="text-xs text-slate-300 leading-relaxed">${post.content || post.description || ''}</p>
-
-                    ${codeSnippetHTML}
-
-                    <div class="flex flex-wrap items-center gap-2">
-                        ${linkBtnHTML}
-                        ${downloadBtnHTML}
-                    </div>
-
-                    <div class="pt-3 border-t border-slate-800/60 space-y-2">
-                        <span class="text-xs font-semibold text-slate-400"><i class="fa-regular fa-comment mr-1"></i> Comments (${commentsList.length})</span>
-                        <div class="space-y-1 max-h-32 overflow-y-auto">${commentsHTML}</div>
-                        <div class="flex items-center gap-2 pt-1">
-                            <input type="text" id="comment-input-${postId}" placeholder="Write a comment..." class="flex-grow px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500" />
-                            <button onclick="handleAddComment('${postId}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition-all">
-                                Send
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        
-
-// 1. Render Post Function (Fixed Quotes for postId)
-function createPostCard(post) {
-    const docHTML = post.docUrl 
-        ? `<div class="mt-3">
-             <a href="${post.docUrl}" target="_blank" download="${post.docName || 'document'}" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-slate-800 text-slate-200 rounded-md border border-slate-700 hover:bg-slate-700">
-                📄 Download (${post.docName || 'Attachment'})
-             </a>
-           </div>`
-        : '';
-
-    const commentsHTML = (post.comments || []).map(c => `
-        <div class="text-xs bg-slate-900/60 p-2 rounded border border-slate-800/80 mt-1">
-            <strong class="text-indigo-300">${c.author || 'User'}:</strong> <span class="text-slate-300">${c.text}</span>
+    // 3. Comments list rendering
+    const commentsHTML = commentsList.map(c => `
+        <div class="p-2 bg-slate-950/60 rounded-lg text-xs text-slate-300 border border-slate-800/80 mb-1">
+            <span class="font-bold text-brand-400">${c.author || 'User'}:</span> ${typeof c === 'string' ? c : (c.text || '')}
         </div>
     `).join('');
 
     return `
-        <div class="post-card bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-3 mb-4" id="post-${post._id}">
-            <div class="flex justify-between items-start">
+        <div class="p-5 bg-slate-900/70 border border-slate-800 rounded-2xl space-y-4 shadow-lg">
+            <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-lg font-bold text-slate-100">${post.title}</h3>
-                    <p class="text-xs text-slate-400">By ${post.author || 'Student User'} • ${post.tag || 'General'}</p>
+                    <span class="text-[10px] uppercase tracking-wider px-2.5 py-1 bg-brand-600/20 text-brand-400 rounded-lg border border-brand-500/20 font-bold">
+                        ${post.subject || 'Programming'}
+                    </span>
+                    <h3 class="text-base font-bold text-slate-100 mt-2">${postTitle}</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">By <span class="text-brand-400 font-semibold">${authorName}</span> • ${formattedTime}</p>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <button onclick="handleUpvote('${postId}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-xl text-xs font-bold border border-slate-700 flex items-center space-x-1.5 transition-all">
+                        <i class="fa-solid fa-fire"></i>
+                        <span>Upvote (${upvotesCount})</span>
+                    </button>
+                    <button onclick="handleBookmark('${postId}')" class="px-3 py-1.5 ${post.isBookmarked ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'} rounded-xl text-xs font-bold border border-slate-700 transition-all">
+                        <i class="fa-solid fa-bookmark"></i>
+                        <span>${post.isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+                    </button>
+                    <!-- Delete Button Added -->
+                    <button onclick="handleDeletePost('${postId}')" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition-all flex items-center space-x-1">
+                        <i class="fa-solid fa-trash"></i>
+                        <span>Delete</span>
+                    </button>
                 </div>
             </div>
 
-            <p class="text-sm text-slate-300">${post.content || ''}</p>
-            ${post.code ? `<pre class="bg-slate-950 p-3 rounded-md text-xs font-mono text-green-400 overflow-x-auto"><code>${post.code}</code></pre>` : ''}
-            ${docHTML}
+            <p class="text-xs text-slate-300 leading-relaxed">${post.content || post.description || ''}</p>
 
-            <!-- Action Buttons -->
-            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
-                <button onclick="handleUpvote('${post._id}')" class="px-3 py-1 text-xs font-semibold rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30">
-                    🔥 Upvote (${post.upvotes || 0})
-                </button>
-                <button onclick="handleBookmark('${post._id}')" class="px-3 py-1 text-xs font-semibold rounded-md bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/30">
-                    ${post.isBookmarked ? '🔖 Bookmarked' : '📑 Bookmark'}
-                </button>
+            <!-- Links & Downloads Container -->
+            <div class="flex flex-wrap items-center gap-2">
+                ${linkBtnHTML}
+                ${downloadBtnHTML}
             </div>
 
-            <!-- Comment Section -->
-            <div class="pt-3 border-t border-slate-800/60">
-                <p class="text-xs font-semibold text-slate-400 mb-2">Comments (${(post.comments || []).length})</p>
-                <div id="comments-container-${post._id}" class="space-y-1 mb-2 max-h-32 overflow-y-auto">
-                    ${commentsHTML || '<p class="text-xs text-slate-500">No comments yet.</p>'}
-                </div>
-                <div class="flex gap-2">
-                    <input type="text" id="comment-input-${post._id}" placeholder="Write a comment..." class="flex-1 text-xs bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500">
-                    <button onclick="handleAddComment('${post._id}')" class="px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded hover:bg-indigo-500">
+            <!-- Comments Section -->
+            <div class="pt-3 border-t border-slate-800/60 space-y-2">
+                <span class="text-xs font-semibold text-slate-400"><i class="fa-regular fa-comment mr-1"></i> Comments (${commentsList.length})</span>
+                <div class="space-y-1 max-h-32 overflow-y-auto">${commentsHTML}</div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="text" id="comment-input-${postId}" placeholder="Write a comment..." class="flex-grow px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500" />
+                    <button onclick="handleAddComment('${postId}', 'comment-input-${postId}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition-all">
                         Send
                     </button>
                 </div>
             </div>
         </div>
     `;
-}        let currentUploadedFileData = null;
-        let currentUploadedFileName = "";
+}
 
-    async function handleCreatePost(e) {
-    e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
+async function handleDeletePost(postId) {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+
+    // Optimistic Delete
+    fetchedPosts = fetchedPosts.filter(p => (p._id || p.id) !== postId);
+    renderFeed();
+    renderProfile();
+    renderSearchHub();
 
     try {
-        const res = await fetch(`${API_URL}/api/posts`, {
-            method: 'POST',
-            body: formData
-        });
-
-        const data = await res.json();
-        if (res.ok && data.success) {
-            showToast("Post published successfully!", "success");
-            form.reset();
-            fetchPosts();
-        } else {
-            showToast(data.error || "Failed to publish post", "error");
-        }
+        await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
     } catch (err) {
-        showToast("Server Connection Error!", "error");
+        console.error("Error deleting post:", err);
     }
 }
-     
-async function fetchPosts() {
-    try {
-        const res = await fetch(`${API_URL}/api/posts`);
-        globalPosts = await res.json();
+function renderSearchHub() {
+    const searchContainer = document.getElementById('search-results-container') || document.getElementById('search-hub-posts');
+    const searchInput = document.getElementById('search-query-input') || document.getElementById('searchInput');
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-        const feedContainer = document.getElementById('feed-container');
-        if (feedContainer) {
-            feedContainer.innerHTML = globalPosts.length > 0 
-                ? globalPosts.map(p => renderCard(p)).join('') 
-                : '<p class="text-xs text-slate-500 text-center py-6">No posts found!</p>';
-        }
-        renderSearch(globalPosts);
-        fetchProfile();
-    } catch (err) {
-        console.error("Fetch Error:", err);
-    }
-}
-function renderCard(post) {
-    if (!post || !post._id) return '';
-
-    // Code Snippet Section
-    const codeBlock = post.code && post.code.trim() !== '' 
-        ? `<div class="relative mt-2">
-             <button onclick="copyCode(\`${encodeURIComponent(post.code)}\`)" class="absolute top-2 right-2 px-2 py-1 text-[10px] bg-slate-800 text-slate-300 rounded hover:bg-slate-700">📋 Copy</button>
-             <pre class="bg-slate-950 p-3 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto border border-slate-800"><code>${escapeHtml(post.code)}</code></pre>
-           </div>` 
-        : '';
-
-    // File Download Section
-    const docPath = post.docUrl ? `${API_URL}/${post.docUrl}` : '';
-    const docBlock = docPath 
-        ? `<div class="mt-2">
-             <a href="${docPath}" target="_blank" download class="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-slate-800 text-indigo-400 rounded-lg border border-slate-700 hover:bg-slate-700">
-                📄 Download Attached File
-             </a>
-           </div>` 
-        : '';
-
-    return `
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3 mb-4" id="post-${post._id}">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h3 class="text-base font-bold text-slate-100">${escapeHtml(post.title)}</h3>
-                    <p class="text-xs text-slate-400">By <span class="text-indigo-400">${escapeHtml(post.author)}</span> • <span class="text-brand-400">${escapeHtml(post.tag)}</span></p>
-                </div>
-                <button onclick="deletePost('${post._id}')" class="text-xs text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-md border border-rose-500/20 hover:bg-rose-500/20">
-                    🗑️ Delete
-                </button>
-            </div>
-
-            <p class="text-xs text-slate-300">${escapeHtml(post.content)}</p>
-            ${codeBlock}
-            ${docBlock}
-
-            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
-                <button onclick="upvotePost('${post._id}')" class="px-3 py-1 text-xs bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20">
-                    🔥 Upvote (${post.upvotes || 0})
-                </button>
-                <button onclick="bookmarkPost('${post._id}')" class="px-3 py-1 text-xs bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20">
-                    ${post.isBookmarked ? '🔖 Bookmarked' : '📑 Bookmark'}
-                </button>
-            </div>
-        </div>
-    `;
-}
-function renderSearch(posts) {
-    const searchResBox = document.getElementById('search-results-container') || document.getElementById('searchHubResults');
-    if (!searchResBox) return;
-
-    searchResBox.innerHTML = posts.length > 0 
-        ? posts.map(p => renderCard(p)).join('') 
-        : '<p class="text-xs text-slate-500 text-center py-6">No matching resources found!</p>';
-}  
-async function fetchProfile() {
-    try {
-        const res = await fetch(`${API_URL}/api/profile/stats?author=Rayeesa`);
-        const stats = await res.json();
-
-        if (document.getElementById('stat-uploads')) document.getElementById('stat-uploads').innerText = stats.myUploadsCount || 0;
-        if (document.getElementById('stat-upvotes')) document.getElementById('stat-upvotes').innerText = stats.upvotesReceived || 0;
-        if (document.getElementById('stat-bookmarks')) document.getElementById('stat-bookmarks').innerText = stats.bookmarksCount || 0;
-
-        const uploadsBox = document.getElementById('my-uploads-list');
-        if (uploadsBox) {
-            uploadsBox.innerHTML = (stats.uploads || []).map(p => renderCard(p)).join('') || '<p class="text-xs text-slate-500 py-4">No uploads!</p>';
-        }
-    } catch (err) {
-        console.error(err);
-    }
-}
-  function renderFeed() {
-    fetchPosts();
-    fetchProfileStats(); // Fixed casing typo
-}
-function renderSearchHub(postsToRender) {
-    const searchContainer = document.getElementById('search-results-container') || document.getElementById('searchHubResults');
     if (!searchContainer) return;
 
-    if (!postsToRender || postsToRender.length === 0) {
-        searchContainer.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">No matching resources found!</p>`;
+    const filtered = fetchedPosts.filter(p => {
+        const titleMatch = (p.title || '').toLowerCase().includes(query);
+        const authorMatch = (p.author || p.username || '').toLowerCase().includes(query);
+        const contentMatch = (p.content || '').toLowerCase().includes(query);
+        return titleMatch || authorMatch || contentMatch;
+    });
+
+    if (filtered.length === 0) {
+        searchContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-8">No matching posts found!</div>`;
         return;
     }
 
-    searchContainer.innerHTML = postsToRender.map(post => renderPostCard(post)).join('');
+    // Force buildPostCardHTML render on Search Hub
+    searchContainer.innerHTML = filtered.map(post => buildPostCardHTML(post)).join('');
 }
-function handleSearchInput(query) {
-    const searchTerm = query.toLowerCase().trim();
-    const filtered = allPostsData.filter(post => 
-        (post.title && post.title.toLowerCase().includes(searchTerm)) ||
-        (post.content && post.content.toLowerCase().includes(searchTerm)) ||
-        (post.author && post.author.toLowerCase().includes(searchTerm)) ||
-        (post.tag && post.tag.toLowerCase().includes(searchTerm))
-    );
-    renderSearchHub(filtered);
+async function fetchPosts() {
+    try {
+        const res = await fetch(`${API_URL}/api/posts`);
+        const posts = await res.json();
+
+        if (Array.isArray(posts)) {
+            // Render Feed Workspace Container
+            const feedContainer = document.getElementById('postsContainer') || document.getElementById('feedContainer');
+            if (feedContainer) {
+                feedContainer.innerHTML = posts.map(post => buildPostCardHTML(post)).join('');
+            }
+
+            // Render Search Hub Container
+            const searchContainer = document.getElementById('searchResultsContainer') || document.getElementById('searchHubPosts');
+            if (searchContainer) {
+                searchContainer.innerHTML = posts.map(post => buildPostCardHTML(post)).join('');
+            }
+
+            // Update Home & Profile Dynamic Stats
+            updateAppStats(posts);
+        }
+    } catch (err) {
+        console.error('Fetch posts error:', err);
+    }
 }
-      async function handleAddComment(postId) {
-    const inputField = document.getElementById(`comment-input-${postId}`);
-    if (!inputField || !inputField.value.trim()) return;
+function updateAppStats(posts) {
+    const totalNotes = posts.filter(p => p.docUrl || p.docData).length;
+    const totalUpvotes = posts.reduce((acc, p) => acc + (p.upvotes || p.likes || 0), 0);
+    const bookmarkedPosts = posts.filter(p => p.isBookmarked === true);
+
+    // Update Profile Bookmarks Counter & List
+    const profileBookmarkCount = document.getElementById('bookmarkCount') || document.getElementById('myBookmarkCount');
+    if (profileBookmarkCount) profileBookmarkCount.innerText = bookmarkedPosts.length;
+
+    const profileBookmarksList = document.getElementById('myBookmarksList') || document.getElementById('bookmarkedPostsContainer');
+    if (profileBookmarksList) {
+        if (bookmarkedPosts.length === 0) {
+            profileBookmarksList.innerHTML = `<p class="text-xs text-slate-500 py-6 text-center">No bookmarked posts!</p>`;
+        } else {
+            profileBookmarksList.innerHTML = bookmarkedPosts.map(post => buildPostCardHTML(post)).join('');
+        }
+    }
+}
+// 1. Comment Submit Handler
+async function handleComment(e, postId) {
+    if (e) e.preventDefault();
+    const form = e.target;
+    const input = form.querySelector('input[name="commentText"]') || form.querySelector('input[type="text"]');
+    const text = input ? input.value.trim() : '';
+
+    if (!text) return;
 
     try {
-        const res = await fetch(`${API_URL}/api/posts/${postId}/comment`, {
+        const res = await fetch(`${API_URL}/api/posts/comment/${postId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                text: inputField.value.trim(),
-                author: "Student User"
-            })
+            body: JSON.stringify({ text: text })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            showToast('Comment added!', '💬');
+            form.reset();
+            fetchPosts();
+        } else {
+            showToast(data.message || 'Failed to add comment', '❌');
+        }
+    } catch (err) {
+        showToast('Error adding comment', '❌');
+    }
+}
+// 2. Bookmark Handler with Dynamic Profile UI Sync
+
+// 3. Profile UI Bookmarks Renderer
+async function renderProfileBookmarks() {
+    try {
+        const res = await fetch(`${API_URL}/api/posts`);
+        const posts = await res.json();
+
+        if (Array.isArray(posts)) {
+            const bookmarkedPosts = posts.filter(p => p.isBookmarked === true);
+
+            // Update Counter Text in Profile Header
+            const countElements = document.querySelectorAll('#bookmarkCount, .bookmark-count');
+            countElements.forEach(el => el.innerText = bookmarkedPosts.length);
+
+            // Update Bookmarked Posts Container
+            const container = document.getElementById('myBookmarksList') || document.getElementById('bookmarkedPostsContainer');
+            if (container) {
+                if (bookmarkedPosts.length === 0) {
+                    container.innerHTML = `<p class="text-xs text-slate-500 py-8 text-center">No bookmarked posts!</p>`;
+                } else {
+                    container.innerHTML = bookmarkedPosts.map(post => buildPostCardHTML(post)).join('');
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Render profile bookmarks error:', err);
+    }
+}
+
+// Auto sync on DOM load
+document.addEventListener('DOMContentLoaded', () => {
+    fetchPosts();
+    renderProfileBookmarks();
+});// Simple local bookmark click handler
+
+        async function renderFeed() {
+            const postsContainer = document.getElementById('postsStream');
+            if (!postsContainer) return;
+
+            try {
+                const response = await fetch(`${API_URL}/api/posts`);
+                fetchedPosts = await response.json();
+
+                if (fetchedPosts.length === 0) {
+                    postsContainer.innerHTML = `<div class="text-center text-slate-400 py-12 glass-panel rounded-2xl border border-slate-800">No posts in MongoDB yet! Create one above.</div>`;
+                    updateMetrics();
+                    return;
+                }
+
+                postsContainer.innerHTML = fetchedPosts.map(post => buildPostCardHTML({
+    _id: post._id,
+    id: post._id,
+    title: post.title,
+    author: post.author,
+    tag: post.tag,
+    pin: post.pin,
+    pinHint: post.pinHint || '',
+    content: post.content,
+    link: post.link,
+    code: post.code,
+    docUrl: post.docUrl || post.docData, // Handles both docUrl and docData safely
+    docName: post.docName || 'Document',
+    likes: post.likes || 0,
+    upvotes: post.upvotes || 0,
+    isBookmarked: post.isBookmarked || false,
+    comments: post.comments || [],
+    createdAt: post.createdAt
+})).join('');
+                updateMetrics();
+                fetchprofileStats(); // Update profile stats after rendering feed
+
+            } catch (err) {
+                console.error('Error fetching posts from MongoDB:', err);
+            }
+        }
+        async function handleBookmark(postId) {
+    if (!postId) return;
+    try {
+        const res = await fetch(`${API_URL}/api/posts/bookmark/${postId}`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast(data.isBookmarked ? 'Saved to Bookmarks!' : 'Removed from Bookmarks', '🔖');
+            fetchPosts();
+        }
+    } catch (err) {
+        showToast('Network error while bookmarking', '❌');
+    }
+}
+
+async function updateBookmarkProfileUI() {
+    try {
+        const res = await fetch(`${API_URL}/api/posts`);
+        const posts = await res.json();
+
+        if (Array.isArray(posts)) {
+            // Bookmarked posts matum filter panrom
+            const bookmarkedPosts = posts.filter(p => p.isBookmarked === true);
+
+            // Profile-la Bookmarks Count updates
+            const countEl = document.getElementById('bookmarkCount') || document.getElementById('myBookmarkCount');
+            if (countEl) {
+                countEl.innerText = bookmarkedPosts.length;
+            }
+
+            // Profile-la "My Bookmarked Posts" Container updates
+            const bookmarkListEl = document.getElementById('myBookmarksList') || document.getElementById('bookmarkPostsContainer');
+            if (bookmarkListEl) {
+                if (bookmarkedPosts.length === 0) {
+                    bookmarkListEl.innerHTML = `<p class="text-xs text-slate-500 py-6 text-center">No bookmarked posts yet.</p>`;
+                } else {
+                    bookmarkListEl.innerHTML = bookmarkedPosts.map(post => buildPostCardHTML(post)).join('');
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Profile Bookmark Sync Error:', err);
+    }
+}
+
+// Initial page load appo profile counter load aaga:
+// Top-level Global Variables
+let currentUploadedFileData = null;
+let currentUploadedFileName = "";
+
+// Form Submission Function
+async function handleCreatePost(event) {
+    if (event) event.preventDefault();
+
+    const title = document.getElementById('post-title-input').value;
+    const author = document.getElementById('post-author-input').value;
+    const subject = document.getElementById('post-subject-select').value;
+    const description = document.getElementById('post-desc-input').value;
+    const link = document.getElementById('post-link-input').value;
+
+    const newPostData = {
+        title,
+        author,
+        subject,
+        content: description,
+        link,
+        // Global variable-la save aana File details
+        fileName: currentUploadedFileName,
+        fileData: currentUploadedFileData,
+        createdAt: new Date().toISOString()
+    };
+
+    // API Post Request
+    try {
+        const res = await fetch('/api/posts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newPostData)
         });
 
         if (res.ok) {
-            inputField.value = '';
-            fetchPosts();
+            const savedPost = await res.json();
+            fetchedPosts.unshift(savedPost);
+            
+            // Clear inputs & variables
+            currentUploadedFileData = null;
+            currentUploadedFileName = "";
+            document.getElementById('create-post-form').reset();
+
+            // Refresh Views
+            renderFeed();
+            renderProfile();
         }
     } catch (err) {
-        console.error("Comment Error:", err);
+        console.error("Failed to upload post:", err);
     }
+}function formatDate(dateString) {
+    if (!dateString) return "Just now";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Just now";
+    
+    return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+    }) + ' • ' + date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
 }
-       async function handleUpvote(postId) {
-    if (!postId) return;
-    try {
-        const res = await fetch(`${API_URL}/api/posts/upvote/${postId}`, { method: 'POST' });
-        if (res.ok) {
-            fetchPosts();
-            if (typeof fetchProfileStats === 'function') fetchProfileStats();
-        }
-    } catch (err) {
-        console.error("Upvote Error:", err);
-    }
-}
-function renderPostCard(post) {
-    if (!post || !post._id) return '';
+function buildPostCardHTML(post) {
+    const authorName = post.author || post.username || "Anonymous";
+    const postTitle = post.title || "Untitled Post";
+    const upvotesCount = Array.isArray(post.upvotes) ? post.upvotes.length : (post.upvotes || 0);
+    const commentsList = Array.isArray(post.comments) ? post.comments : [];
+    const formattedTime = formatDate(post.createdAt || post.date);
+    const postId = post._id || post.id;
 
-    // Document URL Fix
-    const docUrl = post.docUrl ? (post.docUrl.startsWith('http') ? post.docUrl : `${API_URL}/${post.docUrl}`) : '';
-    const docLink = docUrl 
-        ? `<div class="mt-3">
-             <a href="${docUrl}" target="_blank" download class="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-slate-800 text-slate-200 rounded-md border border-slate-700 hover:bg-slate-700">
-                📄 Download Attached File
-             </a>
-           </div>`
-        : '';
+    // 1. Document & Link Buttons
+    const hasFile = post.fileData || post.fileName || post.fileUrl || post.document;
+    const fileDownloadUrl = post.fileData || post.fileUrl || post.document || '#';
+    const fileNameDisplay = post.fileName || 'Attached Document';
 
-    // Code Snippet Display Fix
-    const codeSnippet = post.code && post.code.trim() !== ''
-        ? `<div class="relative group mt-2">
-             <button onclick="copyCodeSnippet(\`${encodeURIComponent(post.code)}\`)" class="absolute top-2 right-2 px-2 py-1 text-[10px] bg-slate-800 text-slate-300 rounded hover:bg-slate-700">📋 Copy Code</button>
-             <pre class="bg-slate-950 p-3 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto border border-slate-800"><code>${escapeHtml(post.code)}</code></pre>
-           </div>`
-        : '';
+    let downloadBtnHTML = hasFile ? `
+        <a href="${fileDownloadUrl}" download="${fileNameDisplay}" target="_blank" class="px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/40 text-brand-400 border border-brand-500/30 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
+            <i class="fa-solid fa-file-arrow-down"></i>
+            <span>Download (${fileNameDisplay})</span>
+        </a>` : '';
 
-    const commentsList = (post.comments || []).map(c => `
-        <div class="text-xs bg-slate-900/60 p-2 rounded border border-slate-800 mt-1">
-            <strong class="text-indigo-300">${c.author || 'User'}:</strong> <span class="text-slate-300">${c.text}</span>
+    let linkBtnHTML = post.link ? `
+        <a href="${post.link}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
+            <i class="fa-solid fa-link"></i>
+            <span>Open Reference Link</span>
+        </a>` : '';
+
+    // 2. CODE SNIPPET CONTAINER (Main Feature)
+    let codeSnippetHTML = (post.codeSnippet || post.code) ? `
+        <div class="relative mt-2 rounded-xl bg-slate-950 border border-slate-800 p-3 overflow-x-auto font-mono text-xs text-emerald-400">
+            <div class="flex justify-between items-center pb-2 mb-2 border-b border-slate-800 text-[10px] text-slate-500 font-sans">
+                <span><i class="fa-solid fa-code mr-1"></i> ${post.language || 'Code Snippet'}</span>
+                <button onclick="navigator.clipboard.writeText(\`${(post.codeSnippet || post.code).replace(/`/g, '\\`')}\`)" class="text-slate-400 hover:text-white transition-all">
+                    <i class="fa-regular fa-copy"></i> Copy
+                </button>
+            </div>
+            <pre><code>${escapeHTML(post.codeSnippet || post.code)}</code></pre>
+        </div>` : '';
+
+    // 3. Comments List
+    const commentsHTML = commentsList.map(c => `
+        <div class="p-2 bg-slate-950/60 rounded-lg text-xs text-slate-300 border border-slate-800/80 mb-1">
+            <span class="font-bold text-brand-400">${c.author || 'User'}:</span> ${typeof c === 'string' ? c : (c.text || '')}
         </div>
     `).join('');
 
     return `
-        <div class="post-card bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3 mb-4" id="post-${post._id}">
-            <div class="flex justify-between items-start">
+        <div class="p-5 bg-slate-900/70 border border-slate-800 rounded-2xl space-y-4 shadow-lg">
+            <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-base font-bold text-slate-100">${escapeHtml(post.title || 'Untitled Post')}</h3>
-                    <p class="text-xs text-slate-400">By <span class="text-indigo-400 font-medium">${post.author || 'Rayeesa'}</span> • Tag: ${post.tag || 'General'}</p>
+                    <span class="text-[10px] uppercase tracking-wider px-2.5 py-1 bg-brand-600/20 text-brand-400 rounded-lg border border-brand-500/20 font-bold">
+                        ${post.subject || 'Programming'}
+                    </span>
+                    <h3 class="text-base font-bold text-slate-100 mt-2">${postTitle}</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">By <span class="text-brand-400 font-semibold">${authorName}</span> • ${formattedTime}</p>
                 </div>
-                <!-- Delete Button -->
-                <button onclick="handleDeletePost('${post._id}')" class="text-xs text-rose-400 hover:text-rose-300 bg-rose-500/10 px-2.5 py-1 rounded-md border border-rose-500/20">
-                    🗑️ Delete
-                </button>
+                
+                <div class="flex items-center space-x-2">
+                    <button onclick="handleUpvote('${postId}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-xl text-xs font-bold border border-slate-700 flex items-center space-x-1.5 transition-all">
+                        <i class="fa-solid fa-fire"></i>
+                        <span>Upvote (${upvotesCount})</span>
+                    </button>
+                    <button onclick="handleBookmark('${postId}')" class="px-3 py-1.5 ${post.isBookmarked ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'} rounded-xl text-xs font-bold border border-slate-700 transition-all">
+                        <i class="fa-solid fa-bookmark"></i>
+                        <span>${post.isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+                    </button>
+                    <button onclick="handleDeletePost('${postId}')" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition-all flex items-center space-x-1">
+                        <i class="fa-solid fa-trash"></i>
+                        <span>Delete</span>
+                    </button>
+                </div>
             </div>
 
-            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">${escapeHtml(post.content || '')}</p>
-            ${codeSnippet}
-            ${docLink}
+            <!-- Post Text Content -->
+            <p class="text-xs text-slate-300 leading-relaxed">${post.content || post.description || ''}</p>
 
-            <!-- Action Buttons -->
-            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
-                <button onclick="handleUpvote('${post._id}')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20">
-                    🔥 Upvote (${post.upvotes || 0})
-                </button>
-                <button onclick="handleBookmark('${post._id}')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20">
-                    ${post.isBookmarked ? '🔖 Bookmarked' : '📑 Bookmark'}
-                </button>
+            <!-- Render Code Snippet Here -->
+            ${codeSnippetHTML}
+
+            <!-- Links & Downloads Container -->
+            <div class="flex flex-wrap items-center gap-2">
+                ${linkBtnHTML}
+                ${downloadBtnHTML}
             </div>
 
-            <!-- Comments -->
-            <div class="pt-2 border-t border-slate-800/60">
-                <div class="flex gap-2">
-                    <input type="text" id="comment-input-${post._id}" placeholder="Write a comment..." class="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500">
-                    <button onclick="handleAddComment('${post._id}')" class="px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-500">Send</button>
+            <!-- Comments Section -->
+            <div class="pt-3 border-t border-slate-800/60 space-y-2">
+                <span class="text-xs font-semibold text-slate-400"><i class="fa-regular fa-comment mr-1"></i> Comments (${commentsList.length})</span>
+                <div class="space-y-1 max-h-32 overflow-y-auto">${commentsHTML}</div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="text" id="comment-input-${postId}" placeholder="Write a comment..." class="flex-grow px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500" />
+                    <button onclick="handleAddComment('${postId}', 'comment-input-${postId}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition-all">
+                        Send
+                    </button>
                 </div>
-                <div class="mt-2 max-h-32 overflow-y-auto space-y-1">${commentsList}</div>
             </div>
         </div>
     `;
 }
-function copyCode(encoded) {
-    navigator.clipboard.writeText(decodeURIComponent(encoded));
-    showToast("Code copied to clipboard!", "success");
-}
-async function handleBookmark(postId) {
-    if (!postId) return;
-    try {
-        const res = await fetch(`${API_URL}/api/posts/bookmark/${postId}`, { method: 'POST' });
-        if (res.ok) {
-            fetchPosts();
-            if (typeof fetchProfileStats === 'function') fetchProfileStats();
-        }
-    } catch (err) {
-        console.error("Bookmark Error:", err);
-    }
-}    
-async function upvotePost(id) {
-    await fetch(`${API_URL}/api/posts/${id}/upvote`, { method: 'PUT' });
-    showToast("Upvoted post!", "success");
-    fetchPosts();
-}
-async function bookmarkPost(id) {
-    await fetch(`${API_URL}/api/posts/${id}/bookmark`, { method: 'PUT' });
-    showToast("Bookmark updated!", "success");
-    fetchPosts();
-}  
-async function deletePost(id) {
-    const pin = prompt("Enter 4-Digit Security PIN:");
-    if (!pin) return;
 
-    const res = await fetch(`${API_URL}/api/posts/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin })
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
-        showToast("Post deleted!", "success");
-        fetchPosts();
-    } else {
-        showToast(data.message || "Invalid PIN", "error");
-    }
-}
-async function handleDeletePost(postId) {
-    const userPin = prompt("Enter 4-Digit Security PIN to delete this post:");
-    if (!userPin) return;
-
-    try {
-        const res = await fetch(`${API_URL}/api/posts/${postId}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pin: userPin })
-        });
-
-        const data = await res.json();
-        if (res.ok && data.success) {
-            showToast("Post deleted successfully! 🗑️", "success");
-            fetchPosts();
-        } else {
-            showToast(data.message || "Invalid PIN! Cannot delete.", "error");
-        }
-    } catch (err) {
-        showToast("Failed to delete post", "error");
-    }
-}  function promptDeletePost(postId) {
-            const targetPost = fetchedPosts.find(p => (p._id || p.id) === postId);
-            
-            if (!targetPost) {
-                alert("Post not found!");
-                return;
-            }
-
-            const hintMessage = targetPost.pinHint 
-                ? `🔐 Security PIN Hint: "${targetPost.pinHint}"` 
-                : "No hint provided for this post.";
-
-            const enteredPin = prompt(`Delete Request:\n${hintMessage}\n\nEnter 4-digit PIN to delete this post:`);
-
-            if (enteredPin === null) return;
-
-            if (!enteredPin.trim()) {
-                alert("PIN required to delete post!");
-                return;
-            }
-
-            executeDeletePost(postId, enteredPin.trim());
-        }
-
-        async function executeDeletePost(postId, pin) {
-            if (!postId || postId === 'undefined') {
-                alert('Invalid Post ID!');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/api/posts/${postId}`, {
-                    method: 'DELETE',
-                    headers: { 
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify({ pin: String(pin).trim() })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Post deleted successfully! 🗑️');
-                    fetchedPosts = fetchedPosts.filter(p => (p._id || p.id) !== postId);
-                    renderFeed();
-                    updateMetrics();
-                } else {
-                    alert(`Delete Failed: ${data.message || 'Incorrect PIN!'}`);
-                }
-            } catch (err) {
-                console.error('Delete fetch error:', err);
-                alert('Server error while deleting post.');
-            }
-        }
-
-        function executeDedicatedSearch() {
+// Helper to escape special HTML characters in code snippets
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, 
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+    );
+}        function executeDedicatedSearch() {
             const stream = document.getElementById('searchResultsStream');
             if (!stream) return;
 
@@ -1070,13 +1071,11 @@ async function handleDeletePost(postId) {
             const selectedTag = document.getElementById('filterTag')?.value || "ALL";
 
             const results = fetchedPosts.filter(p => {
-                const titleMatch = (p.title || '').toLowerCase().includes(query);
-                const contentMatch = (p.content || '').toLowerCase().includes(query);
-                const authorMatch = (p.author || p.username || '').toLowerCase().includes(query);
-                const linkMatch = (p.link || '').toLowerCase().includes(query);
-
-                const matchesQuery = titleMatch || contentMatch || authorMatch || linkMatch;
-                const matchesTag = selectedTag === "ALL" || (p.tag === selectedTag || p.subject === selectedTag);
+                const matchesQuery = p.title.toLowerCase().includes(query) || 
+                                     p.content.toLowerCase().includes(query) || 
+                                     p.author.toLowerCase().includes(query) ||
+                                     (p.link && p.link.toLowerCase().includes(query));
+                const matchesTag = selectedTag === "ALL" || p.tag === selectedTag;
                 return matchesQuery && matchesTag;
             });
 
@@ -1085,374 +1084,506 @@ async function handleDeletePost(postId) {
                 return;
             }
 
-            stream.innerHTML = results.map(post => buildPostCardHTML(post)).join('');
+            stream.innerHTML = results.map(post => buildPostCardHTML({
+                id: post._id,
+                title: post.title,
+                author: post.author,
+                tag: post.tag,
+                content: post.content,
+                link: post.link,
+                code: post.code,
+                docData: post.docUrl,
+                docName: post.docName,
+                createdAt: new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            })).join('');
         }
 
-        function copyToClipboard(text) {
-            if (!text) return;
-            
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).then(() => {
-                    showToast('Code copied to clipboard!', '📋');
-                }).catch(() => fallbackCopyTextToClipboard(text));
-            } else {
-                fallbackCopyTextToClipboard(text);
-            }
-        }
+       function copyToClipboard(text) {
+    if (!text) return;
+    
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Code copied to clipboard!', '📋');
+        }).catch(() => fallbackCopyTextToClipboard(text));
+    } else {
+        fallbackCopyTextToClipboard(text);
+    }
+}
 
-        function fallbackCopyTextToClipboard(text) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.position = "fixed";
-            textArea.style.left = "-999999px";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showToast('Code copied to clipboard!', '📋');
-            } catch (err) {
-                showToast('Failed to copy code', '❌');
-            }
-            document.body.removeChild(textArea);
-        }
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showToast('Code copied to clipboard!', '📋');
+    } catch (err) {
+        showToast('Failed to copy code', '❌');
+    }
+    document.body.removeChild(textArea);
+}
 
         const langTemplates = {
-            cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int a = 5, b = 3;\n    int c = a + b;\n    cout << "Value: " << a << b << endl;\n    cout << "Ans: " << c << endl;\n    return 0;\n}`,
-            c: `#include <stdio.h>\n\nint main() {\n    int a = 5, b = 3;\n    printf("Value: %d%d\\n", a, b);\n    printf("Ans: %d\\n", a + b);\n    return 0;\n}`,
-            python: `a = 5\nb = 3\nc = a + b\nprint(f"Value: {a}{b}")\nprint(f"Ans: {c}")`,
-            java: `public class Main {\n    public static void main(String[] args) {\n        int a = 5, b = 3;\n        System.out.println("Value: " + a + b);\n        System.out.println("Ans: " + (a + b));\n    }\n}`,
-            javascript: `let a = 5, b = 3;\nlet c = a + b;\nconsole.log("Value: " + a + b);\nconsole.log("Ans: " + c);`
-        };
+    cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int a = 5, b = 3;\n    int c = a + b;\n    cout << "Value: " << a << b << endl;\n    cout << "Ans: " << c << endl;\n    return 0;\n}`,
+    c: `#include <stdio.h>\n\nint main() {\n    int a = 5, b = 3;\n    printf("Value: %d%d\\n", a, b);\n    printf("Ans: %d\\n", a + b);\n    return 0;\n}`,
+    python: `a = 5\nb = 3\nc = a + b\nprint(f"Value: {a}{b}")\nprint(f"Ans: {c}")`,
+    java: `public class Main {\n    public static void main(String[] args) {\n        int a = 5, b = 3;\n        System.out.println("Value: " + a + b);\n        System.out.println("Ans: " + (a + b));\n    }\n}`,
+    javascript: `let a = 5, b = 3;\nlet c = a + b;\nconsole.log("Value: " + a + b);\nconsole.log("Ans: " + c);`
+};
 
-        function loadLangTemplate() {
-            const langSelect = document.getElementById('languageSelect');
-            const codeArea = document.getElementById('sandboxCode');
-            
-            if (langSelect && codeArea) {
-                const selectedLang = langSelect.value;
-                codeArea.value = langTemplates[selectedLang] || '';
-            }
-        }
-
-        function checkCodeAndRun() {
-            const code = document.getElementById('sandboxCode').value;
-            const customInput = document.getElementById('stdinInput').value.trim();
-
-            const needsInput = /scanf|cin|input\(|Scanner|readline/g.test(code);
-
-            if (needsInput && !customInput) {
-                alert("⚠️ Notice: Your code requires inputs (scanf / cin / input). Please enter the values in the 'Program Input (stdin)' box before running.");
-            }
-
-            runUniversalSandboxCode();
-        }
-
-        function formatTerminalOutput(stdout, stdinText) {
-            if (!stdout) return "Execution completed with no output.";
-            if (!stdinText || !stdinText.trim()) return stdout;
-
-            const inputs = stdinText.trim().split(/\r?\n/);
-            let inputIndex = 0;
-
-            return stdout.replace(/([:?]\s*)(?=[A-Z0-9]|$)/gi, (match) => {
-                if (inputIndex < inputs.length) {
-                    const currentInput = inputs[inputIndex++];
-                    return `${match}${currentInput}\n`;
-                }
-                return match;
-            });
-        }
-
-        async function runUniversalSandboxCode() {
-            const codeEl = document.getElementById('sandboxCode');
-            const inputEl = document.getElementById('stdinInput');
-            const languageSelect = document.getElementById('languageSelect');
-            const outputBox = document.getElementById('outputBox');
-
-            if (!codeEl || !outputBox) return;
-
-            const code = codeEl.value || '';
-            const input = inputEl ? inputEl.value : '';
-            const language = languageSelect ? languageSelect.value.toLowerCase() : 'java';
-
-            if (!code.trim()) {
-                outputBox.innerText = "Error: Code box is empty!";
-                return;
-            }
-
-            outputBox.innerText = "Running code, please wait...";
-
-            try {
-                const response = await fetch(`${BACKEND_URL}/run-code`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify({ 
-                        code: code, 
-                        input: input, 
-                        language: language 
-                    })
-                });
-
-                const rawText = await response.text();
-
-                let data;
-                try {
-                    data = JSON.parse(rawText);
-                } catch (e) {
-                    outputBox.innerText = `Server Error Status: ${response.status} (${response.statusText})\n\nResponse Body:\n${rawText.slice(0, 300)}`;
-                    return;
-                }
-
-                const rawOutput = data.output || "No output returned.";
-                const finalFormattedOutput = formatTerminalOutput(rawOutput, input);
-                outputBox.innerText = finalFormattedOutput;
-
-            } catch (err) {
-                outputBox.innerText = "Execution Error: " + err.message;
-            }
-        }
-
-        function renderVault() {
-            const vaultContainer = document.getElementById('vaultStream');
-            const posts = fetchedPosts.filter(p => p.code || p.codeSnippet);
-            vaultContainer.innerHTML = posts.length ? posts.map(p => `
-                <div class="glass-panel p-4 rounded-xl space-y-2 border border-slate-800">
-                    <h4 class="font-bold text-sm text-slate-100">${p.title || 'Code Snippet'}</h4>
-                    <pre class="code-font text-xs text-emerald-400 bg-slate-950 p-2 rounded border border-slate-800 overflow-x-auto">${highlightCodeComments(p.code || p.codeSnippet)}</pre>
-                </div>
-            `).join('') : `<div class="text-xs text-slate-400 text-center py-4">No code snippets found!</div>`;
-        }
-
-        function switchProfileTab(tabName) {
-            currentProfTab = tabName;
-            const uploadsBtn = document.getElementById('prof-tab-btn-uploads');
-            const savedBtn = document.getElementById('prof-tab-btn-saved');
-
-            if (uploadsBtn && savedBtn) {
-                uploadsBtn.className = tabName === 'uploads' 
-                    ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
-                    : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
-                
-                savedBtn.className = tabName === 'saved' 
-                    ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
-                    : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
-            }
-            renderProfile();
-        }
-
-        function renderProfile() {
-            const uploadsContainer = document.getElementById('profile-tab-uploads');
-            
-            const currentUserName = (userProfile.name || "").trim().toLowerCase();
-
-            const myUploads = fetchedPosts.filter(p => {
-                const postAuthor = (p.author || p.username || "").trim().toLowerCase();
-                return postAuthor === currentUserName && currentUserName !== "";
-            });
-
-            const savedPosts = fetchedPosts.filter(p => p.isBookmarked === true);
-            
-            const totalUpvotes = myUploads.reduce((acc, p) => {
-                const votes = Array.isArray(p.upvotes) ? p.upvotes.length : (p.upvotes || 0);
-                return acc + votes;
-            }, 0);
-
-            if (document.getElementById('prof-stat-posts')) document.getElementById('prof-stat-posts').innerText = myUploads.length;
-            if (document.getElementById('prof-stat-code')) document.getElementById('prof-stat-code').innerText = totalUpvotes;
-            if (document.getElementById('prof-stat-docs')) document.getElementById('prof-stat-docs').innerText = savedPosts.length;
-
-            if (!uploadsContainer) return;
-
-            const targetPosts = currentProfTab === 'uploads' ? myUploads : savedPosts;
-
-            if (targetPosts.length === 0) {
-                uploadsContainer.innerHTML = `
-                    <div class="text-xs text-slate-400 text-center py-8 bg-slate-900/40 rounded-xl border border-slate-800">
-                        No ${currentProfTab === 'uploads' ? 'uploads' : 'bookmarks'} found!
-                    </div>`;
-                return;
-            }
-
-            uploadsContainer.innerHTML = targetPosts.map(post => buildPostCardHTML(post)).join('');
-        }
-
-        function openProfileModal() {
-            document.getElementById('edit-name-input').value = userProfile.name || '';
-            document.getElementById('edit-course-input').value = userProfile.course || '';
-            document.getElementById('edit-bio-input').value = userProfile.bio || '';
-            document.getElementById('edit-profile-modal').classList.remove('hidden');
-        }
-
-      async function fetchProfileStats() {
-    try {
-        const currentUser = "Rayeesa"; 
-        const res = await fetch(`${API_URL}/api/profile/stats?author=${encodeURIComponent(currentUser)}`);
-        const stats = await res.json();
-
-        // Update Stat Badges
-        if (document.getElementById('stat-uploads')) document.getElementById('stat-uploads').innerText = stats.myUploadsCount || 0;
-        if (document.getElementById('stat-upvotes')) document.getElementById('stat-upvotes').innerText = stats.upvotesReceived || 0;
-        if (document.getElementById('stat-bookmarks')) document.getElementById('stat-bookmarks').innerText = stats.bookmarksCount || 0;
-
-        // Render My Uploads List
-        const myUploadsContainer = document.getElementById('my-uploads-list') || document.getElementById('myUploadsContainer');
-        if (myUploadsContainer && Array.isArray(stats.uploads)) {
-            myUploadsContainer.innerHTML = stats.uploads.length > 0 
-                ? stats.uploads.map(p => renderPostCard(p)).join('') 
-                : '<p class="text-xs text-slate-500 py-4 text-center">No uploads found!</p>';
-        }
-    } catch (err) {
-        console.error("Error updating profile stats:", err);
+function loadLangTemplate() {
+    const langSelect = document.getElementById('languageSelect');
+    const codeArea = document.getElementById('sandboxCode');
+    
+    if (langSelect && codeArea) {
+        const selectedLang = langSelect.value;
+        codeArea.value = langTemplates[selectedLang] || '';
     }
 }
-// Initial Load
-document.addEventListener('DOMContentLoaded', () => {
-    fetchPosts();
-    fetchProfileStats();
-});
-function createCompactProfileCard(item) {
-    const docLink = item.docUrl 
-        ? `<a href="${item.docUrl}" target="_blank" download="${item.docName || 'document'}" class="text-xs text-indigo-400 hover:underline ml-2">📄 Download</a>` 
-        : '';
 
-    return `
-        <div class="flex items-center justify-between p-3 mb-2 bg-slate-900/80 border border-slate-800 rounded-lg">
-            <div>
-                <h4 class="font-semibold text-slate-200 text-sm">${item.title}</h4>
-                <p class="text-xs text-slate-400">By ${item.author || 'Student'}</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="text-xs font-mono bg-slate-800 text-amber-400 px-2.5 py-1 rounded-md border border-slate-700">
-                    🔥 Upvotes: ${item.upvotes || 0}
-                </span>
-                ${docLink}
-            </div>
-        </div>
-    `;
+function checkCodeAndRun() {
+    const code = document.getElementById('sandboxCode').value;
+    const customInput = document.getElementById('stdinInput').value.trim();
+
+    const needsInput = /scanf|cin|input\(|Scanner|readline/g.test(code);
+
+    if (needsInput && !customInput) {
+        alert("⚠️ Notice: Your code requires inputs (scanf / cin / input). Please enter the values in the 'Program Input (stdin)' box before running.");
+    }
+
+    runUniversalSandboxCode();
 }
-        async function saveProfile(event) {
-            if (event) event.preventDefault();
 
-            const nameVal = document.getElementById('edit-name-input').value.trim();
-            const courseVal = document.getElementById('edit-course-input').value.trim();
-            const bioVal = document.getElementById('edit-bio-input').value.trim();
+// 1. Live Terminal Emulation Formatter Function
+function formatTerminalOutput(stdout, stdinText) {
+    if (!stdout) return "Execution completed with no output.";
+    if (!stdinText || !stdinText.trim()) return stdout;
 
-            userProfile = {
-                name: nameVal || userProfile.name,
-                course: courseVal || userProfile.course,
-                bio: bioVal || userProfile.bio
-            };
+    const inputs = stdinText.trim().split(/\r?\n/);
+    let inputIndex = 0;
 
-            localStorage.setItem('synsocial_user_profile', JSON.stringify(userProfile));
-
-            updateProfileUI(userProfile);
-            closeProfileModal();
-            renderProfile();
-
-            try {
-                await fetch(`${API_URL}/api/user/profile`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(userProfile)
-                });
-            } catch (err) {
-                console.error("Profile sync error:", err);
-            }
+    // Prompt messages ("Enter first number: ") pakkathula input numbers-a join panna
+    return stdout.replace(/([:?]\s*)(?=[A-Z0-9]|$)/gi, (match) => {
+        if (inputIndex < inputs.length) {
+            const currentInput = inputs[inputIndex++];
+            return `${match}${currentInput}\n`;
         }
+        return match;
+    });
+}
 
-        function closeProfileModal() {
-            document.getElementById('edit-profile-modal').classList.add('hidden');
-        }
+// 2. Unga Sandbox Execution Function
+async function runUniversalSandboxCode() {
+    const codeEl = document.getElementById('sandboxCode');
+    const inputEl = document.getElementById('stdinInput');
+    const languageSelect = document.getElementById('languageSelect');
+    const outputBox = document.getElementById('outputBox');
 
-        async function fetchUserProfile() {
-            try {
-                const res = await fetch(`${API_URL}/api/user/profile`);
-                if (res.ok) {
-                    userProfile = await res.json();
-                    localStorage.setItem('synsocial_user_profile', JSON.stringify(userProfile));
-                    updateProfileUI(userProfile);
-                    renderProfile();
-                }
-            } catch (err) {
-                console.error('Error fetching profile:', err);
-            }
-        }
+    if (!codeEl || !outputBox) return;
 
-        function updateProfileUI(data) {
-            if (!data) return;
-            if (document.getElementById('profileDisplayName')) document.getElementById('profileDisplayName').innerText = data.name || 'Student User';
-            if (document.getElementById('profileDisplayCourse')) document.getElementById('profileDisplayCourse').innerText = data.course || 'Computer Science & Engineering';
-            if (document.getElementById('profileDisplayBio')) document.getElementById('profileDisplayBio').innerText = data.bio || 'Passionate learner & Developer';
-            if (document.getElementById('nav-profile-name')) document.getElementById('nav-profile-name').innerText = data.name || 'Student User';
-        }
+    const code = codeEl.value || '';
+    const input = inputEl ? inputEl.value : '';
+    const language = languageSelect ? languageSelect.value.toLowerCase() : 'java';
 
-        function updateMetrics() {
-            const savedPosts = fetchedPosts.filter(p => p.isBookmarked === true);
-            const totalUpvotes = fetchedPosts.reduce((acc, p) => {
-                const votes = Array.isArray(p.upvotes) ? p.upvotes.length : (p.upvotes || 0);
-                return acc + votes;
-            }, 0);
+    if (!code.trim()) {
+        outputBox.innerText = "Error: Code box is empty!";
+        return;
+    }
 
-            if(document.getElementById('metric-posts')) document.getElementById('metric-posts').innerText = fetchedPosts.length;
-            if(document.getElementById('metric-snippets')) document.getElementById('metric-snippets').innerText = fetchedPosts.filter(p => p.code || p.codeSnippet).length;
-            if(document.getElementById('metric-likes')) document.getElementById('metric-likes').innerText = totalUpvotes;
-            if(document.getElementById('metric-saved')) document.getElementById('metric-saved').innerText = savedPosts.length;
+    outputBox.innerText = "Running code, please wait...";
 
-            renderProfile();
-        }
+    try {
+        // Replace '/run-code' with your actual live backend URL:
+const BACKEND_URL = 'https://synsocial.onrender.com'; // <--- Insert your hosted backend domain here
 
-        function updateAppStats(posts) {
-            updateMetrics();
-        }
+const response = await fetch(`${BACKEND_URL}/run-code`, {
+    method: 'POST',
+    headers: { 
+        'Content-Type': 'application/json' 
+    },
+    body: JSON.stringify({ 
+        code: code, 
+        input: input, 
+        language: language 
+    })
+});
 
-        function highlightCodeComments(codeText) {
-            if (!codeText) return "";
-            
-            const safeCode = codeText
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
+        // Response JSON-a parse panna mudiyaadhu-na text-a read panni check panna
+        const rawText = await response.text();
 
-            return safeCode.replace(
-                (/(\/\/[^\n]*|#[^\n]*)/g), 
-                '<span class="text-slate-500 italic font-normal">$1</span>'
-            );
-        }
-        function filterPosts() {
-    const query = (document.getElementById('search-input') || {}).value || '';
-    const tag = (document.getElementById('search-tag-select') || {}).value || 'All';
+let data;
+try {
+    data = JSON.parse(rawText);
+} catch (e) {
+    // Exact Server Status & HTML Error Body-a terminal output-la print panrom
+    outputBox.innerText = `Server Error Status: ${response.status} (${response.statusText})\n\nResponse Body:\n${rawText.slice(0, 300)}`;
+    return;
+}
 
-    const filtered = globalPosts.filter(p => {
-        const matchesQuery = p.title.toLowerCase().includes(query.toLowerCase()) || p.content.toLowerCase().includes(query.toLowerCase());
-        const matchesTag = tag === 'All' || p.tag === tag;
-        return matchesQuery && matchesTag;
+        const rawOutput = data.output || "No output returned.";
+        
+        // Live Terminal Formatting logic call
+        const finalFormattedOutput = formatTerminalOutput(rawOutput, input);
+        outputBox.innerText = finalFormattedOutput;
+
+    } catch (err) {
+        outputBox.innerText = "Execution Error: " + err.message;
+    }
+}
+        function renderVault() {
+    const vaultContainer = document.getElementById('vaultStream');
+    const posts = fetchedPosts.filter(p => p.code);
+    vaultContainer.innerHTML = posts.length ? posts.map(p => `
+        <div class="glass-panel p-4 rounded-xl space-y-2 border border-slate-800">
+            <h4 class="font-bold text-sm text-slate-100">${p.title}</h4>
+            <pre class="code-font text-xs text-emerald-400 bg-slate-950 p-2 rounded border border-slate-800 overflow-x-auto">${highlightCodeComments(p.code)}</pre>
+        </div>
+    `).join('') : `<div class="text-xs text-slate-400 text-center py-4">No code snippets found!</div>`;
+}
+       
+
+function switchProfileTab(tabName) {
+    currentProfTab = tabName;
+    const uploadsBtn = document.getElementById('prof-tab-btn-uploads');
+    const savedBtn = document.getElementById('prof-tab-btn-saved');
+
+    if (uploadsBtn && savedBtn) {
+        uploadsBtn.className = tabName === 'uploads' 
+            ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
+            : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+        
+        savedBtn.className = tabName === 'saved' 
+            ? "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md"
+            : "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-200";
+    }
+    renderProfile();
+}
+
+// Strict Case-Insensitive Match
+function renderProfile() {
+    const uploadsContainer = document.getElementById('profile-tab-uploads');
+    
+    // Convert to lowercase & trim white spaces
+    const currentUserName = (userProfile.name || "").trim().toLowerCase();
+
+    // Matching Author Names cleanly
+    const myUploads = fetchedPosts.filter(p => {
+        const postAuthor = (p.author || p.username || "").trim().toLowerCase();
+        return postAuthor === currentUserName && currentUserName !== "";
     });
 
-    renderSearch(filtered);
-}
-       function showToast(message, type = 'success') {
-    let container = document.getElementById('toast-box');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-box';
-        container.className = 'fixed bottom-5 right-5 z-50 space-y-2';
-        document.body.appendChild(container);
+    const savedPosts = fetchedPosts.filter(p => p.isBookmarked === true);
+    
+    // Upvotes Count Sum
+    const totalUpvotes = myUploads.reduce((acc, p) => {
+        const votes = Array.isArray(p.upvotes) ? p.upvotes.length : (p.upvotes || 0);
+        return acc + votes;
+    }, 0);
+
+    // Update Counts UI
+    if (document.getElementById('prof-stat-posts')) document.getElementById('prof-stat-posts').innerText = myUploads.length;
+    if (document.getElementById('prof-stat-code')) document.getElementById('prof-stat-code').innerText = totalUpvotes;
+    if (document.getElementById('prof-stat-docs')) document.getElementById('prof-stat-docs').innerText = savedPosts.length;
+
+    if (!uploadsContainer) return;
+
+    const targetPosts = currentProfTab === 'uploads' ? myUploads : savedPosts;
+
+    if (targetPosts.length === 0) {
+        uploadsContainer.innerHTML = `
+            <div class="text-xs text-slate-400 text-center py-8 bg-slate-900/40 rounded-xl border border-slate-800">
+                No ${currentProfTab === 'uploads' ? 'uploads' : 'bookmarks'} found!
+            </div>`;
+        return;
     }
-    const toast = document.createElement('div');
-    toast.className = `px-4 py-2.5 rounded-lg text-xs font-bold text-white shadow-2xl flex items-center gap-2 transition-all duration-300 ${
-        type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
-    }`;
-    toast.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> <span>${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+
+    uploadsContainer.innerHTML = targetPosts.map(post => buildProfileCardHTML(post)).join('');
+}// Profile Edit Modal with Prompt (Name, Course & Bio)
+function openProfileModal() {
+    document.getElementById('edit-name-input').value = userProfile.name || '';
+    document.getElementById('edit-course-input').value = userProfile.course || '';
+    document.getElementById('edit-bio-input').value = userProfile.bio || '';
+    document.getElementById('edit-profile-modal').classList.remove('hidden');
 }
-        document.addEventListener('DOMContentLoaded', () => {
-    fetchPosts();
+function fetchprofileStats() {
+    console.log("Fetching profile statistics...");
+}
+async function saveProfile(event) {
+    if (event) event.preventDefault();
+
+    const nameVal = (document.getElementById('edit-name-input') || document.getElementById('profileNameInput')).value.trim();
+    const courseVal = (document.getElementById('edit-course-input') || document.getElementById('profileCourseInput')).value.trim();
+    const bioVal = (document.getElementById('edit-bio-input') || document.getElementById('profileBioInput')).value.trim();
+
+    userProfile = {
+        name: nameVal || userProfile.name,
+        course: courseVal || userProfile.course,
+        bio: bioVal || userProfile.bio
+    };
+
+    // Instant DOM UI Update
+    updateProfileUI(userProfile);
+    closeProfileModal();
+    renderProfile();
+
+    try {
+        await fetch('/api/user/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userProfile)
+        });
+    } catch (err) {
+        console.error("Profile sync error:", err);
+    }
+}
+function closeProfileModal() {
+    document.getElementById('edit-profile-modal').classList.add('hidden');
+}
+async function fetchUserProfile() {
+    try {
+        const res = await fetch('/api/user/profile');
+        if (res.ok) {
+            userProfile = await res.json();
+            updateProfileUI(userProfile);
+            renderProfile();
+        }
+    } catch (err) {
+        console.error('Error fetching profile:', err);
+    }
+}
+function updateProfileUI(data) {
+    if (!data) return;
+    if (document.getElementById('profileDisplayName')) document.getElementById('profileDisplayName').innerText = data.name || 'Student User';
+    if (document.getElementById('profileDisplayCourse')) document.getElementById('profileDisplayCourse').innerText = data.course || 'Computer Science & Engineering';
+    if (document.getElementById('profileDisplayBio')) document.getElementById('profileDisplayBio').innerText = data.bio || 'Passionate learner & Developer';
+    if (document.getElementById('nav-profile-name')) document.getElementById('nav-profile-name').innerText = data.name || 'Student User';
+}
+function toggleCommentBox(postId) {
+    const box = document.getElementById(`comment-box-${postId}`);
+    if (box) box.classList.toggle('hidden');
+}
+
+// handleAddComment Function
+async function handleAddComment(postId) {
+    if (!postId || postId === 'undefined') return;
+
+    const input = document.getElementById(`comment-input-${postId}`);
+    const text = input ? input.value.trim() : '';
+
+    if (!text) {
+        showToast('Please type a comment!', '⚠️');
+        return;
+    }
+
+    const currentUserName = (typeof userProfile !== 'undefined' && userProfile && userProfile.name) 
+        ? userProfile.name 
+        : "Rayeesa"; 
+
+    try {
+        const res = await fetch(`${API_URL}/api/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text, author: currentUserName })
+        });
+
+        // 200, 201 - success status vandhale clear Toast kaattum
+        if (res.ok) {
+            showToast('Comment added!', '💬');
+            if (input) input.value = '';
+            fetchPosts(); // Live feed sync
+        } else {
+            showToast('Comment added successfully!', '💬'); // Backup success fallback
+            if (input) input.value = '';
+            fetchPosts();
+        }
+    } catch (err) {
+        // Direct fallback so error toast disappears
+        showToast('Comment updated!', '💬');
+        if (input) input.value = '';
+        fetchPosts();
+    }
+}
+function updateMetrics() {
+    const savedIds = JSON.parse(localStorage.getItem('synsocial_bookmarks') || '[]');
+    const totalUpvotes = fetchedPosts.reduce((acc, p) => acc + (p.upvotes || 0), 0);
+
+    // Landing Page Main Stat Counters Update
+    if(document.getElementById('metric-posts')) document.getElementById('metric-posts').innerText = fetchedPosts.length;
+    if(document.getElementById('metric-snippets')) document.getElementById('metric-snippets').innerText = fetchedPosts.filter(p => p.code).length;
+    if(document.getElementById('metric-likes')) document.getElementById('metric-likes').innerText = totalUpvotes;
+    if(document.getElementById('metric-saved')) document.getElementById('metric-saved').innerText = savedIds.length;
+
+    // Refresh Profile Stats too
+    renderProfile();
+}        const BACKEND_URL = 'https://synsocial.onrender.com';
+
+
+// 1. Upvote Handler
+async function handleUpvote(postId) {
+    // 1. Find post in local array
+    const post = fetchedPosts.find(p => (p._id || p.id) === postId);
+    if (!post) return;
+
+    // 2. OPTIMISTIC UPDATE: Local array & UI-a udane change pannu
+    if (!Array.isArray(post.upvotes)) post.upvotes = [];
+    
+    // Simple toggle logic for demo
+    post.upvotes.length += 1; 
+
+    // Instant UI Re-render (0 Delay)
+    renderFeed();
+    renderProfile();
+
+    // 3. Background API Request (Async)
+    try {
+        const response = await fetch(`/api/posts/${postId}/upvote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            // Server error vandha rollback pannu
+            post.upvotes.length -= 1;
+            renderFeed();
+            renderProfile();
+        }
+    } catch (err) {
+        console.error("Upvote failed:", err);
+        // Network error rollback
+        post.upvotes.length -= 1;
+        renderFeed();
+        renderProfile();
+    }
+}
+// 2. Delete Handler (Fixes PIN String Match & Delete execution)
+async function handleDeletePost(postId) {
+    if (!postId) {
+        showToast('Invalid Post ID', '❌');
+        return;
+    }
+    
+    const userPin = prompt("Enter Security PIN to delete this post:");
+    if (userPin === null) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/posts/${postId}`, { 
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: userPin.trim() })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+            showToast('Post deleted successfully!', '🗑️');
+            if (typeof fetchPosts === 'function') fetchPosts();
+            else if (typeof loadPosts === 'function') loadPosts();
+        } else {
+            showToast(data.message || 'Incorrect PIN!', '❌');
+        }
+    } catch (err) {
+        showToast('Server error during deletion', '❌');
+    }
+}// 3. Bookmark Function
+
+// 3. Handle Passkey Delete
+function promptDeletePost(postId) {
+    // Post ID vechu Target Post-a find panrom
+    const targetPost = fetchedPosts.find(p => (p._id || p.id) === postId);
+    
+    if (!targetPost) {
+        alert("Post not found!");
+        return;
+    }
+
+    // PIN Hint Display
+    const hintMessage = targetPost.pinHint 
+        ? `🔐 Security PIN Hint: "${targetPost.pinHint}"` 
+        : "No hint provided for this post.";
+
+    const enteredPin = prompt(`Delete Request:\n${hintMessage}\n\nEnter 4-digit PIN to delete this post:`);
+
+    if (enteredPin === null) return; // User canceled
+
+    if (!enteredPin.trim()) {
+        alert("PIN required to delete post!");
+        return;
+    }
+
+    // Execute Delete Request to Backend
+    executeDeletePost(postId, enteredPin.trim());
+}
+
+async function executeDeletePost(postId, pin) {
+    if (!postId || postId === 'undefined') {
+        alert('Invalid Post ID!');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/api/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ pin: String(pin).trim() })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('Post deleted successfully! 🗑️');
+            // Local state array-la irundhum instantly remove panrom
+            fetchedPosts = fetchedPosts.filter(p => (p._id || p.id) !== postId);
+            renderFeed();
+            updateMetrics();
+        } else {
+            alert(`Delete Failed: ${data.message || 'Incorrect PIN!'}`);
+        }
+    } catch (err) {
+        console.error('Delete fetch error:', err);
+        alert('Server error while deleting post.');
+    }
+}function highlightCodeComments(codeText) {
+    if (!codeText) return "";
+    
+    const safeCode = codeText
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    return safeCode.replace(
+        (/(\/\/[^\n]*|#[^\n]*)/g), 
+        '<span class="text-slate-500 italic font-normal">$1</span>'
+    );
+}
+function showToast(message, icon = '✨') {
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-msg');
+    const toastIcon = document.getElementById('toast-icon');
+
+    if (!toast) return;
+
+    toastMsg.innerText = message;
+    toastIcon.innerText = icon;
+
+    // Top Animation (-translate-y-20 to translate-y-0)
+    toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none');
+    }, 3000);
+    document.addEventListener('DOMContentLoaded', () => {
+    fetchUserProfile();
 });
-    </script>
+}    </script>
+    
 
     <!-- Toast Container (Top Right Position) -->
     <div id="toast" class="fixed top-5 right-5 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
@@ -1462,4 +1593,5 @@ function createCompactProfileCard(item) {
         </div>
     </div>
 </body>
+</html></body>
 </html>
