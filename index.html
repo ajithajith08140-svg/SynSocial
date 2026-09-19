@@ -461,6 +461,7 @@ int main() {
 
     <script>
         let currentProfTab = 'uploads';
+        let allPostsData = [];
         let userProfile = JSON.parse(localStorage.getItem('synsocial_user_profile')) || {
             name: "Student User",
             course: "Computer Science & Engineering",
@@ -543,18 +544,10 @@ int main() {
             });
         }
 
-        function escapeHTML(str) {
-            if (!str) return '';
-            return str.replace(/[&<>'"]/g, 
-                tag => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag] || tag)
-            );
-        }
+        function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
         // URL should match backend routes
 fetch(`https://synsocial.onrender.com/api/posts/${postId}/comment`, {
   method: 'POST',
@@ -743,25 +736,48 @@ function createPostCard(post) {
 }
      
 async function fetchPosts() {
-    const feedContainer = document.getElementById('feed-container') || document.getElementById('postsContainer');
-    if (!feedContainer) return;
-
     try {
         const res = await fetch(`${API_URL}/api/posts`);
-        const posts = await res.json();
+        allPostsData = await res.json();
 
-        if (Array.isArray(posts)) {
-            feedContainer.innerHTML = posts.map(post => renderPostCard(post)).join('');
+        const feedContainer = document.getElementById('feed-container');
+        if (feedContainer && Array.isArray(allPostsData)) {
+            feedContainer.innerHTML = allPostsData.length > 0 
+                ? allPostsData.map(post => renderPostCard(post)).join('') 
+                : '<p class="text-xs text-slate-500 text-center py-6">No posts found in the feed!</p>';
         }
+
+        renderSearchHub(allPostsData);
+        fetchProfileStats();
     } catch (err) {
         console.error("Error fetching feed:", err);
     }
-}
-        function renderFeed() {
+}      
+  function renderFeed() {
     fetchPosts();
     fetchProfileStats(); // Fixed casing typo
 }
+function renderSearchHub(postsToRender) {
+    const searchContainer = document.getElementById('search-results-container') || document.getElementById('searchHubResults');
+    if (!searchContainer) return;
 
+    if (!postsToRender || postsToRender.length === 0) {
+        searchContainer.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">No matching resources found!</p>`;
+        return;
+    }
+
+    searchContainer.innerHTML = postsToRender.map(post => renderPostCard(post)).join('');
+}
+function handleSearchInput(query) {
+    const searchTerm = query.toLowerCase().trim();
+    const filtered = allPostsData.filter(post => 
+        (post.title && post.title.toLowerCase().includes(searchTerm)) ||
+        (post.content && post.content.toLowerCase().includes(searchTerm)) ||
+        (post.author && post.author.toLowerCase().includes(searchTerm)) ||
+        (post.tag && post.tag.toLowerCase().includes(searchTerm))
+    );
+    renderSearchHub(filtered);
+}
       async function handleAddComment(postId) {
     const inputField = document.getElementById(`comment-input-${postId}`);
     if (!inputField || !inputField.value.trim()) return;
@@ -799,58 +815,72 @@ async function fetchPosts() {
 function renderPostCard(post) {
     if (!post || !post._id) return '';
 
-    const docLink = post.docUrl 
+    // Document URL Fix
+    const docUrl = post.docUrl ? (post.docUrl.startsWith('http') ? post.docUrl : `${API_URL}/${post.docUrl}`) : '';
+    const docLink = docUrl 
         ? `<div class="mt-3">
-             <a href="${post.docUrl}" target="_blank" download="${post.docName || 'document'}" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-slate-800 text-slate-200 rounded-md border border-slate-700 hover:bg-slate-700">
-                📄 Download (${post.docName || 'Attachment'})
+             <a href="${docUrl}" target="_blank" download class="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-slate-800 text-slate-200 rounded-md border border-slate-700 hover:bg-slate-700">
+                📄 Download Attached File
              </a>
            </div>`
         : '';
 
+    // Code Snippet Display Fix
+    const codeSnippet = post.code && post.code.trim() !== ''
+        ? `<div class="relative group mt-2">
+             <button onclick="copyCodeSnippet(\`${encodeURIComponent(post.code)}\`)" class="absolute top-2 right-2 px-2 py-1 text-[10px] bg-slate-800 text-slate-300 rounded hover:bg-slate-700">📋 Copy Code</button>
+             <pre class="bg-slate-950 p-3 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto border border-slate-800"><code>${escapeHtml(post.code)}</code></pre>
+           </div>`
+        : '';
+
     const commentsList = (post.comments || []).map(c => `
-        <div class="text-xs bg-slate-900/60 p-2 rounded border border-slate-800/80 mt-1">
+        <div class="text-xs bg-slate-900/60 p-2 rounded border border-slate-800 mt-1">
             <strong class="text-indigo-300">${c.author || 'User'}:</strong> <span class="text-slate-300">${c.text}</span>
         </div>
     `).join('');
 
     return `
-        <div class="post-card bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-3 mb-4" id="post-${post._id}">
+        <div class="post-card bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3 mb-4" id="post-${post._id}">
             <div class="flex justify-between items-start">
                 <div>
-                    <h3 class="text-lg font-bold text-slate-100">${post.title || 'Untitled Post'}</h3>
-                    <p class="text-xs text-slate-400">By ${post.author || 'Student User'} • ${post.tag || 'General'}</p>
+                    <h3 class="text-base font-bold text-slate-100">${escapeHtml(post.title || 'Untitled Post')}</h3>
+                    <p class="text-xs text-slate-400">By <span class="text-indigo-400 font-medium">${post.author || 'Rayeesa'}</span> • Tag: ${post.tag || 'General'}</p>
                 </div>
+                <!-- Delete Button -->
+                <button onclick="handleDeletePost('${post._id}')" class="text-xs text-rose-400 hover:text-rose-300 bg-rose-500/10 px-2.5 py-1 rounded-md border border-rose-500/20">
+                    🗑️ Delete
+                </button>
             </div>
 
-            <p class="text-sm text-slate-300">${post.content || ''}</p>
-            ${post.code ? `<pre class="bg-slate-950 p-3 rounded-md text-xs font-mono text-green-400 overflow-x-auto"><code>${post.code}</code></pre>` : ''}
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">${escapeHtml(post.content || '')}</p>
+            ${codeSnippet}
             ${docLink}
 
-            <!-- Action Buttons (Wrapped in Single Quotes '${post._id}') -->
+            <!-- Action Buttons -->
             <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
-                <button onclick="handleUpvote('${post._id}')" class="px-3 py-1 text-xs font-semibold rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30">
+                <button onclick="handleUpvote('${post._id}')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20">
                     🔥 Upvote (${post.upvotes || 0})
                 </button>
-                <button onclick="handleBookmark('${post._id}')" class="px-3 py-1 text-xs font-semibold rounded-md bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/30">
+                <button onclick="handleBookmark('${post._id}')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20">
                     ${post.isBookmarked ? '🔖 Bookmarked' : '📑 Bookmark'}
                 </button>
             </div>
 
-            <!-- Comments Section -->
-            <div class="pt-3 border-t border-slate-800/60">
-                <p class="text-xs font-semibold text-slate-400 mb-2">Comments (${(post.comments || []).length})</p>
-                <div id="comments-container-${post._id}" class="space-y-1 mb-2 max-h-32 overflow-y-auto">
-                    ${commentsList || '<p class="text-xs text-slate-500">No comments yet.</p>'}
-                </div>
+            <!-- Comments -->
+            <div class="pt-2 border-t border-slate-800/60">
                 <div class="flex gap-2">
-                    <input type="text" id="comment-input-${post._id}" placeholder="Write a comment..." class="flex-1 text-xs bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500">
-                    <button onclick="handleAddComment('${post._id}')" class="px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded hover:bg-indigo-500">
-                        Send
-                    </button>
+                    <input type="text" id="comment-input-${post._id}" placeholder="Write a comment..." class="flex-1 text-xs bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500">
+                    <button onclick="handleAddComment('${post._id}')" class="px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-500">Send</button>
                 </div>
+                <div class="mt-2 max-h-32 overflow-y-auto space-y-1">${commentsList}</div>
             </div>
         </div>
     `;
+}
+function copyCodeSnippet(encodedCode) {
+    const code = decodeURIComponent(encodedCode);
+    navigator.clipboard.writeText(code);
+    showToast("Code snippet copied to clipboard! 📋", "success");
 }
 async function handleBookmark(postId) {
     if (!postId) return;
@@ -863,7 +893,29 @@ async function handleBookmark(postId) {
     } catch (err) {
         console.error("Bookmark Error:", err);
     }
-}        function promptDeletePost(postId) {
+}      
+async function handleDeletePost(postId) {
+    const userPin = prompt("Enter 4-Digit Security PIN to delete this post:");
+    if (!userPin) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: userPin })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast("Post deleted successfully! 🗑️", "success");
+            fetchPosts();
+        } else {
+            showToast(data.message || "Invalid PIN! Cannot delete.", "error");
+        }
+    } catch (err) {
+        showToast("Failed to delete post", "error");
+    }
+}  function promptDeletePost(postId) {
             const targetPost = fetchedPosts.find(p => (p._id || p.id) === postId);
             
             if (!targetPost) {
@@ -1142,29 +1194,26 @@ async function handleBookmark(postId) {
             document.getElementById('edit-profile-modal').classList.remove('hidden');
         }
 
-       async function fetchProfileStats() {
+      async function fetchProfileStats() {
     try {
-        const res = await fetch(`${API_URL}/api/user/profile`);
-        const data = await res.json();
+        const currentUser = "Rayeesa"; 
+        const res = await fetch(`${API_URL}/api/profile/stats?author=${encodeURIComponent(currentUser)}`);
+        const stats = await res.json();
 
-        // Render Compact My Uploads List
-        const uploadsContainer = document.getElementById('my-uploads-list');
-        if (uploadsContainer) {
-            uploadsContainer.innerHTML = (data.myUploads && data.myUploads.length > 0)
-                ? data.myUploads.map(item => createCompactProfileCard(item)).join('')
-                : '<p class="text-xs text-slate-500 p-2">No uploads found.</p>';
+        // Update Stat Badges
+        if (document.getElementById('stat-uploads')) document.getElementById('stat-uploads').innerText = stats.myUploadsCount || 0;
+        if (document.getElementById('stat-upvotes')) document.getElementById('stat-upvotes').innerText = stats.upvotesReceived || 0;
+        if (document.getElementById('stat-bookmarks')) document.getElementById('stat-bookmarks').innerText = stats.bookmarksCount || 0;
+
+        // Render My Uploads List
+        const myUploadsContainer = document.getElementById('my-uploads-list') || document.getElementById('myUploadsContainer');
+        if (myUploadsContainer && Array.isArray(stats.uploads)) {
+            myUploadsContainer.innerHTML = stats.uploads.length > 0 
+                ? stats.uploads.map(p => renderPostCard(p)).join('') 
+                : '<p class="text-xs text-slate-500 py-4 text-center">No uploads found!</p>';
         }
-
-        // Render Compact Bookmarks List
-        const bookmarksContainer = document.getElementById('my-bookmarks-list');
-        if (bookmarksContainer) {
-            bookmarksContainer.innerHTML = (data.bookmarks && data.bookmarks.length > 0)
-                ? data.bookmarks.map(item => createCompactProfileCard(item)).join('')
-                : '<p class="text-xs text-slate-500 p-2">No bookmarks saved yet.</p>';
-        }
-
     } catch (err) {
-        console.error("Profile Fetch Error:", err);
+        console.error("Error updating profile stats:", err);
     }
 }
 // Initial Load
@@ -1290,25 +1339,31 @@ function createCompactProfileCard(item) {
     feedContainer.innerHTML = filtered.map(post => renderPostCard(post)).join('');
 }
 
-        function showToast(message, icon = '✨') {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toast-msg');
-            const toastIcon = document.getElementById('toast-icon');
+        function showToast(message, type = 'success') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'fixed bottom-5 right-5 z-50 space-y-2';
+        document.body.appendChild(container);
+    }
 
-            if (!toast) return;
+    const toast = document.createElement('div');
+    toast.className = `px-4 py-2.5 rounded-lg text-xs font-semibold text-white shadow-xl transition-all duration-300 transform translate-y-2 opacity-0 flex items-center gap-2 ${
+        type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
+    }`;
+    toast.innerHTML = `<span>${type === 'success' ? '✅' : '⚠️'}</span> <span>${message}</span>`;
+    
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+    }, 10);
 
-            toastMsg.innerText = message;
-            toastIcon.innerText = icon;
-
-            toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
-            toast.classList.add('translate-y-0', 'opacity-100');
-
-            setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none');
-            }, 3000);
-        }
-
+    setTimeout(() => {
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
         document.addEventListener('DOMContentLoaded', () => {
     fetchPosts();
 });

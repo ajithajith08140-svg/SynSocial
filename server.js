@@ -24,7 +24,7 @@ const uploadsPath = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsPath)) {
     fs.mkdirSync(uploadsPath, { recursive: true });
 }
-app.use('/uploads', express.static(uploadsPath));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // 3. Database Connection Setup
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
@@ -201,32 +201,24 @@ app.post('/api/posts/upvote/:id', async (req, res) => {
 // Delete Post Endpoint
 app.delete('/api/posts/:id', async (req, res) => {
     try {
-        const { id } = req.params;
-        const { pin } = req.body || {};
-
-        const post = await Post.findById(id);
+        const { pin } = req.body;
+        const post = await Post.findById(req.params.id);
 
         if (!post) {
-            return res.status(404).json({ success: false, message: "Post not found!" });
+            return res.status(404).json({ success: false, message: 'Post not found' });
         }
 
-        const enteredPin = pin ? String(pin).trim() : "";
-        const storedPin = post.pin ? String(post.pin).trim() : "";
-
-        if (storedPin && storedPin !== enteredPin) {
-            const hintMsg = post.pinHint ? `Incorrect PIN! Hint: ${post.pinHint}` : "Incorrect PIN!";
-            return res.status(401).json({ success: false, message: hintMsg });
+        // Check PIN
+        if (post.pin && post.pin !== pin) {
+            return res.status(401).json({ success: false, message: 'Incorrect 4-Digit Security PIN!' });
         }
 
-        await Post.findByIdAndDelete(id);
-        return res.status(200).json({ success: true, message: "Post deleted successfully" });
-
-    } catch (error) {
-        console.error("Delete Endpoint Error:", error);
-        return res.status(500).json({ success: false, message: "Server error during deletion", error: error.message });
+        await Post.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Post deleted successfully!' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
 });
-
 // Unified Comment Endpoint Handlers
 const handleAddComment = async (req, res) => {
     try {
@@ -257,6 +249,25 @@ const handleAddComment = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error adding comment' });
     }
 };
+app.get('/api/profile/stats', async (req, res) => {
+    try {
+        const authorName = req.query.author || "Rayeesa";
+        const userPosts = await Post.find({ author: new RegExp(`^${authorName}$`, 'i') });
+        
+        const totalUpvotes = userPosts.reduce((acc, p) => acc + (p.upvotes || 0), 0);
+        const bookmarkedPosts = await Post.find({ isBookmarked: true });
+
+        res.json({
+            myUploadsCount: userPosts.length,
+            upvotesReceived: totalUpvotes,
+            bookmarksCount: bookmarkedPosts.length,
+            uploads: userPosts,
+            bookmarks: bookmarkedPosts
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
 app.post('/api/posts/:id/comment', handleAddComment);
 app.post('/api/posts/:id/comments', handleAddComment);
