@@ -575,27 +575,30 @@ function openEditProfileModal() {
 function buildPostCardHTML(post) {
     const authorName = post.author || post.username || "Anonymous";
     const postTitle = post.title || "Untitled Post";
-    
-    // Exact Upvotes and Comments length calculation
     const upvotesCount = Array.isArray(post.upvotes) ? post.upvotes.length : (post.upvotes || 0);
     const commentsList = Array.isArray(post.comments) ? post.comments : [];
     const formattedTime = formatDate(post.createdAt || post.date);
     const postId = post._id || post.id;
 
-    // Render Download & Link Buttons
-    let downloadBtnHTML = post.fileData || post.fileName ? `
-        <a href="${post.fileData || '#'}" download="${post.fileName || 'file'}" class="px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/40 text-brand-400 border border-brand-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all">
+    // 1. Download Document Button Handling
+    const hasFile = post.fileData || post.fileName || post.fileUrl || post.document;
+    const fileDownloadUrl = post.fileData || post.fileUrl || post.document || '#';
+    const fileNameDisplay = post.fileName || 'Attached Document';
+
+    let downloadBtnHTML = hasFile ? `
+        <a href="${fileDownloadUrl}" download="${fileNameDisplay}" target="_blank" class="px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/40 text-brand-400 border border-brand-500/30 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
             <i class="fa-solid fa-file-arrow-down"></i>
-            <span>Download (${post.fileName || 'file'})</span>
+            <span>Download (${fileNameDisplay})</span>
         </a>` : '';
 
+    // 2. Reference Link Button
     let linkBtnHTML = post.link ? `
-        <a href="${post.link}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all">
+        <a href="${post.link}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
             <i class="fa-solid fa-link"></i>
             <span>Open Reference Link</span>
         </a>` : '';
 
-    // Comment items rendering
+    // 3. Comments list rendering
     const commentsHTML = commentsList.map(c => `
         <div class="p-2 bg-slate-950/60 rounded-lg text-xs text-slate-300 border border-slate-800/80 mb-1">
             <span class="font-bold text-brand-400">${c.author || 'User'}:</span> ${typeof c === 'string' ? c : (c.text || '')}
@@ -622,11 +625,17 @@ function buildPostCardHTML(post) {
                         <i class="fa-solid fa-bookmark"></i>
                         <span>${post.isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
                     </button>
+                    <!-- Delete Button Added -->
+                    <button onclick="handleDeletePost('${postId}')" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition-all flex items-center space-x-1">
+                        <i class="fa-solid fa-trash"></i>
+                        <span>Delete</span>
+                    </button>
                 </div>
             </div>
 
             <p class="text-xs text-slate-300 leading-relaxed">${post.content || post.description || ''}</p>
 
+            <!-- Links & Downloads Container -->
             <div class="flex flex-wrap items-center gap-2">
                 ${linkBtnHTML}
                 ${downloadBtnHTML}
@@ -645,6 +654,22 @@ function buildPostCardHTML(post) {
             </div>
         </div>
     `;
+}
+
+async function handleDeletePost(postId) {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+
+    // Optimistic Delete
+    fetchedPosts = fetchedPosts.filter(p => (p._id || p.id) !== postId);
+    renderFeed();
+    renderProfile();
+    renderSearchHub();
+
+    try {
+        await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+    } catch (err) {
+        console.error("Error deleting post:", err);
+    }
 }
 function renderSearchHub() {
     const searchContainer = document.getElementById('search-results-container') || document.getElementById('search-hub-posts');
@@ -860,44 +885,57 @@ async function updateBookmarkProfileUI() {
 }
 
 // Initial page load appo profile counter load aaga:
-document.addEventListener('DOMContentLoaded', updateBookmarkProfileUI);
-          async function handleCreatePost(e) {
-    if (e) e.preventDefault();
+// Top-level Global Variables
+let currentUploadedFileData = null;
+let currentUploadedFileName = "";
 
-    const form = e ? e.target : document.getElementById('postForm');
-    if (!form) return;
+// Form Submission Function
+async function handleCreatePost(event) {
+    if (event) event.preventDefault();
 
-    const formData = new FormData(form);
+    const title = document.getElementById('post-title-input').value;
+    const author = document.getElementById('post-author-input').value;
+    const subject = document.getElementById('post-subject-select').value;
+    const description = document.getElementById('post-desc-input').value;
+    const link = document.getElementById('post-link-input').value;
 
+    const newPostData = {
+        title,
+        author,
+        subject,
+        content: description,
+        link,
+        // Global variable-la save aana File details
+        fileName: currentUploadedFileName,
+        fileData: currentUploadedFileData,
+        createdAt: new Date().toISOString()
+    };
+
+    // API Post Request
     try {
-        showToast('Publishing post...', '⏳');
-
-        const res = await fetch(`${API_URL}/api/posts/create`, {
+        const res = await fetch('/api/posts', {
             method: 'POST',
-            body: formData
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newPostData)
         });
 
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-            showToast('Post published successfully!', '🎉');
-            form.reset();
+        if (res.ok) {
+            const savedPost = await res.json();
+            fetchedPosts.unshift(savedPost);
             
-            // Feed-a direct-a reload pannuvom without page refresh
-            if (typeof fetchPosts === 'function') {
-                fetchPosts();
-            } else if (typeof loadPosts === 'function') {
-                loadPosts();
-            }
-        } else {
-            showToast(data.error || 'Failed to publish post', '❌');
+            // Clear inputs & variables
+            currentUploadedFileData = null;
+            currentUploadedFileName = "";
+            document.getElementById('create-post-form').reset();
+
+            // Refresh Views
+            renderFeed();
+            renderProfile();
         }
     } catch (err) {
-        console.error('Create Post Error:', err);
-        showToast('Network error while publishing post', '❌');
+        console.error("Failed to upload post:", err);
     }
-}
-function formatDate(dateString) {
+}function formatDate(dateString) {
     if (!dateString) return "Just now";
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Just now";
