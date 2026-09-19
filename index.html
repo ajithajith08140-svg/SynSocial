@@ -216,6 +216,7 @@
                             <option value="DataStructures">DSA</option>
                             <option value="WebDev">Web Dev</option>
                             <option value="Database">DBMS</option>
+                            <option value="General">General</option>
                         </select>
                     </div>
                 </div>
@@ -227,7 +228,24 @@
         <!-- VIEW 3: FEED WORKSPACE PAGE -->
         <section id="view-feed" class="page-view hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-                
+                <!-- Feed Workspace Section -->
+<section id="feed-workspace" class="active-tab">
+    <h2>Academic Feed</h2>
+    
+    <!-- Feed Posts Dynamic Rendering Container -->
+    <div id="feed-container"></div>
+</section>
+
+<!-- My Profile Section -->
+<section id="profile-workspace">
+    <h2>User Profile</h2>
+    
+    <h3>My Uploads</h3>
+    <div id="my-uploads-list"></div>
+
+    <h3>My Bookmarks</h3>
+    <div id="my-bookmarks-list"></div>
+</section>
                 <!-- Post Create Form -->
                 <div class="lg:col-span-5 order-1 lg:order-1 space-y-6">
                     <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-slate-800 space-y-4 lg:sticky lg:top-24">
@@ -259,7 +277,7 @@
                                     <select id="post-subject-select" name="tag" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-brand-500">
                                         <option value="Programming">Programming</option>
                                         <option value="WebDev">WebDev</option>
-                                        <option value="Statistics">Statistics</option>
+                                        <option value="Statistics">DBMS</option>
                                         <option value="General">General</option>
                                     </select>
                                 </div>
@@ -647,10 +665,55 @@ fetch(`https://synsocial.onrender.com/api/posts/${postId}/comment`, {
             `;
         }
 
+        
+
+// 1. Render Post Function (Fixed Quotes for postId)
+function createPostCard(post) {
+    const docHTML = post.docUrl 
+        ? `<div style="margin-top: 10px;">
+             📄 <a href="${post.docUrl}" target="_blank" download="${post.docName || 'document'}">Download Attachment (${post.docName || 'File'})</a>
+           </div>`
+        : '';
+
+    const commentsHTML = (post.comments || []).map(c => `
+        <div class="comment-item" style="background: rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 6px; margin-top: 5px;">
+            <strong>${c.author || 'Student'}:</strong> ${c.text}
+        </div>
+    `).join('');
+
+    return `
+        <div class="post-card" id="post-${post._id}" style="background: #1e2030; padding: 15px; margin-bottom: 15px; border-radius: 8px;">
+            <h3>${post.title}</h3>
+            <p style="color: #aaa; font-size: 0.85rem;">By ${post.author || 'Anonymous'} | Tag: ${post.tag || 'General'}</p>
+            <p>${post.content || ''}</p>
+            
+            ${post.code ? `<pre style="background:#111; padding:10px; border-radius:5px;"><code>${post.code}</code></pre>` : ''}
+            ${docHTML}
+
+            <div style="margin-top: 12px; display: flex; gap: 10px;">
+                <button onclick="handleUpvote('${post._id}')">👍 Upvote (${post.upvotes || 0})</button>
+                <button onclick="handleBookmark('${post._id}')">${post.isBookmarked ? '🔖 Bookmarked' : '📑 Bookmark'}</button>
+                <button onclick="handleDelete('${post._id}')">🗑️ Delete</button>
+            </div>
+
+            <!-- Comments Section -->
+            <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
+                <p><strong>Comments (${(post.comments || []).length})</strong></p>
+                <div id="comments-container-${post._id}">
+                    ${commentsHTML}
+                </div>
+                <div style="display: flex; gap: 5px; margin-top: 8px;">
+                    <input type="text" id="comment-input-${post._id}" placeholder="Write a comment..." style="flex:1; padding: 6px; border-radius: 4px; border: 1px solid #444; background: #2a2d3d; color: #fff;">
+                    <button onclick="handleAddComment('${post._id}')">Send</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
         let currentUploadedFileData = null;
         let currentUploadedFileName = "";
 
-       async function handleCreatePost(event) {
+      async function handleCreatePost(event) {
     if (event) event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
@@ -661,48 +724,46 @@ fetch(`https://synsocial.onrender.com/api/posts/${postId}/comment`, {
             body: formData
         });
 
-        const contentType = res.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-            const data = await res.json();
-            // Post successfully saved to backend
-if (res.ok && data.success) {
-    showToast('Post published successfully!', '🚀');
-    
-    // Server-la irundhu vandha new post-a top-la render panna
-    const feedContainer = document.getElementById('feed-container');
-    const newPostHTML = renderPostCard(data.post);
-    
-    // Top-la insert panradhu
-    feedContainer.insertAdjacentHTML('afterbegin', newPostHTML); 
-} else {
-                showToast(data.message || 'Failed to create post', '❌');
+        const data = await res.json();
+        if (res.ok && data.success) {
+            alert('Post Published Successfully! 🚀');
+            form.reset();
+            
+            const feedContainer = document.getElementById('feed-container') || document.getElementById('postsContainer');
+            if (feedContainer) {
+                feedContainer.insertAdjacentHTML('afterbegin', createPostCard(data.post));
+            } else {
+                fetchPosts();
             }
         } else {
-            console.error("Server returned non-JSON response:", await res.text());
-            showToast('Server starting up, please try again in 10 seconds!', '⚠️');
+            alert('Failed to create post: ' + (data.error || data.message));
         }
     } catch (err) {
         console.error("Failed to upload post:", err);
-        showToast('Error uploading post', '❌');
+        alert("Upload Error! Check console details.");
     }
 }
-        async function fetchPosts() {
+     
+async function fetchPosts() {
+    // Check both possible container names to avoid 'Cannot set properties of null'
+    const feedContainer = document.getElementById('feed-container') || document.getElementById('postsContainer');
+    
+    if (!feedContainer) {
+        console.warn("Feed container element not found on current page/tab.");
+        return;
+    }
+
     try {
         const res = await fetch(`${API_URL}/api/posts`);
         const posts = await res.json();
-        
-        const feedContainer = document.getElementById('feed-container');
-        feedContainer.innerHTML = ''; // Container clear panradhu
 
-        // Ovvoru post-kum renderPostCard call aagum
-        posts.forEach(post => {
-            feedContainer.innerHTML += renderPostCard(post);
-        });
+        if (Array.isArray(posts)) {
+            feedContainer.innerHTML = posts.map(post => createPostCard(post)).join('');
+        }
     } catch (err) {
         console.error("Error fetching feed:", err);
     }
 }
-
         async function renderFeed() {
             const postsContainer = document.getElementById('postsStream');
             if (!postsContainer) return;
@@ -729,73 +790,44 @@ if (res.ok && data.success) {
         }
 
         async function handleAddComment(postId) {
-            if (!postId || postId === 'undefined') return;
+    const inputField = document.getElementById(`comment-input-${postId}`);
+    if (!inputField || !inputField.value.trim()) return;
 
-            const input = document.getElementById(`comment-input-${postId}`);
-            const text = input ? input.value.trim() : '';
+    try {
+        const res = await fetch(`${API_URL}/api/posts/${postId}/comment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text: inputField.value.trim(),
+                author: "Student User"
+            })
+        });
 
-            if (!text) {
-                showToast('Please type a comment!', '⚠️');
-                return;
-            }
-
-            const currentUserName = (typeof userProfile !== 'undefined' && userProfile && userProfile.name) 
-                ? userProfile.name 
-                : "Student User"; 
-
-            const post = fetchedPosts.find(p => (p._id || p.id) === postId);
-            if (post) {
-                if (!Array.isArray(post.comments)) post.comments = [];
-                post.comments.push({ text, author: currentUserName, createdAt: new Date().toISOString() });
-                if (input) input.value = '';
-                renderFeed();
-            }
-
-            try {
-                const res = await fetch(`${API_URL}/api/posts/${postId}/comment`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: text, author: currentUserName })
-                });
-
-                if (res.ok) {
-                    showToast('Comment added!', '💬');
-                    fetchPosts();
-                } else {
-                    showToast('Comment updated!', '💬');
-                    fetchPosts();
-                }
-            } catch (err) {
-                showToast('Comment saved!', '💬');
-                fetchPosts();
-            }
+        const data = await res.json();
+        if (data.success) {
+            inputField.value = '';
+            fetchPosts(); // Reload posts to update comments immediately
         }
+    } catch (err) {
+        console.error("Error adding comment:", err);
+    }
+}
 
         async function handleUpvote(postId) {
-            const post = fetchedPosts.find(p => (p._id || p.id) === postId);
-            if (!post) return;
+    try {
+        // Updated route path to match backend: /api/posts/upvote/:id
+        const res = await fetch(`${API_URL}/api/posts/upvote/${postId}`, {
+            method: 'POST'
+        });
+        const data = await res.json();
 
-            if (!Array.isArray(post.upvotes)) post.upvotes = [];
-            post.upvotes.push(userProfile.name || 'user'); 
-
-            renderFeed();
-            renderProfile();
-
-            try {
-                const response = await fetch(`${API_URL}/api/posts/${postId}/upvote`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (!response.ok) {
-                    fetchPosts();
-                }
-            } catch (err) {
-                console.error("Upvote failed:", err);
-                fetchPosts();
-            }
+        if (data.success) {
+            fetchPosts(); // Refresh feed state
         }
-
+    } catch (err) {
+        console.error("Upvote error:", err);
+    }
+}
 function renderPostCard(post) {
     return `
         <div class="post-card" id="post-${post._id}">
@@ -810,33 +842,19 @@ function renderPostCard(post) {
     `;
 }
         async function handleBookmark(postId) {
-            if (!postId) return;
-            try {
-                const res = await fetch(`${API_URL}/api/posts/bookmark/${postId}`, { method: 'POST' });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    showToast(data.isBookmarked ? 'Saved to Bookmarks!' : 'Removed from Bookmarks', '🔖');
-                    fetchPosts();
-                } else {
-                    const post = fetchedPosts.find(p => (p._id || p.id) === postId);
-                    if (post) {
-                        post.isBookmarked = !post.isBookmarked;
-                        showToast(post.isBookmarked ? 'Saved to Bookmarks!' : 'Removed from Bookmarks', '🔖');
-                        renderFeed();
-                        renderProfile();
-                    }
-                }
-            } catch (err) {
-                const post = fetchedPosts.find(p => (p._id || p.id) === postId);
-                if (post) {
-                    post.isBookmarked = !post.isBookmarked;
-                    showToast(post.isBookmarked ? 'Saved to Bookmarks!' : 'Removed from Bookmarks', '🔖');
-                    renderFeed();
-                    renderProfile();
-                }
-            }
+    try {
+        const res = await fetch(`${API_URL}/api/posts/bookmark/${postId}`, {
+            method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+            fetchPosts();
+            fetchProfileStats(); // Refresh profile tab if open
         }
-
+    } catch (err) {
+        console.error("Bookmark error:", err);
+    }
+}
         function promptDeletePost(postId) {
             const targetPost = fetchedPosts.find(p => (p._id || p.id) === postId);
             
@@ -1116,9 +1134,56 @@ function renderPostCard(post) {
             document.getElementById('edit-profile-modal').classList.remove('hidden');
         }
 
-        function fetchprofileStats() {
-            console.log("Fetching profile statistics...");
+        async function fetchProfileStats() {
+    console.log("Fetching profile statistics...");
+    try {
+        const res = await fetch(`${API_URL}/api/user/profile`);
+        const data = await res.json();
+
+        // Render My Uploads List
+        const uploadsContainer = document.getElementById('my-uploads-list');
+        if (uploadsContainer && data.myUploads) {
+            uploadsContainer.innerHTML = data.myUploads.map(item => `
+                <div style="padding: 10px; background: rgba(255,255,255,0.03); margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${item.title}</strong>
+                        <div style="font-size: 0.8rem; color: #888;">By ${item.author}</div>
+                    </div>
+                    <div>
+                        <span style="background: #2b3a4a; padding: 3px 8px; border-radius: 4px; font-size: 0.85rem;">👍 ${item.upvotes || 0}</span>
+                        ${item.docUrl ? `<a href="${item.docUrl}" target="_blank" style="margin-left:8px; text-decoration:none;">📄 File</a>` : ''}
+                    </div>
+                </div>
+            `).join('') || '<p style="color:#777;">No uploads yet.</p>';
         }
+
+        // Render Bookmarks List
+        const bookmarksContainer = document.getElementById('my-bookmarks-list');
+        if (bookmarksContainer && data.bookmarks) {
+            bookmarksContainer.innerHTML = data.bookmarks.map(item => `
+                <div style="padding: 10px; background: rgba(255,255,255,0.03); margin-bottom: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${item.title}</strong>
+                        <div style="font-size: 0.8rem; color: #888;">By ${item.author}</div>
+                    </div>
+                    <div>
+                        <span style="background: #2b3a4a; padding: 3px 8px; border-radius: 4px; font-size: 0.85rem;">👍 ${item.upvotes || 0}</span>
+                        ${item.docUrl ? `<a href="${item.docUrl}" target="_blank" style="margin-left:8px; text-decoration:none;">📄 File</a>` : ''}
+                    </div>
+                </div>
+            `).join('') || '<p style="color:#777;">No bookmarks yet.</p>';
+        }
+
+    } catch (err) {
+        console.error("Profile fetch error:", err);
+    }
+}
+
+// Initial Load
+document.addEventListener('DOMContentLoaded', () => {
+    fetchPosts();
+    fetchProfileStats();
+});
 
         async function saveProfile(event) {
             if (event) event.preventDefault();
