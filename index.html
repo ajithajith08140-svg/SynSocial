@@ -573,74 +573,100 @@ function openEditProfileModal() {
 }
       //1. Post Card HTML Generator (Used for Feed, Search Hub, and Profile Bookmarks)
 function buildPostCardHTML(post) {
-    const id = post._id || post.id || '';
-    const comments = Array.isArray(post.comments) ? post.comments : [];
+    const authorName = post.author || post.username || "Anonymous";
+    const postTitle = post.title || "Untitled Post";
     
-    let formattedDate = 'Just now';
-    if (post.createdAt) {
-        const d = new Date(post.createdAt);
-        if (!isNaN(d.getTime())) {
-            formattedDate = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-    }
+    // Exact Upvotes and Comments length calculation
+    const upvotesCount = Array.isArray(post.upvotes) ? post.upvotes.length : (post.upvotes || 0);
+    const commentsList = Array.isArray(post.comments) ? post.comments : [];
+    const formattedTime = formatDate(post.createdAt || post.date);
+    const postId = post._id || post.id;
 
-    const docUrl = post.docUrl || post.docData || '';
-    const docName = post.docName || 'Document';
+    // Render Download & Link Buttons
+    let downloadBtnHTML = post.fileData || post.fileName ? `
+        <a href="${post.fileData || '#'}" download="${post.fileName || 'file'}" class="px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/40 text-brand-400 border border-brand-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all">
+            <i class="fa-solid fa-file-arrow-down"></i>
+            <span>Download (${post.fileName || 'file'})</span>
+        </a>` : '';
+
+    let linkBtnHTML = post.link ? `
+        <a href="${post.link}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all">
+            <i class="fa-solid fa-link"></i>
+            <span>Open Reference Link</span>
+        </a>` : '';
+
+    // Comment items rendering
+    const commentsHTML = commentsList.map(c => `
+        <div class="p-2 bg-slate-950/60 rounded-lg text-xs text-slate-300 border border-slate-800/80 mb-1">
+            <span class="font-bold text-brand-400">${c.author || 'User'}:</span> ${typeof c === 'string' ? c : (c.text || '')}
+        </div>
+    `).join('');
 
     return `
-        <div class="glass-card p-5 rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-xl mb-4 space-y-4">
-            <div class="flex items-start justify-between gap-3">
+        <div class="p-5 bg-slate-900/70 border border-slate-800 rounded-2xl space-y-4 shadow-lg">
+            <div class="flex items-center justify-between">
                 <div>
-                    <span class="inline-block px-2.5 py-0.5 text-[10px] font-semibold text-brand-400 bg-brand-500/10 rounded-full border border-brand-500/20 mb-2">
-                        ${post.tag || 'General'}
+                    <span class="text-[10px] uppercase tracking-wider px-2.5 py-1 bg-brand-600/20 text-brand-400 rounded-lg border border-brand-500/20 font-bold">
+                        ${post.subject || 'Programming'}
                     </span>
-                    <h3 class="text-base font-bold text-slate-100">${post.title || 'Untitled Post'}</h3>
-                    <p class="text-xs text-slate-400 mt-1">
-                        By <span class="font-medium text-slate-300">${post.author || 'Anonymous'}</span> • ${formattedDate}
-                    </p>
+                    <h3 class="text-base font-bold text-slate-100 mt-2">${postTitle}</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">By <span class="text-brand-400 font-semibold">${authorName}</span> • ${formattedTime}</p>
                 </div>
                 
-                <div class="flex items-center gap-2 shrink-0">
-                    <button type="button" onclick="handleUpvote('${id}')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">
-                        🔥 Upvote (${post.upvotes || post.likes || 0})
+                <div class="flex items-center space-x-2">
+                    <button onclick="handleUpvote('${postId}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-xl text-xs font-bold border border-slate-700 flex items-center space-x-1.5 transition-all">
+                        <i class="fa-solid fa-fire"></i>
+                        <span>Upvote (${upvotesCount})</span>
                     </button>
-                    <button type="button" onclick="handleBookmark('${id}')" class="px-3 py-1.5 rounded-lg ${post.isBookmarked ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-amber-400'} text-xs font-semibold transition">
-                        🔖 ${post.isBookmarked ? 'Bookmarked' : 'Bookmark'}
-                    </button>
-                    <button type="button" onclick="handleDeletePost('${id}')" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold transition">
-                        🗑️ Delete
+                    <button onclick="handleBookmark('${postId}')" class="px-3 py-1.5 ${post.isBookmarked ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'} rounded-xl text-xs font-bold border border-slate-700 transition-all">
+                        <i class="fa-solid fa-bookmark"></i>
+                        <span>${post.isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
                     </button>
                 </div>
             </div>
 
-            <p class="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">${post.content || ''}</p>
+            <p class="text-xs text-slate-300 leading-relaxed">${post.content || post.description || ''}</p>
 
-            <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-800/60">
-                ${post.link ? `
-                    <a href="${post.link}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-brand-400 border border-slate-700 rounded-lg text-xs font-medium transition">
-                        🔗 Open Reference Link
-                    </a>
-                ` : ''}
-
-                ${docUrl ? `
-                    <a href="${docUrl}" target="_blank" download class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/30 rounded-lg text-xs font-medium transition">
-                        📄 Download (${docName})
-                    </a>
-                ` : ''}
+            <div class="flex flex-wrap items-center gap-2">
+                ${linkBtnHTML}
+                ${downloadBtnHTML}
             </div>
 
-            <div class="pt-3 border-t border-slate-800/40 space-y-2">
-                <p class="text-xs font-semibold text-slate-400">Comments (${comments.length})</p>
-                <div class="space-y-1">
-                    ${comments.map(c => `<div class="bg-slate-950 p-2 rounded text-xs text-slate-300">${typeof c === 'object' ? (c.text || '') : c}</div>`).join('')}
+            <!-- Comments Section -->
+            <div class="pt-3 border-t border-slate-800/60 space-y-2">
+                <span class="text-xs font-semibold text-slate-400"><i class="fa-regular fa-comment mr-1"></i> Comments (${commentsList.length})</span>
+                <div class="space-y-1 max-h-32 overflow-y-auto">${commentsHTML}</div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="text" id="comment-input-${postId}" placeholder="Write a comment..." class="flex-grow px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-500" />
+                    <button onclick="handleAddComment('${postId}', 'comment-input-${postId}')" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition-all">
+                        Send
+                    </button>
                 </div>
-                <form onsubmit="handleComment(event, '${id}')" class="flex gap-2 pt-1">
-                    <input type="text" name="commentText" required placeholder="Write a comment..." class="flex-1 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none">
-                    <button type="submit" class="px-3 py-1.5 bg-brand-600 text-white text-xs font-bold rounded-lg">Send</button>
-                </form>
             </div>
         </div>
     `;
+}
+function renderSearchHub() {
+    const searchContainer = document.getElementById('search-results-container') || document.getElementById('search-hub-posts');
+    const searchInput = document.getElementById('search-query-input') || document.getElementById('searchInput');
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+    if (!searchContainer) return;
+
+    const filtered = fetchedPosts.filter(p => {
+        const titleMatch = (p.title || '').toLowerCase().includes(query);
+        const authorMatch = (p.author || p.username || '').toLowerCase().includes(query);
+        const contentMatch = (p.content || '').toLowerCase().includes(query);
+        return titleMatch || authorMatch || contentMatch;
+    });
+
+    if (filtered.length === 0) {
+        searchContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-8">No matching posts found!</div>`;
+        return;
+    }
+
+    // Force buildPostCardHTML render on Search Hub
+    searchContainer.innerHTML = filtered.map(post => buildPostCardHTML(post)).join('');
 }
 async function fetchPosts() {
     try {
@@ -874,8 +900,6 @@ document.addEventListener('DOMContentLoaded', updateBookmarkProfileUI);
 function formatDate(dateString) {
     if (!dateString) return "Just now";
     const date = new Date(dateString);
-    
-    // Check for Invalid Date
     if (isNaN(date.getTime())) return "Just now";
     
     return date.toLocaleDateString('en-US', { 
@@ -1173,29 +1197,29 @@ function fetchprofileStats() {
 async function saveProfile(event) {
     if (event) event.preventDefault();
 
-    const updatedData = {
-        name: document.getElementById('edit-name-input').value.trim(),
-        course: document.getElementById('edit-course-input').value.trim(),
-        bio: document.getElementById('edit-bio-input').value.trim()
+    const nameVal = (document.getElementById('edit-name-input') || document.getElementById('profileNameInput')).value.trim();
+    const courseVal = (document.getElementById('edit-course-input') || document.getElementById('profileCourseInput')).value.trim();
+    const bioVal = (document.getElementById('edit-bio-input') || document.getElementById('profileBioInput')).value.trim();
+
+    userProfile = {
+        name: nameVal || userProfile.name,
+        course: courseVal || userProfile.course,
+        bio: bioVal || userProfile.bio
     };
 
-    try {
-        const response = await fetch('/api/user/profile', {
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedData)
-        });
+    // Instant DOM UI Update
+    updateProfileUI(userProfile);
+    closeProfileModal();
+    renderProfile();
 
-        if (response.ok) {
-            const data = await response.json();
-            userProfile = data.user || updatedData;
-            updateProfileUI(userProfile);
-            closeProfileModal();
-        } else {
-            console.error("Profile update error status:", response.status);
-        }
+    try {
+        await fetch('/api/user/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userProfile)
+        });
     } catch (err) {
-        console.error('Error saving profile:', err);
+        console.error("Profile sync error:", err);
     }
 }
 function closeProfileModal() {

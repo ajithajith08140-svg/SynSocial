@@ -361,12 +361,10 @@ function prompt(message) {
     }
 });
 // Express Server Endpoint
-app.put('/api/user/profile', async (req, res) => {
+app.post('/api/user/profile', async (req, res) => {
     try {
         const { name, course, bio } = req.body;
-
-        // User profile update logic (Assuming single user or latest user for demo)
-        let user = await User.findOne(); 
+        let user = await User.findOne();
         if (!user) {
             user = new User({ name, course, bio });
         } else {
@@ -374,14 +372,12 @@ app.put('/api/user/profile', async (req, res) => {
             user.course = course;
             user.bio = bio;
         }
-
         await user.save();
-        res.status(200).json({ message: "Profile Updated", user });
+        res.status(200).json({ message: "Profile updated successfully", user });
     } catch (err) {
-        res.status(500).json({ message: "Database Error", error: err.message });
+        res.status(500).json({ message: "Error updating profile", error: err.message });
     }
-});
-// 7. Start Server
+});// 7. Start Server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
