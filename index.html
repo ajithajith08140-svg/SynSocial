@@ -519,40 +519,46 @@ int main() {
             }
         }
 
-        async function handleAddComment(postId) {
-    if (!postId || postId === 'undefined') return;
+        async function handleAddComment(postId, commentInputId) {
+    const inputElem = document.getElementById(commentInputId);
+    if (!inputElem || !inputElem.value.trim()) return;
 
-    const input = document.getElementById(`comment-input-${postId}`);
-    const text = input ? input.value.trim() : '';
+    const commentText = inputElem.value.trim();
+    const post = fetchedPosts.find(p => (p._id || p.id) === postId);
+    if (!post) return;
 
-    if (!text) {
-        showToast('Please type a comment!', '⚠️');
-        return;
-    }
+    if (!Array.isArray(post.comments)) post.comments = [];
 
-    const currentUserName = (typeof userProfile !== 'undefined' && userProfile && userProfile.name) 
-        ? userProfile.name 
-        : "Student User";
+    // Temporary comment object for instant UI
+    const tempComment = {
+        text: commentText,
+        author: userProfile.name || 'Student User',
+        createdAt: new Date().toISOString()
+    };
 
+    // 1. OPTIMISTIC UPDATE: Add comment immediately
+    post.comments.push(tempComment);
+    inputElem.value = ''; // Input box clear pannu
+    renderFeed(); // Instant UI Update
+
+    // 2. Background API Call
     try {
-        const response = await fetch(`${API_URL}/api/posts/${postId}/comments`, {
+        const response = await fetch(`/api/posts/${postId}/comment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text, author: currentUserName })
+            body: JSON.stringify({ text: commentText, author: userProfile.name })
         });
 
-        // Response HTTP Status 200/201 -a irundhale Comment Added Toast Kaattum
-        if (response.ok) {
-            showToast('Comment added!', '💬');
-            if (input) input.value = '';
-            fetchPosts(); // Live feed sync
-        } else {
-            const data = await response.json().catch(() => ({}));
-            showToast(data.message || 'Failed to add comment', '❌');
+        if (!response.ok) {
+            // Revert if request failed
+            post.comments.pop();
+            renderFeed();
+            alert("Comment failed to save!");
         }
     } catch (err) {
-        console.error("Fetch Error:", err);
-        showToast('Network error while commenting', '❌');
+        console.error("Comment error:", err);
+        post.comments.pop();
+        renderFeed();
     }
 }
 function openEditProfileModal() {
@@ -868,9 +874,10 @@ document.addEventListener('DOMContentLoaded', updateBookmarkProfileUI);
 function formatDate(dateString) {
     if (!dateString) return "Just now";
     const date = new Date(dateString);
+    
+    // Check for Invalid Date
     if (isNaN(date.getTime())) return "Just now";
     
-    // Exact Date & Time format (e.g., Sep 19, 2026 • 01:13 AM)
     return date.toLocaleDateString('en-US', { 
         month: 'short', 
         day: 'numeric', 
@@ -1114,15 +1121,28 @@ function switchProfileTab(tabName) {
     renderProfile();
 }
 
+// Strict Case-Insensitive Match
 function renderProfile() {
     const uploadsContainer = document.getElementById('profile-tab-uploads');
+    
+    // Convert to lowercase & trim white spaces
     const currentUserName = (userProfile.name || "").trim().toLowerCase();
 
-    const myUploads = fetchedPosts.filter(p => (p.author || "").trim().toLowerCase() === currentUserName);
+    // Matching Author Names cleanly
+    const myUploads = fetchedPosts.filter(p => {
+        const postAuthor = (p.author || p.username || "").trim().toLowerCase();
+        return postAuthor === currentUserName && currentUserName !== "";
+    });
+
     const savedPosts = fetchedPosts.filter(p => p.isBookmarked === true);
+    
+    // Upvotes Count Sum
+    const totalUpvotes = myUploads.reduce((acc, p) => {
+        const votes = Array.isArray(p.upvotes) ? p.upvotes.length : (p.upvotes || 0);
+        return acc + votes;
+    }, 0);
 
-    const totalUpvotes = myUploads.reduce((acc, p) => acc + (p.upvotes || 0), 0);
-
+    // Update Counts UI
     if (document.getElementById('prof-stat-posts')) document.getElementById('prof-stat-posts').innerText = myUploads.length;
     if (document.getElementById('prof-stat-code')) document.getElementById('prof-stat-code').innerText = totalUpvotes;
     if (document.getElementById('prof-stat-docs')) document.getElementById('prof-stat-docs').innerText = savedPosts.length;
@@ -1134,14 +1154,13 @@ function renderProfile() {
     if (targetPosts.length === 0) {
         uploadsContainer.innerHTML = `
             <div class="text-xs text-slate-400 text-center py-8 bg-slate-900/40 rounded-xl border border-slate-800">
-                No ${currentProfTab === 'uploads' ? 'uploads' : 'bookmarks'} available!
+                No ${currentProfTab === 'uploads' ? 'uploads' : 'bookmarks'} found!
             </div>`;
         return;
     }
 
     uploadsContainer.innerHTML = targetPosts.map(post => buildProfileCardHTML(post)).join('');
-}
-// Profile Edit Modal with Prompt (Name, Course & Bio)
+}// Profile Edit Modal with Prompt (Name, Course & Bio)
 function openProfileModal() {
     document.getElementById('edit-name-input').value = userProfile.name || '';
     document.getElementById('edit-course-input').value = userProfile.course || '';
@@ -1263,23 +1282,41 @@ function updateMetrics() {
 
 // 1. Upvote Handler
 async function handleUpvote(postId) {
-    if (!postId) return;
+    // 1. Find post in local array
+    const post = fetchedPosts.find(p => (p._id || p.id) === postId);
+    if (!post) return;
+
+    // 2. OPTIMISTIC UPDATE: Local array & UI-a udane change pannu
+    if (!Array.isArray(post.upvotes)) post.upvotes = [];
+    
+    // Simple toggle logic for demo
+    post.upvotes.length += 1; 
+
+    // Instant UI Re-render (0 Delay)
+    renderFeed();
+    renderProfile();
+
+    // 3. Background API Request (Async)
     try {
-        const res = await fetch(`${API_URL}/api/posts/upvote/${postId}`, { method: 'POST' });
-        const data = await res.json();
-        if (res.ok && data.success) {
-            showToast('Upvoted!', '👍');
-            fetchPosts();
+        const response = await fetch(`/api/posts/${postId}/upvote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            // Server error vandha rollback pannu
+            post.upvotes.length -= 1;
+            renderFeed();
+            renderProfile();
         }
     } catch (err) {
-        showToast('Network error while upvoting', '❌');
+        console.error("Upvote failed:", err);
+        // Network error rollback
+        post.upvotes.length -= 1;
+        renderFeed();
+        renderProfile();
     }
 }
-
-// 5. DOM Initialization Fix (Prevents ReferenceError)
-document.addEventListener('DOMContentLoaded', () => {
-    fetchPosts();
-});
 // 2. Delete Handler (Fixes PIN String Match & Delete execution)
 async function handleDeletePost(postId) {
     if (!postId) {
