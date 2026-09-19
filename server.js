@@ -19,7 +19,22 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- USER SCHEMA & MODEL ADDITION (Required to fix 500 Server Error) ---
+// 2. Ensure Uploads Directory Exists & Serve Static Files
+const uploadsPath = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsPath)) {
+    fs.mkdirSync(uploadsPath, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsPath));
+
+// 3. Database Connection Setup
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
+
+mongoose.connect(MONGO_URI)
+    .then(() => console.log("MongoDB Connected Successfully!"))
+    .catch(err => console.error("MongoDB Connection Error:", err));
+
+// 4. Mongoose Schemas & Models (Defined first so all routes can use them)
 const userSchema = new mongoose.Schema({
     name: { type: String, default: "Student User" },
     course: String,
@@ -28,74 +43,6 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
-// Profile Fetching & Updating Handlers
-const handleProfileUpdate = async (req, res) => {
-    try {
-        const { name, course, bio } = req.body;
-        let user = await User.findOne();
-        
-        if (!user) {
-            user = new User({ name, course, bio });
-        } else {
-            user.name = name;
-            user.course = course;
-            user.bio = bio;
-        }
-        
-        await user.save();
-        return res.status(200).json({ message: "Profile Updated Successfully", user });
-    } catch (err) {
-        return res.status(500).json({ message: "Database Error", error: err.message });
-    }
-};
-
-// GET Route added for /api/user/profile to fix 404 & 500 error on fetching
-app.get('/api/user/profile', async (req, res) => {
-    try {
-        let user = await User.findOne();
-        if (!user) {
-            user = await User.create({ name: "Student User", course: "", bio: "" });
-        }
-
-        // Fetching user uploads (Title, Author, Upvotes, Doc details)
-        const myUploads = await Post.find({ author: user.name })
-            .select('title author upvotes docUrl docName createdAt')
-            .sort({ createdAt: -1 });
-
-        // Fetching bookmarked posts (Title, Author, Upvotes, Doc details)
-        const bookmarks = await Post.find({ isBookmarked: true })
-            .select('title author upvotes docUrl docName createdAt')
-            .sort({ createdAt: -1 });
-
-        res.status(200).json({
-            user,
-            myUploads,
-            bookmarks
-        });
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching profile statistics", error: err.message });
-    }
-});
-
-// Supporting both PUT and POST for Profile Updates
-app.put('/api/user/profile', handleProfileUpdate);
-app.post('/api/user/profile', handleProfileUpdate);
-
-// 2. Ensure Uploads Directory Exists & Static Server
-if (!fs.existsSync('uploads')) {
-    fs.mkdirSync('uploads');
-}
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// 3. Port & MongoDB Connection Setup
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
-
-mongoose.connect(MONGO_URI)
-    .then(() => console.log("MongoDB Connected Successfully!"))
-    .catch(err => console.error("MongoDB Connection Error:", err));
-
-// 4. Mongoose Schema Definition (Includes isBookmarked)
 const postSchema = new mongoose.Schema({
     title: String,
     author: String,
@@ -120,7 +67,7 @@ const postSchema = new mongoose.Schema({
 
 const Post = mongoose.model('Post', postSchema);
 
-// 5. Configure Multer Storage
+// 5. Configure Multer File Storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/');
@@ -139,6 +86,56 @@ app.get('/', (req, res) => {
     res.send("Synsocial API Server is running!");
 });
 
+// Profile Handlers
+const handleProfileUpdate = async (req, res) => {
+    try {
+        const { name, course, bio } = req.body;
+        let user = await User.findOne();
+        
+        if (!user) {
+            user = new User({ name, course, bio });
+        } else {
+            user.name = name;
+            user.course = course;
+            user.bio = bio;
+        }
+        
+        await user.save();
+        return res.status(200).json({ message: "Profile Updated Successfully", user });
+    } catch (err) {
+        return res.status(500).json({ message: "Database Error", error: err.message });
+    }
+};
+
+// GET User Profile (Fetch Stats, Uploads & Bookmarks)
+app.get('/api/user/profile', async (req, res) => {
+    try {
+        let user = await User.findOne();
+        if (!user) {
+            user = await User.create({ name: "Student User", course: "", bio: "" });
+        }
+
+        const myUploads = await Post.find({ author: user.name })
+            .select('title author upvotes docUrl docName createdAt')
+            .sort({ createdAt: -1 });
+
+        const bookmarks = await Post.find({ isBookmarked: true })
+            .select('title author upvotes docUrl docName createdAt')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            user,
+            myUploads,
+            bookmarks
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching profile statistics", error: err.message });
+    }
+});
+
+app.put('/api/user/profile', handleProfileUpdate);
+app.post('/api/user/profile', handleProfileUpdate);
+
 // Fetch All Posts
 app.get('/api/posts', async (req, res) => {
     try {
@@ -149,7 +146,7 @@ app.get('/api/posts', async (req, res) => {
     }
 });
 
-// Create Post and Save to MongoDB
+// Create Post
 app.post('/api/posts/create', upload.single('document'), async (req, res) => {
     try {
         const { title, author, tag, pin, pinHint, content, link, code } = req.body;
@@ -230,7 +227,7 @@ app.delete('/api/posts/:id', async (req, res) => {
     }
 });
 
-// Single Unified Comment Route (Supports both frontend API paths)
+// Unified Comment Endpoint Handlers
 const handleAddComment = async (req, res) => {
     try {
         const { id } = req.params;
@@ -261,6 +258,7 @@ const handleAddComment = async (req, res) => {
     }
 };
 
+app.post('/api/posts/:id/comment', handleAddComment);
 app.post('/api/posts/:id/comments', handleAddComment);
 app.post('/api/posts/comment/:id', handleAddComment);
 

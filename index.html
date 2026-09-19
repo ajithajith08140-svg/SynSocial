@@ -549,6 +549,12 @@ int main() {
                 }[tag] || tag)
             );
         }
+        // URL should match backend routes
+fetch(`https://synsocial.onrender.com/api/posts/${postId}/comment`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ text: commentText, author: "Student User" })
+})
 
         function buildPostCardHTML(post) {
             const authorName = post.author || post.username || "Anonymous";
@@ -645,61 +651,50 @@ int main() {
         let currentUploadedFileName = "";
 
         async function handleCreatePost(event) {
-            if (event) event.preventDefault();
+    if (event) event.preventDefault();
 
-            const form = event.target;
-            const formData = new FormData(form);
-            const codeSnippet = document.getElementById('post-code-input')?.value || "";
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    // Code snippet manual-aa handle panradhukku
+    const codeSnippet = document.getElementById('post-code-input')?.value || "";
+    formData.append('code', codeSnippet);
 
-            const title = formData.get('title');
-            const author = formData.get('author');
-            const tag = formData.get('tag');
-            const pin = formData.get('pin');
-            const pinHint = formData.get('pinHint');
-            const content = formData.get('content');
-            const link = formData.get('link');
+    // If file input field name is NOT 'document', map it explicitly for Multer:
+    const fileInput = form.querySelector('input[type="file"]');
+    if (fileInput && fileInput.files[0]) {
+        formData.append('document', fileInput.files[0]);
+    }
 
-            const newPostData = {
-                title,
-                author,
-                tag,
-                subject: tag,
-                pin,
-                pinHint,
-                content,
-                link,
-                code: codeSnippet,
-                codeSnippet,
-                fileName: currentUploadedFileName,
-                fileData: currentUploadedFileData,
-                createdAt: new Date().toISOString()
-            };
+    try {
+        // FIX 1: Path updated to /api/posts/create
+        // FIX 2: Content-Type header vaikka koodadhu (Browser auto-set multipart/form-data with boundary)
+        const res = await fetch(`${API_URL}/api/posts/create`, {
+            method: 'POST',
+            body: formData 
+        });
 
-            try {
-                const res = await fetch(`${API_URL}/api/posts`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newPostData)
-                });
-
-                if (res.ok) {
-                    showToast('Post published successfully!', '🚀');
-                    currentUploadedFileData = null;
-                    currentUploadedFileName = "";
-                    form.reset();
-                    if(document.getElementById('post-code-input')) document.getElementById('post-code-input').value = '';
-
-                    fetchPosts();
-                    renderFeed();
-                } else {
-                    showToast('Failed to create post', '❌');
-                }
-            } catch (err) {
-                console.error("Failed to upload post:", err);
-                showToast('Error uploading post', '❌');
+        if (res.ok) {
+            showToast('Post published successfully!', '🚀');
+            currentUploadedFileData = null;
+            currentUploadedFileName = "";
+            form.reset();
+            if (document.getElementById('post-code-input')) {
+                document.getElementById('post-code-input').value = '';
             }
-        }
 
+            fetchPosts();
+            renderFeed();
+        } else {
+            const errorData = await res.json();
+            console.error("Server Response Error:", errorData);
+            showToast('Failed to create post', '❌');
+        }
+    } catch (err) {
+        console.error("Failed to upload post:", err);
+        showToast('Error uploading post', '❌');
+    }
+}
         async function fetchPosts() {
             try {
                 const res = await fetch(`${API_URL}/api/posts`);
