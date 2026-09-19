@@ -17,7 +17,18 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// --- USER SCHEMA & MODEL ADDITION (Required to fix 500 Server Error) ---
+const userSchema = new mongoose.Schema({
+    name: { type: String, default: "Student User" },
+    course: String,
+    bio: String
+}, { timestamps: true });
+
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+// Profile Fetching & Updating Handlers
 const handleProfileUpdate = async (req, res) => {
     try {
         const { name, course, bio } = req.body;
@@ -38,10 +49,37 @@ const handleProfileUpdate = async (req, res) => {
     }
 };
 
-// Supporting both PUT and POST to bypass 405 errors
+// GET Route added for /api/user/profile to fix 404 & 500 error on fetching
+app.get('/api/user/profile', async (req, res) => {
+    try {
+        let user = await User.findOne();
+        if (!user) {
+            user = await User.create({ name: "Student User", course: "", bio: "" });
+        }
+
+        // Fetching user uploads (Title, Author, Upvotes, Doc details)
+        const myUploads = await Post.find({ author: user.name })
+            .select('title author upvotes docUrl docName createdAt')
+            .sort({ createdAt: -1 });
+
+        // Fetching bookmarked posts (Title, Author, Upvotes, Doc details)
+        const bookmarks = await Post.find({ isBookmarked: true })
+            .select('title author upvotes docUrl docName createdAt')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            user,
+            myUploads,
+            bookmarks
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching profile statistics", error: err.message });
+    }
+});
+
+// Supporting both PUT and POST for Profile Updates
 app.put('/api/user/profile', handleProfileUpdate);
 app.post('/api/user/profile', handleProfileUpdate);
-app.use(express.urlencoded({ extended: true }));
 
 // 2. Ensure Uploads Directory Exists & Static Server
 if (!fs.existsSync('uploads')) {
@@ -360,24 +398,8 @@ function prompt(message) {
         executeBinary();
     }
 });
-// Express Server Endpoint
-app.post('/api/user/profile', async (req, res) => {
-    try {
-        const { name, course, bio } = req.body;
-        let user = await User.findOne();
-        if (!user) {
-            user = new User({ name, course, bio });
-        } else {
-            user.name = name;
-            user.course = course;
-            user.bio = bio;
-        }
-        await user.save();
-        res.status(200).json({ message: "Profile updated successfully", user });
-    } catch (err) {
-        res.status(500).json({ message: "Error updating profile", error: err.message });
-    }
-});// 7. Start Server
+
+// 7. Start Server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
