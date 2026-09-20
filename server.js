@@ -290,8 +290,6 @@ app.post('/run-code', async (req, res) => {
         executeBinary();
     }
 });
-document.addEventListener("DOMContentLoaded", () => {
-    loadPosts();
-});
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
