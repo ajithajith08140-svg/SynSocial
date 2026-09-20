@@ -231,24 +231,28 @@ app.post('/run-code', async (req, res) => {
             let rawOutput = stdout || stderr || "Execution completed with no output.";
 
             // Format terminal output to align STDIN inputs with prompt colons
+            // Standard terminal stdin echo format fix
             if (input && stdout) {
                 const inputLines = input.trim().split(/\r?\n/);
                 let lineIndex = 0;
 
-                if (/(:\s*|:\n|\?\s*)/.test(rawOutput)) {
-                    rawOutput = rawOutput.replace(/(:\s*|:\n|\?\s*)/g, (match) => {
+                // Split output by lines and append inputs to prompt lines cleanly
+                const outputLines = stdout.split(/\r?\n/);
+                const formattedLines = outputLines.map(line => {
+                    if (/(:\s*|:\n|\?\s*)$/.test(line) || /(:\s*|\?\s*)/.test(line)) {
                         if (lineIndex < inputLines.length) {
-                            const val = inputLines[lineIndex++];
-                            return `: ${val}\n`;
+                            return `${line}${inputLines[lineIndex++]}`;
                         }
-                        return match;
-                    });
-                }
+                    }
+                    return line;
+                });
+
+                rawOutput = formattedLines.join('\n');
+            } else {
+                rawOutput = stdout || stderr || "Execution completed with no output.";
             }
 
-            // Inga thaan res.json varanum
-            res.json({ output: rawOutput });
-        });
+            res.json({ output: rawOutput });        });
 
         // Pass user input into the terminal STDIN stream
         if (input !== undefined && input !== null) {
