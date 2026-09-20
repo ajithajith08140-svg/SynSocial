@@ -11,7 +11,7 @@ const app = express();
 
 app.use(cors({
     origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -26,44 +26,6 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 
-// Sample In-Memory Posts Store (or connect your MongoDB model)
-let posts = [];
-
-// Posts Endpoints (/api/posts & /posts fallbacks to fix 404)
-const savePostHandler = (req, res) => {
-    const { title, author, subject, pin, pinHint, description, codeSnippet, referenceLink } = req.body;
-    
-    const newPost = {
-        _id: Date.now().toString(),
-        title: title || 'Untitled Post',
-        author: author || 'Anonymous',
-        subject: subject || 'General',
-        pin: pin || '1234',
-        pinHint: pinHint || 'No hint provided',
-        description: description || '',
-        codeSnippet: codeSnippet || '',
-        referenceLink: referenceLink || '',
-        upvotes: 0,
-        createdAt: new Date()
-    };
-
-    posts.unshift(newPost);
-    res.status(201).json({ success: true, post: newPost });
-};
-
-app.post('/api/posts', savePostHandler);
-app.post('/posts', savePostHandler);
-
-// Get All Posts
-const getPostsHandler = (req, res) => res.json(posts);
-app.get('/api/posts', getPostsHandler);
-app.get('/posts', getPostsHandler);
-
-app.post('/api/posts', postHandler);
-app.post('/posts', postHandler);
-
-app.get('/api/posts', (req, res) => res.json(posts));
-app.get('/posts', (req, res) => res.json(posts));
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
 
@@ -104,7 +66,7 @@ const postSchema = new mongoose.Schema({
 const Post = mongoose.model('Post', postSchema);
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
+    destination: (req, file, cb) => cb(null, uploadsDir),
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, uniqueSuffix + path.extname(file.originalname));
@@ -114,16 +76,20 @@ const upload = multer({ storage });
 
 app.get('/', (req, res) => res.send("Synsocial API Server is running!"));
 
-app.get('/api/posts', async (req, res) => {
+// Get All Posts
+const getPostsHandler = async (req, res) => {
     try {
         const posts = await Post.find().sort({ createdAt: -1 });
         res.json(posts);
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
-});
+};
+app.get('/api/posts', getPostsHandler);
+app.get('/posts', getPostsHandler);
 
-app.post('/api/posts/create', upload.single('document'), async (req, res) => {
+// Create Post Handler (supports /api/posts, /posts, and /api/posts/create)
+const createPostHandler = async (req, res) => {
     try {
         const { title, author, tag, pin, pinHint, content, link, code } = req.body;
         let docUrl = "", docName = "";
@@ -153,17 +119,24 @@ app.post('/api/posts/create', upload.single('document'), async (req, res) => {
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
-});
+};
 
+app.post('/api/posts', upload.single('document'), createPostHandler);
+app.post('/posts', upload.single('document'), createPostHandler);
+app.post('/api/posts/create', upload.single('document'), createPostHandler);
+
+// Upvote Post
 app.post('/api/posts/upvote/:id', async (req, res) => {
     try {
         const post = await Post.findByIdAndUpdate(req.params.id, { $inc: { upvotes: 1 } }, { new: true });
+        if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
         res.json({ success: true, upvotes: post.upvotes });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
+// Bookmark Post
 app.post('/api/posts/bookmark/:id', async (req, res) => {
     try {
         const post = await Post.findById(req.params.id);
@@ -177,27 +150,34 @@ app.post('/api/posts/bookmark/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/posts/:id', (req, res) => {
-    const { id } = req.params;
-    const { pin } = req.body;
+// Delete Post with PIN Verification & Hint Return
+app.delete('/api/posts/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { pin } = req.body;
 
-    const post = posts.find(p => p._id === id || p.id === id);
+        const post = await Post.findById(id);
 
-    if (!post) {
-        return res.status(404).json({ success: false, message: 'Post not found' });
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post not found' });
+        }
+
+        if (post.pin && post.pin.trim() !== '' && post.pin !== pin) {
+            return res.status(400).json({
+                success: false,
+                message: 'Incorrect PIN!',
+                hint: post.pinHint || 'No hint provided for this post'
+            });
+        }
+
+        await Post.findByIdAndDelete(id);
+        res.json({ success: true, message: 'Post deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
-
-    if (post.pin && post.pin !== pin) {
-        return res.status(400).json({
-            success: false,
-            message: 'Incorrect PIN!',
-            hint: post.pinHint || 'No hint provided for this post'
-        });
-    }
-
-    posts = posts.filter(p => (p._id !== id && p.id !== id));
-    res.json({ success: true, message: 'Post deleted successfully' });
 });
+
+// Add Comment to Post
 app.post('/api/posts/:id/comment', async (req, res) => {
     try {
         const { text, author } = req.body;
@@ -212,6 +192,7 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
+// Code Execution Endpoint
 app.post('/run-code', async (req, res) => {
     let { code, input, language } = req.body;
     if (!code) return res.status(400).json({ output: "Error: No code provided." });
@@ -220,16 +201,13 @@ app.post('/run-code', async (req, res) => {
     let sourceFile, compileCmd, runCmd, className = 'Main';
 
     if (language === 'java') {
-        // Old residual files cleanup
         ['Main.java', 'Main.class'].forEach(f => { if (fs.existsSync(f)) fs.unlinkSync(f); });
 
-        // Extract import statements
         const importMatches = code.match(/import\s+[\w\.]+;/g) || [];
         const importsStr = importMatches.join('\n');
 
         let cleanCode = code.replace(/import\s+[\w\.]+;/g, '').trim();
 
-        // Check if user wrote a class declaration
         if (/class\s+[A-Za-z0-9_$]+/.test(cleanCode)) {
             cleanCode = cleanCode.replace(/public\s+class\s+/, 'class ');
             cleanCode = cleanCode.replace(/class\s+[A-Za-z0-9_$]+/, 'public class Main');
@@ -259,12 +237,10 @@ app.post('/run-code', async (req, res) => {
         return res.status(400).json({ output: "Error: Unsupported language." });
     }
 
-    // Write code to source file
     fs.writeFileSync(sourceFile, code);
 
     const executeBinary = () => {
         const child = exec(runCmd, { timeout: 5000 }, (runErr, stdout, stderr) => {
-            // Cleanup generated binary and source files
             if (fs.existsSync(sourceFile)) fs.unlinkSync(sourceFile);
             if (fs.existsSync(`${className}.class`)) fs.unlinkSync(`${className}.class`);
             const exeFile = `temp_${uniqueId}`;
@@ -272,13 +248,10 @@ app.post('/run-code', async (req, res) => {
 
             let rawOutput = stdout || stderr || "Execution completed with no output.";
 
-            // Format terminal output to align STDIN inputs with prompt colons
-            // Standard terminal stdin echo format fix
             if (input && stdout) {
                 const inputLines = input.trim().split(/\r?\n/);
                 let lineIndex = 0;
 
-                // Split output by lines and append inputs to prompt lines cleanly
                 const outputLines = stdout.split(/\r?\n/);
                 const formattedLines = outputLines.map(line => {
                     if (/(:\s*|:\n|\?\s*)$/.test(line) || /(:\s*|\?\s*)/.test(line)) {
@@ -294,10 +267,10 @@ app.post('/run-code', async (req, res) => {
                 rawOutput = stdout || stderr || "Execution completed with no output.";
             }
 
-            res.json({ output: rawOutput });        });
+            res.json({ output: rawOutput });
+        });
 
-        // Pass user input into the terminal STDIN stream
-        if (input !== undefined && input !== null) {
+        if (input !== undefined && input !== null && input !== '') {
             child.stdin.write(input + "\n");
         }
         child.stdin.end();
@@ -315,4 +288,5 @@ app.post('/run-code', async (req, res) => {
         executeBinary();
     }
 });
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
