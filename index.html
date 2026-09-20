@@ -684,79 +684,79 @@ int main() {
         }
 
         async function handleCreatePost(event) {
-    if (event) event.preventDefault();
+            if (event) event.preventDefault();
 
-    // Screen screenshot-la irukkura exact IDs use panrom
-    const postTitleEl = document.getElementById('post-title-input');
-    const postContentEl = document.getElementById('post-content-input') || 
-                          document.querySelector('#postForm textarea') || 
-                          document.querySelector('textarea');
+            const title = document.getElementById('post-title-input').value.trim();
+            const author = document.getElementById('post-author-input').value.trim();
+            const tag = document.getElementById('post-tag-select').value;
+            const pin = document.getElementById('post-pin-input').value.trim();
+            const pinHint = document.getElementById('post-pinhint-input').value.trim();
+            const content = document.getElementById('post-desc-input').value.trim();
+            const code = document.getElementById('post-code-input').value;
+            const link = document.getElementById('post-link-input').value.trim();
+            const fileInput = document.getElementById('post-file-input');
 
-    if (!postContentEl) {
-        Swal.fire({
-            icon: 'error',
-            title: 'UI Error',
-            text: 'Content input box not found in form!',
-            background: '#0f172a',
-            color: '#f8fafc'
-        });
-        return;
-    }
-
-    const title = postTitleEl ? postTitleEl.value.trim() : '';
-    const content = postContentEl.value.trim();
-
-    if (!content) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Empty Post',
-            text: 'Please write something before posting!',
-            confirmButtonColor: '#10b981',
-            background: '#0f172a',
-            color: '#f8fafc'
-        });
-        return;
-    }
-
-    try {
-        const response = await fetch('https://synsocial.onrender.com/api/posts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, content })
-        });
-
-        if (response.ok) {
-            if (postTitleEl) postTitleEl.value = '';
-            postContentEl.value = '';
-
-            // 🌟 Success Popup Notification
-            Swal.fire({
-                icon: 'success',
-                title: 'Post Published!',
-                text: 'Your post has been created successfully.',
-                timer: 2000,
-                showConfirmButton: false,
-                background: '#0f172a',
-                color: '#f8fafc'
-            });
-
-            if (typeof loadPosts === 'function') {
-                loadPosts();
+            if (!title || !content || !author || !pin || !pinHint) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Fields',
+                    text: 'Please fill out all required fields (Title, Author, PIN, Hint, Description)!',
+                    background: '#0f172a',
+                    color: '#f8fafc'
+                });
+                return;
             }
-        } else {
-            throw new Error(`Server status: ${response.status}`);
+
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('author', author); // Ungaloda real author name-a send panrom!
+            formData.append('tag', tag);
+            formData.append('pin', pin);
+            formData.append('pinHint', pinHint);
+            formData.append('content', content);
+            formData.append('code', code);
+            formData.append('link', link);
+
+            if (fileInput && fileInput.files[0]) {
+                formData.append('document', fileInput.files[0]); // Document/File-a send panrom
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/posts`, {
+                    method: 'POST',
+                    body: formData // FormData use panrappo 'Content-Type' header manual-ah thara koodathu!
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Form-a clear panrom
+                    document.getElementById('postForm').reset();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Post Published!',
+                        text: 'Your secured post has been created successfully.',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#0f172a',
+                        color: '#f8fafc'
+                    });
+
+                    fetchPosts(); // Feed-a update panrom
+                } else {
+                    throw new Error(result.error || 'Failed to create post');
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Post Failed',
+                    text: err.message || 'Could not create post. Please try again.',
+                    background: '#0f172a',
+                    color: '#f8fafc'
+                });
+            }
         }
-    } catch (err) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Post Failed',
-            text: 'Could not create post. Please try again.',
-            confirmButtonColor: '#ef4444',
-            background: '#0f172a',
-            color: '#f8fafc'
-        });
-    }
-}
         async function handleUpvote(postId) {
             try {
                 const response = await fetch(`${API_URL}/api/posts/upvote/${postId}`, {
@@ -1044,6 +1044,9 @@ int main() {
             updateProfileUI();
             fetchPosts();
         });
+        document.addEventListener("DOMContentLoaded", () => {
+    loadPosts();
+});
     </script>
 
     <div id="toast" class="fixed top-5 right-5 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
