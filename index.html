@@ -243,7 +243,8 @@
                                 <input type="text" id="post-title-input" required placeholder="e.g., C++ Memory Allocation Notes" 
                                        class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500">
                             </div>
-
+                            <!-- Example of your content box -->
+<textarea id="post-content-input" required placeholder="Write your post content here..."></textarea>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-300 mb-1">Author Name *</label>
@@ -685,16 +686,25 @@ int main() {
         async function handleCreatePost(event) {
     if (event) event.preventDefault();
 
-    const postContentEl = document.getElementById('postContent') || document.querySelector('textarea[name="content"]');
-    const postTitleEl = document.getElementById('postTitle') || document.querySelector('input[name="title"]');
+    // Screen screenshot-la irukkura exact IDs use panrom
+    const postTitleEl = document.getElementById('post-title-input');
+    const postContentEl = document.getElementById('post-content-input') || 
+                          document.querySelector('#postForm textarea') || 
+                          document.querySelector('textarea');
 
     if (!postContentEl) {
-        console.error("Post content input element not found!");
+        Swal.fire({
+            icon: 'error',
+            title: 'UI Error',
+            text: 'Content input box not found in form!',
+            background: '#0f172a',
+            color: '#f8fafc'
+        });
         return;
     }
 
-    const content = postContentEl.value.trim();
     const title = postTitleEl ? postTitleEl.value.trim() : '';
+    const content = postContentEl.value.trim();
 
     if (!content) {
         Swal.fire({
@@ -716,10 +726,10 @@ int main() {
         });
 
         if (response.ok) {
-            postContentEl.value = '';
             if (postTitleEl) postTitleEl.value = '';
+            postContentEl.value = '';
 
-            // 🌟 Post Success SweetAlert Popup Notification
+            // 🌟 Success Popup Notification
             Swal.fire({
                 icon: 'success',
                 title: 'Post Published!',
@@ -730,7 +740,6 @@ int main() {
                 color: '#f8fafc'
             });
 
-            // Re-fetch posts feed if function exists
             if (typeof loadPosts === 'function') {
                 loadPosts();
             }
