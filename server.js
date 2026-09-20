@@ -103,9 +103,14 @@ const createPostHandler = async (req, res) => {
             docName = req.file.originalname;
         }
 
+        // Fixed: Use real author input if provided, otherwise fallback to "Student User"
+        const finalAuthor = (author && author.trim() !== "" && author !== "undefined" && author !== "null") 
+            ? author.trim() 
+            : "Student User";
+
         const newPost = new Post({
             title: title || "Untitled Post",
-            author: author || "Student User",
+            author: finalAuthor,
             tag: tag || "General",
             pin: pin ? String(pin).trim() : "",
             pinHint: pinHint || "",
@@ -186,7 +191,8 @@ app.post('/api/posts/:id/comment', async (req, res) => {
         const post = await Post.findById(req.params.id);
         if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
 
-        post.comments.push({ text: text.trim(), author: author || "Student User" });
+        const commentAuthor = (author && author.trim() !== "" && author !== "undefined") ? author.trim() : "Student User";
+        post.comments.push({ text: text.trim(), author: commentAuthor });
         await post.save();
         res.json({ success: true, comments: post.comments });
     } catch (err) {
@@ -290,6 +296,5 @@ app.post('/run-code', async (req, res) => {
         executeBinary();
     }
 });
-
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
