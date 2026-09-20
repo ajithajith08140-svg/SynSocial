@@ -686,31 +686,21 @@ int main() {
         async function handleCreatePost(event) {
     if (event) event.preventDefault();
 
-    // Screen screenshot-la irukkura exact IDs use panrom
-    const postTitleEl = document.getElementById('post-title-input');
-    const postContentEl = document.getElementById('post-content-input') || 
-                          document.querySelector('#postForm textarea') || 
-                          document.querySelector('textarea');
+    // 1. Inputs retrieval matching your form
+    const pinEl = document.querySelector('input[placeholder*="4 Digits"]');
+    const descEl = document.querySelector('textarea') || document.querySelector('input[placeholder*="notes"]');
+    
+    // Auth token check
+    const token = localStorage.getItem('token') || localStorage.getItem('userToken');
 
-    if (!postContentEl) {
-        Swal.fire({
-            icon: 'error',
-            title: 'UI Error',
-            text: 'Content input box not found in form!',
-            background: '#0f172a',
-            color: '#f8fafc'
-        });
-        return;
-    }
+    const pin = pinEl ? pinEl.value.trim() : '';
+    const description = descEl ? descEl.value.trim() : '';
 
-    const title = postTitleEl ? postTitleEl.value.trim() : '';
-    const content = postContentEl.value.trim();
-
-    if (!content) {
+    if (!description) {
         Swal.fire({
             icon: 'warning',
             title: 'Empty Post',
-            text: 'Please write something before posting!',
+            text: 'Please enter a description before publishing!',
             confirmButtonColor: '#10b981',
             background: '#0f172a',
             color: '#f8fafc'
@@ -719,38 +709,54 @@ int main() {
     }
 
     try {
+        const headers = { 
+            'Content-Type': 'application/json' 
+        };
+        
+        // Add Bearer Token if route requires authentication
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch('https://synsocial.onrender.com/api/posts', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, content })
+            headers: headers,
+            body: JSON.stringify({ 
+                pin, 
+                description,
+                codeSnippet: document.querySelector('.CodeMirror')?.CodeMirror?.getValue() || '' 
+            })
         });
 
-        if (response.ok) {
-            if (postTitleEl) postTitleEl.value = '';
-            postContentEl.value = '';
+        if (response.status === 401) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Session Expired',
+                text: 'Please login again to create a post.',
+                background: '#0f172a',
+                color: '#f8fafc'
+            });
+            return;
+        }
 
-            // 🌟 Success Popup Notification
+        if (response.ok) {
             Swal.fire({
                 icon: 'success',
                 title: 'Post Published!',
-                text: 'Your post has been created successfully.',
+                text: 'Your post has been published successfully.',
                 timer: 2000,
                 showConfirmButton: false,
                 background: '#0f172a',
                 color: '#f8fafc'
             });
-
-            if (typeof loadPosts === 'function') {
-                loadPosts();
-            }
         } else {
-            throw new Error(`Server status: ${response.status}`);
+            throw new Error(`Server returned status ${response.status}`);
         }
     } catch (err) {
         Swal.fire({
             icon: 'error',
             title: 'Post Failed',
-            text: 'Could not create post. Please try again.',
+            text: err.message || 'Could not create post. Please try again.',
             confirmButtonColor: '#ef4444',
             background: '#0f172a',
             color: '#f8fafc'
