@@ -5,6 +5,8 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const { exec } = require('child_process');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
 
 const app = express();
@@ -20,11 +22,22 @@ app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
-app.use('/uploads', express.static(uploadsDir));
+// Cloudinary Configuration
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'synsocial_uploads',
+        allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx', 'txt', 'zip'],
+        resource_type: 'auto'
+    }
+});
+const upload = multer({ storage: storage });
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
@@ -65,15 +78,6 @@ const postSchema = new mongoose.Schema({
 
 const Post = mongoose.model('Post', postSchema);
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadsDir),
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-const upload = multer({ storage });
-
 app.get('/', (req, res) => res.send("Synsocial API Server is running!"));
 
 // Get All Posts
@@ -88,16 +92,14 @@ const getPostsHandler = async (req, res) => {
 app.get('/api/posts', getPostsHandler);
 app.get('/posts', getPostsHandler);
 
-// Create Post Handler (supports /api/posts, /posts, and /api/posts/create)
+// Create Post Handler
 const createPostHandler = async (req, res) => {
     try {
-        const { title, author, tag, pin, pinHint, content, link, code } = req.body;
+        const { title, author, tag, pin, pinHint, content, description, link, code } = req.body;
         let docUrl = "", docName = "";
 
         if (req.file) {
-            const host = req.get('host');
-            const protocol = req.protocol;
-            docUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+            docUrl = req.file.path; // Cloudinary secure permanent URL
             docName = req.file.originalname;
         }
 
@@ -107,7 +109,7 @@ const createPostHandler = async (req, res) => {
             tag: tag || "General",
             pin: pin ? String(pin).trim() : "",
             pinHint: pinHint || "",
-            content: content || "",
+            content: content || description || "",
             link: link || "",
             code: code || "",
             docUrl,
