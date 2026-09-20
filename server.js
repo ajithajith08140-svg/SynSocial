@@ -30,20 +30,34 @@ app.use('/uploads', express.static(uploadsDir));
 let posts = [];
 
 // Posts Endpoints (/api/posts & /posts fallbacks to fix 404)
-const postHandler = (req, res) => {
-    const { pin, description, codeSnippet, title } = req.body;
+const savePostHandler = (req, res) => {
+    const { title, author, subject, pin, pinHint, description, codeSnippet, referenceLink } = req.body;
+    
     const newPost = {
-        id: Date.now().toString(),
+        _id: Date.now().toString(),
+        title: title || 'Untitled Post',
+        author: author || 'Anonymous',
+        subject: subject || 'General',
         pin: pin || '1234',
-        pinHint: req.body.pinHint || 'sequence',
-        title: title || 'Untitled',
+        pinHint: pinHint || 'No hint provided',
         description: description || '',
         codeSnippet: codeSnippet || '',
+        referenceLink: referenceLink || '',
+        upvotes: 0,
         createdAt: new Date()
     };
+
     posts.unshift(newPost);
     res.status(201).json({ success: true, post: newPost });
 };
+
+app.post('/api/posts', savePostHandler);
+app.post('/posts', savePostHandler);
+
+// Get All Posts
+const getPostsHandler = (req, res) => res.json(posts);
+app.get('/api/posts', getPostsHandler);
+app.get('/posts', getPostsHandler);
 
 app.post('/api/posts', postHandler);
 app.post('/posts', postHandler);
@@ -166,22 +180,22 @@ app.post('/api/posts/bookmark/:id', async (req, res) => {
 app.delete('/api/posts/:id', (req, res) => {
     const { id } = req.params;
     const { pin } = req.body;
-    const postIndex = posts.findIndex(p => p.id === id);
 
-    if (postIndex === -1) {
-        return res.status(404).json({ message: 'Post not found' });
+    const post = posts.find(p => p._id === id || p.id === id);
+
+    if (!post) {
+        return res.status(404).json({ success: false, message: 'Post not found' });
     }
 
-    const post = posts[postIndex];
     if (post.pin && post.pin !== pin) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Incorrect PIN!', 
-            hint: post.pinHint || 'No hint provided' 
+        return res.status(400).json({
+            success: false,
+            message: 'Incorrect PIN!',
+            hint: post.pinHint || 'No hint provided for this post'
         });
     }
 
-    posts.splice(postIndex, 1);
+    posts = posts.filter(p => (p._id !== id && p.id !== id));
     res.json({ success: true, message: 'Post deleted successfully' });
 });
 app.post('/api/posts/:id/comment', async (req, res) => {
