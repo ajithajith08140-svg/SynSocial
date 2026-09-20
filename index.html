@@ -527,14 +527,15 @@ int main() {
                 '"': '&quot;'
             }[tag] || tag));
         }
-            async function copyCode() {
+           async function copyCode() {
     const sandboxCode = document.getElementById('sandboxCode');
-    if (!sandboxCode || !sandboxCode.value.trim()) {
+    const codeText = sandboxCode ? sandboxCode.value : '';
+
+    if (!codeText.trim()) {
         Swal.fire({
             icon: 'info',
             title: 'Nothing to Copy',
             text: 'Code editor is empty!',
-            confirmButtonColor: '#10b981',
             background: '#0f172a',
             color: '#f8fafc'
         });
@@ -542,32 +543,25 @@ int main() {
     }
 
     try {
-        await navigator.clipboard.writeText(sandboxCode.value);
-        
-        // 🌟 "Copy to Clipboard" SweetAlert Popup
-        Swal.fire({
-            icon: 'success',
-            title: 'Copied to Clipboard!',
-            text: 'Code has been successfully copied.',
-            timer: 1800,
-            showConfirmButton: false,
-            background: '#0f172a',
-            color: '#f8fafc'
-        });
+        await navigator.clipboard.writeText(codeText);
     } catch (err) {
-        // Fallback for older browsers
-        sandboxCode.select();
+        const textArea = document.createElement("textarea");
+        textArea.value = codeText;
+        document.body.appendChild(textArea);
+        textArea.select();
         document.execCommand('copy');
-        
-        Swal.fire({
-            icon: 'success',
-            title: 'Copied to Clipboard!',
-            timer: 1800,
-            showConfirmButton: false,
-            background: '#0f172a',
-            color: '#f8fafc'
-        });
+        document.body.removeChild(textArea);
     }
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Copied to Clipboard!',
+        text: 'Code snippet copied successfully.',
+        timer: 1800,
+        showConfirmButton: false,
+        background: '#0f172a',
+        color: '#f8fafc'
+    });
 }
         function buildPostCardHTML(post) {
             const authorName = post.author || post.username || "Anonymous";
@@ -791,28 +785,55 @@ int main() {
         }
 
         async function handleDeletePost(postId) {
-            const userPin = prompt("Enter 4-Digit Security PIN to delete post:");
-            if (userPin === null) return;
+    const { value: enteredPin } = await Swal.fire({
+        title: 'Enter Security PIN',
+        input: 'password',
+        inputPlaceholder: 'Enter 4-digit PIN',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        background: '#0f172a',
+        color: '#f8fafc'
+    });
 
-            try {
-                const res = await fetch(`${API_URL}/api/posts/${postId}`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pin: userPin.trim() })
-                });
+    if (!enteredPin) return;
 
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    showToast('Post deleted!', '🗑️');
-                    fetchPosts();
-                } else {
-                    showToast(data.message || 'Incorrect PIN!', '❌');
-                }
-            } catch (err) {
-                showToast('Error deleting post', '❌');
-            }
+    try {
+        const response = await fetch(`https://synsocial.onrender.com/api/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: enteredPin })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            // Wrong PIN -> Show PIN Hint Popup
+            Swal.fire({
+                icon: 'error',
+                title: 'Incorrect PIN!',
+                html: `Entered PIN is wrong.<br><br><b>Recovery Hint:</b> <i>${data.hint || 'Check your hint settings'}</i>`,
+                confirmButtonColor: '#10b981',
+                background: '#0f172a',
+                color: '#f8fafc'
+            });
+            return;
         }
 
+        Swal.fire({
+            icon: 'success',
+            title: 'Deleted!',
+            text: 'Post deleted successfully.',
+            timer: 1500,
+            showConfirmButton: false,
+            background: '#0f172a',
+            color: '#f8fafc'
+        });
+
+        if (typeof loadPosts === 'function') loadPosts();
+    } catch (err) {
+        console.error(err);
+    }
+}
         async function handleAddComment(postId) {
             const input = document.getElementById(`comment-input-${postId}`);
             const text = input ? input.value.trim() : '';
@@ -974,23 +995,19 @@ int main() {
     const sandboxCode = document.getElementById('sandboxCode');
     const stdinInput = document.getElementById('stdinInput');
     const outputBox = document.getElementById('outputBox');
-    const langSelect = document.getElementById('languageSelect') || document.querySelector('select');
-    const selectedLang = langSelect ? langSelect.value.toLowerCase() : 'java';
+    const selectedLang = (document.getElementById('languageSelect')?.value || 'java').toLowerCase();
 
     if (!sandboxCode) return;
 
     const code = sandboxCode.value;
     const inputVal = stdinInput ? stdinInput.value.trim() : '';
 
-    // Detect if code needs dynamic user inputs
     const needsInput = /(Scanner|scanf|cin|input\(|prompt\()/i.test(code);
 
     if (needsInput && !inputVal) {
         stdinInput.style.border = '2px solid #ff4757';
-        stdinInput.style.backgroundColor = 'rgba(255, 71, 87, 0.1)';
         stdinInput.focus();
 
-        // 🌟 Input Required Popup (Terminal clean-a irukkum)
         Swal.fire({
             icon: 'warning',
             title: 'Input Required!',
@@ -1000,31 +1017,18 @@ int main() {
             background: '#0f172a',
             color: '#f8fafc'
         });
-
         return;
     }
 
-    if (stdinInput) {
-        stdinInput.style.border = '1px solid #334155';
-        stdinInput.style.backgroundColor = 'transparent';
-    }
-
+    if (stdinInput) stdinInput.style.border = '1px solid #334155';
     outputBox.innerText = "Executing code...";
 
     try {
         const response = await fetch('https://synsocial.onrender.com/run-code', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                code: code,
-                input: inputVal,
-                language: selectedLang
-            })
+            body: JSON.stringify({ code, input: inputVal, language: selectedLang })
         });
-
-        if (!response.ok) {
-            throw new Error(`Server status: ${response.status}`);
-        }
 
         const data = await response.json();
         outputBox.innerText = data.output;

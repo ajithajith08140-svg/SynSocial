@@ -20,12 +20,36 @@ app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const uploadsPath = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsPath)) {
-    fs.mkdirSync(uploadsPath, { recursive: true });
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
 }
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
+// Sample In-Memory Posts Store (or connect your MongoDB model)
+let posts = [];
+
+// Posts Endpoints (/api/posts & /posts fallbacks to fix 404)
+const postHandler = (req, res) => {
+    const { pin, description, codeSnippet, title } = req.body;
+    const newPost = {
+        id: Date.now().toString(),
+        pin: pin || '1234',
+        pinHint: req.body.pinHint || 'sequence',
+        title: title || 'Untitled',
+        description: description || '',
+        codeSnippet: codeSnippet || '',
+        createdAt: new Date()
+    };
+    posts.unshift(newPost);
+    res.status(201).json({ success: true, post: newPost });
+};
+
+app.post('/api/posts', postHandler);
+app.post('/posts', postHandler);
+
+app.get('/api/posts', (req, res) => res.json(posts));
+app.get('/posts', (req, res) => res.json(posts));
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
 
@@ -139,23 +163,27 @@ app.post('/api/posts/bookmark/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/posts/:id', async (req, res) => {
-    try {
-        const { pin } = req.body;
-        const post = await Post.findById(req.params.id);
-        if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+app.delete('/api/posts/:id', (req, res) => {
+    const { id } = req.params;
+    const { pin } = req.body;
+    const postIndex = posts.findIndex(p => p.id === id);
 
-        if (post.pin && post.pin !== pin) {
-            return res.status(401).json({ success: false, message: 'Incorrect 4-Digit Security PIN!' });
-        }
-
-        await Post.findByIdAndDelete(req.params.id);
-        res.json({ success: true, message: 'Post deleted successfully!' });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+    if (postIndex === -1) {
+        return res.status(404).json({ message: 'Post not found' });
     }
-});
 
+    const post = posts[postIndex];
+    if (post.pin && post.pin !== pin) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Incorrect PIN!', 
+            hint: post.pinHint || 'No hint provided' 
+        });
+    }
+
+    posts.splice(postIndex, 1);
+    res.json({ success: true, message: 'Post deleted successfully' });
+});
 app.post('/api/posts/:id/comment', async (req, res) => {
     try {
         const { text, author } = req.body;
