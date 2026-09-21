@@ -55,6 +55,15 @@
         }
         
         .code-font { font-family: 'Fira Code', 'Courier New', monospace; }
+        /* Mobile Code Selection & Comment Differentiating */
+pre code, .code-font {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+.hljs-comment, code span.comment, .code-comment {
+    color: #94a3b8 !important;
+    font-style: italic !important;
+}
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 transition-colors duration-200 min-h-screen flex flex-col font-sans">
@@ -785,27 +794,34 @@ int main() {
         }
 
         async function handleDeletePost(postId) {
-            const userPin = prompt("Enter 4-Digit Security PIN to delete post:");
-            if (userPin === null) return;
+    const userPin = prompt("Enter 4-Digit Security PIN to delete post:");
+    if (userPin === null) return;
 
-            try {
-                const res = await fetch(`${API_URL}/api/posts/${postId}`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pin: userPin.trim() })
-                });
+    try {
+        const res = await fetch(`${API_URL}/api/posts/${postId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: userPin.trim() })
+        });
 
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    showToast('Post deleted!', '🗑️');
-                    fetchPosts();
-                } else {
-                    showToast(data.message || 'Incorrect PIN!', '❌');
-                }
-            } catch (err) {
-                showToast('Error deleting post', '❌');
-            }
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast('Post deleted!', '🗑️');
+            fetchPosts();
+        } else {
+            // Wrong PIN-ku hint-oda alert kaattrom
+            Swal.fire({
+                icon: 'error',
+                title: 'Incorrect PIN',
+                text: `Hint: ${data.hint || data.message || 'Check your PIN hint!'}`,
+                background: '#0f172a',
+                color: '#f8fafc'
+            });
         }
+    } catch (err) {
+        showToast('Error deleting post', '❌');
+    }
+}
 
         async function handleAddComment(postId) {
             const input = document.getElementById(`comment-input-${postId}`);
@@ -864,30 +880,43 @@ int main() {
         }
 
         function renderProfile() {
-            const uploadsContainer = document.getElementById('profile-tab-uploads');
-            const currentUserName = (userProfile.name || "").trim().toLowerCase();
+    const uploadsContainer = document.getElementById('profile-tab-uploads');
+    const currentUserName = (userProfile.name || "").trim().toLowerCase();
 
-            const myUploads = fetchedPosts.filter(p => (p.author || "").trim().toLowerCase() === currentUserName);
-            const savedPosts = fetchedPosts.filter(p => p.isBookmarked === true);
+    const myUploads = fetchedPosts.filter(p => (p.author || "").trim().toLowerCase() === currentUserName);
+    const savedPosts = fetchedPosts.filter(p => p.isBookmarked === true);
 
-            const totalUpvotes = myUploads.reduce((acc, p) => acc + (Array.isArray(p.upvotes) ? p.upvotes.length : (p.upvotes || 0)), 0);
+    const totalUpvotes = myUploads.reduce((acc, p) => acc + (Array.isArray(p.upvotes) ? p.upvotes.length : (p.upvotes || 0)), 0);
 
-            if (document.getElementById('prof-stat-posts')) document.getElementById('prof-stat-posts').innerText = myUploads.length;
-            if (document.getElementById('prof-stat-code')) document.getElementById('prof-stat-code').innerText = totalUpvotes;
-            if (document.getElementById('prof-stat-docs')) document.getElementById('prof-stat-docs').innerText = savedPosts.length;
+    if (document.getElementById('prof-stat-posts')) document.getElementById('prof-stat-posts').innerText = myUploads.length;
+    if (document.getElementById('prof-stat-code')) document.getElementById('prof-stat-code').innerText = totalUpvotes;
+    if (document.getElementById('prof-stat-docs')) document.getElementById('prof-stat-docs').innerText = savedPosts.length;
 
-            if (!uploadsContainer) return;
+    if (!uploadsContainer) return;
 
-            const targetPosts = currentProfTab === 'uploads' ? myUploads : savedPosts;
+    const targetPosts = currentProfTab === 'uploads' ? myUploads : savedPosts;
 
-            if (targetPosts.length === 0) {
-                uploadsContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-8 bg-slate-900/40 rounded-xl border border-slate-800">No ${currentProfTab} found!</div>`;
-                return;
-            }
+    if (targetPosts.length === 0) {
+        uploadsContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-8 bg-slate-900/40 rounded-xl border border-slate-800">No ${currentProfTab} found!</div>`;
+        return;
+    }
 
-            uploadsContainer.innerHTML = targetPosts.map(post => buildPostCardHTML(post)).join('');
-        }
-
+    // Short & clean card: Topic (Tag), Author Name, and Upvotes only
+    uploadsContainer.innerHTML = targetPosts.map(post => `
+        <div class="p-4 bg-slate-900/70 border border-slate-800 rounded-xl space-y-2 shadow-md">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] uppercase tracking-wider px-2.5 py-0.5 bg-brand-600/20 text-brand-400 rounded-lg border border-brand-500/20 font-bold">
+                    ${post.tag || 'Programming'}
+                </span>
+                <span class="text-xs font-bold text-amber-400">
+                    <i class="fa-solid fa-fire"></i> Upvotes (${Array.isArray(post.upvotes) ? post.upvotes.length : (post.upvotes || 0)})
+                </span>
+            </div>
+            <h4 class="text-sm font-bold text-slate-100">${post.title || 'Untitled Post'}</h4>
+            <p class="text-xs text-slate-400">Author: <span class="text-brand-400 font-semibold">${post.author || 'Anonymous'}</span></p>
+        </div>
+    `).join('');
+}
         function switchProfileTab(tabName) {
             currentProfTab = tabName;
             const uploadsBtn = document.getElementById('prof-tab-btn-uploads');
@@ -968,62 +997,40 @@ int main() {
     const sandboxCode = document.getElementById('sandboxCode');
     const stdinInput = document.getElementById('stdinInput');
     const outputBox = document.getElementById('outputBox');
-    const langSelect = document.getElementById('languageSelect') || document.querySelector('select');
+    const langSelect = document.getElementById('languageSelect');
     const selectedLang = langSelect ? langSelect.value.toLowerCase() : 'java';
 
-    if (!sandboxCode) return;
+    if (!sandboxCode || !sandboxCode.value.trim()) return;
 
-    const code = sandboxCode.value;
-    const inputVal = stdinInput ? stdinInput.value.trim() : '';
+    outputBox.innerText = "Terminal ready...\nExecuting code via Piston API...";
 
-    // Detect if code needs dynamic user inputs
-    const needsInput = /(Scanner|scanf|cin|input\(|prompt\()/i.test(code);
-
-    if (needsInput && !inputVal) {
-        stdinInput.style.border = '2px solid #ff4757';
-        stdinInput.style.backgroundColor = 'rgba(255, 71, 87, 0.1)';
-        stdinInput.focus();
-
-        // 🌟 Input Required Popup (Terminal clean-a irukkum)
-        Swal.fire({
-            icon: 'warning',
-            title: 'Input Required!',
-            html: `Your code expects user input (e.g., <code>Scanner</code> or <code>scanf</code>).<br><br>Please provide the required values in the <b>Program Input (stdin)</b> field before running the code.`,
-            confirmButtonText: 'Got it',
-            confirmButtonColor: '#10b981',
-            background: '#0f172a',
-            color: '#f8fafc'
-        });
-
-        return;
-    }
-
-    if (stdinInput) {
-        stdinInput.style.border = '1px solid #334155';
-        stdinInput.style.backgroundColor = 'transparent';
-    }
-
-    outputBox.innerText = "Executing code...";
+    let pistonLang = selectedLang;
+    if (selectedLang === 'cpp') pistonLang = 'c++';
+    if (selectedLang === 'c') pistonLang = 'c';
+    if (selectedLang === 'python') pistonLang = 'python';
+    if (selectedLang === 'java') pistonLang = 'java';
+    if (selectedLang === 'javascript') pistonLang = 'javascript';
 
     try {
-        const response = await fetch('https://synsocial.onrender.com/run-code', {
+        const response = await fetch('https://emkc.org/api/v2/piston/execute', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                code: code,
-                input: inputVal,
-                language: selectedLang
+                language: pistonLang,
+                version: '*',
+                files: [{ content: sandboxCode.value }],
+                stdin: stdinInput ? stdinInput.value : ''
             })
         });
 
-        if (!response.ok) {
-            throw new Error(`Server status: ${response.status}`);
-        }
-
         const data = await response.json();
-        outputBox.innerText = data.output;
+        if (data.run) {
+            outputBox.innerText = data.run.output || data.run.stderr || "Execution completed with no output.";
+        } else {
+            outputBox.innerText = "Execution Error: Could not run code.";
+        }
     } catch (err) {
-        outputBox.innerText = "Execution Error: " + err.message;
+        outputBox.innerText = "Network Error: " + err.message;
     }
 }
         function showToast(message, icon = '✨') {
