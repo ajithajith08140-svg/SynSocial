@@ -461,7 +461,12 @@ int main() {
             course: "Computer Science & Engineering",
             bio: "Passionate learner & Developer"
         };
-
+        // loadPosts-ku alternative-ah fetchPosts-a bind panrom
+window.loadPosts = function() {
+    if (typeof fetchPosts === 'function') {
+        fetchPosts();
+    }
+};
         const quotesList = [
             { quote: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King" },
             { quote: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
@@ -1005,16 +1010,18 @@ int main() {
     outputBox.innerText = "Terminal ready...\nExecuting code via Piston API...";
 
     let pistonLang = selectedLang;
-    if (selectedLang === 'cpp') pistonLang = 'c++';
-    if (selectedLang === 'c') pistonLang = 'c';
-    if (selectedLang === 'python') pistonLang = 'python';
-    if (selectedLang === 'java') pistonLang = 'java';
-    if (selectedLang === 'javascript') pistonLang = 'javascript';
+    if (selectedLang === 'cpp' || selectedLang === 'c++') pistonLang = 'cpp';
+    else if (selectedLang === 'c') pistonLang = 'c';
+    else if (selectedLang === 'python') pistonLang = 'python';
+    else if (selectedLang === 'java') pistonLang = 'java';
+    else if (selectedLang === 'javascript') pistonLang = 'javascript';
 
     try {
         const response = await fetch('https://emkc.org/api/v2/piston/execute', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 language: pistonLang,
                 version: '*',
@@ -1024,8 +1031,10 @@ int main() {
         });
 
         const data = await response.json();
-        if (data.run) {
+        if (data && data.run) {
             outputBox.innerText = data.run.output || data.run.stderr || "Execution completed with no output.";
+        } else if (data.message) {
+            outputBox.innerText = "API Message: " + data.message;
         } else {
             outputBox.innerText = "Execution Error: Could not run code.";
         }
