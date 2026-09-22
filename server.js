@@ -207,28 +207,43 @@ app.post('/api/run-code', async (req, res) => {
         let { language, code, stdin } = req.body;
         const lang = (language || '').toLowerCase().trim();
 
+        // Fetch live compilers list directly on each request to ensure 100% accuracy
+        let compilers = [];
+        try {
+            const listRes = await axios.get('https://wandbox.org/api/list.json');
+            compilers = listRes.data;
+        } catch (err) {
+            console.error("Failed to fetch compiler list:", err.message);
+        }
+
         let compilerChoice = 'cpython-3.10.2';
         let fileName = 'prog.py';
 
         if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-            compilerChoice = 'nodejs-18.15.0';
+            const match = compilers.find(c => c.name.startsWith('nodejs'));
+            compilerChoice = match ? match.name : 'nodejs-18.15.0';
             fileName = 'prog.js';
         } else if (lang.includes('python') || lang === 'py') {
-            compilerChoice = 'cpython-3.10.2';
+            const match = compilers.find(c => c.name.startsWith('cpython') || c.name.startsWith('python'));
+            compilerChoice = match ? match.name : 'cpython-3.10.2';
             fileName = 'prog.py';
         } else if (lang.includes('java')) {
-            compilerChoice = 'openjdk-free-java'; // Working openjdk compiler on Wandbox
+            const match = compilers.find(c => c.name.startsWith('openjdk'));
+            compilerChoice = match ? match.name : 'openjdk-jdk-17.0.3+7';
             fileName = 'Main.java';
             
-            const match = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
-            if (match && match[1]) {
-                fileName = match[1] + '.java';
+            // User enda class name potalum antha perlaye file name-ah set pannum
+            const matchClass = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
+            if (matchClass && matchClass[1]) {
+                fileName = matchClass[1] + '.java';
             }
         } else if (lang.includes('cpp') || lang.includes('c++')) {
-            compilerChoice = 'gcc-12.2.0';
+            const match = compilers.find(c => (c.name.startsWith('gcc') && c.name.includes('c++')) || c.name.startsWith('g++'));
+            compilerChoice = match ? match.name : 'gcc-12.2.0';
             fileName = 'prog.cpp';
         } else if (lang === 'c') {
-            compilerChoice = 'gcc-12.2.0';
+            const match = compilers.find(c => c.name === 'gcc-head' || (c.name.startsWith('gcc') && !c.name.includes('c++')));
+            compilerChoice = match ? match.name : 'gcc-12.2.0';
             fileName = 'prog.c';
         }
 
