@@ -36,6 +36,7 @@ const storage = new CloudinaryStorage({
     params: {
         folder: 'synsocial_uploads',
         resource_type: 'auto', // Or 'raw' for PDFs/Docs
+        upload_preset: 'synsocial_preset',
         format: async (req, file) => {
             // File extension-a safe-ah maintain panrathuku
             let ext = file.originalname.split('.').pop();
