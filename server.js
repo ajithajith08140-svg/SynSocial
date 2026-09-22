@@ -8,8 +8,10 @@ const { exec } = require('child_process');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
+const axios = require('axios');
 
 const app = express();
+
 
 app.use(cors({
     origin: '*',
@@ -33,10 +35,16 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'synsocial_uploads',
-        resource_type: 'auto', // Itha direct-ah 'auto' nu string-ah potrunga!
+        resource_type: 'auto', // Or 'raw' for PDFs/Docs
+        format: async (req, file) => {
+            // File extension-a safe-ah maintain panrathuku
+            let ext = file.originalname.split('.').pop();
+            return ext;
+        },
         public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
     },
-});const upload = multer({ storage: storage });
+});
+const upload = multer({ storage: storage });
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
@@ -200,7 +208,7 @@ app.post('/api/posts/:id/comment', async (req, res) => {
 });
 
 // Code Execution Endpoint
-app.post('/run-code', async (req, res) => {
+app.post('/api/run-code', async (req, res) => {
     let { code, input, language } = req.body;
     if (!code) return res.status(400).json({ output: "Error: No code provided." });
 
