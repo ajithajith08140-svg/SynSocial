@@ -217,13 +217,11 @@ app.post('/api/run-code', async (req, res) => {
             compilerChoice = 'cpython-3.10.2';
             fileName = 'prog.py';
         } else if (lang.includes('java')) {
-            compilerChoice = 'openjdk';
+            compilerChoice = 'openjdk-free-java'; // Working openjdk compiler on Wandbox
             fileName = 'Main.java';
             
-            // User potta public class name-a (e.g., Test, Student) kandupidi
             const match = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
             if (match && match[1]) {
-                // File peraiyum antha class perlaye vachutom, so public irunthalum error varathu!
                 fileName = match[1] + '.java';
             }
         } else if (lang.includes('cpp') || lang.includes('c++')) {
