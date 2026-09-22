@@ -1017,18 +1017,17 @@ window.loadPosts = function() {
     else if (selectedLang === 'javascript') pistonLang = 'javascript';
 
     try {
-        const response = await fetch('https://synsocial.onrender.com', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                language: pistonLang,
-                version: '*',
-                files: [{ content: sandboxCode.value }],
-                stdin: stdinInput ? stdinInput.value : ''
-            })
-        });
+       const response = await fetch(`${API_URL}/run-code`, {
+    method: 'POST',
+    headers: { 
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        language: pistonLang,
+        code: sandboxCode.value, // Inga 'code' key kandippa irukanum
+        input: stdinInput ? stdinInput.value : ''
+    })
+});
 
         const data = await response.json();
         if (data && data.run) {
