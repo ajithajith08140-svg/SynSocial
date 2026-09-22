@@ -204,18 +204,23 @@ app.post('/api/posts/:id/comment', async (req, res) => {
 
 app.post('/api/run-code', async (req, res) => {
     try {
-        const { language, code, stdin } = req.body;
+        let { language, code, stdin } = req.body;
 
-        // Wandbox head compilers mapping
+        // Java-ku vera class name irunthaalum, atha 'Main'-ku auto-va replace panra logic
+        if (language === 'java') {
+            // public class <any_name> irunthaal atha public class Main aaka maathum
+            code = code.replace(/public\s+class\s+[A-Za-z0-9_]+/g, 'public class Main');
+        }
+
         const compilerMap = {
-            'java': 'openjdk-head',
-            'python': 'cpython-head',
+            'java': 'openjdk',
+            'python': 'cpython',
             'cpp': 'gcc-head',
             'c': 'gcc-head',
-            'javascript': 'nodejs-head'
+            'javascript': 'nodejs'
         };
 
-        const compilerChoice = compilerMap[language] || 'cpython-head';
+        const compilerChoice = compilerMap[language] || 'cpython';
 
         const response = await axios.post('https://wandbox.org/api/compile.json', {
             compiler: compilerChoice,
