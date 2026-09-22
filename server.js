@@ -202,34 +202,46 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
+let cachedCompilers = null;
+
+async function getWandboxCompiler(lang) {
+    try {
+        if (!cachedCompilers) {
+            const res = await axios.get('https://wandbox.org/api/list.json');
+            cachedCompilers = res.data;
+        }
+        
+        let match = null;
+        const l = lang.toLowerCase();
+        
+        if (l.includes('python') || l === 'py') {
+            match = cachedCompilers.find(c => c.name.includes('cpython') || c.name.includes('python'));
+        } else if (l.includes('java')) {
+            match = cachedCompilers.find(c => c.name.includes('openjdk') || c.name.includes('java'));
+        } else if (l.includes('javascript') || l === 'js' || l === 'node') {
+            match = cachedCompilers.find(c => c.name.includes('nodejs') || c.name.includes('node'));
+        } else if (l.includes('cpp') || l.includes('c++')) {
+            match = cachedCompilers.find(c => c.name.includes('gcc') || c.name.includes('clang'));
+        } else if (l === 'c') {
+            match = cachedCompilers.find(c => c.name.includes('gcc'));
+        }
+        
+        return match ? match.name : 'cpython-3.10.2';
+    } catch (e) {
+        return 'cpython-3.10.2';
+    }
+}
+
 app.post('/api/run-code', async (req, res) => {
     try {
         let { language, code, stdin } = req.body;
-        
-        // Normalize language string to lowercase and remove spaces
         const lang = (language || '').toLowerCase().trim();
 
-        // Java-ku class name auto-correction
         if (lang === 'java' || lang === 'openjdk') {
             code = code.replace(/public\s+class\s+[A-Za-z0-9_]+/g, 'public class Main');
         }
 
-        // Safe and robust compiler mapping with aliases
-        const compilerMap = {
-            'java': 'openjdk',
-            'openjdk': 'openjdk',
-            'python': 'cpython',
-            'py': 'cpython',
-            'cpython': 'cpython',
-            'cpp': 'gcc-head',
-            'c++': 'gcc-head',
-            'c': 'gcc-head',
-            'javascript': 'nodejs',
-            'js': 'nodejs',
-            'node': 'nodejs'
-        };
-
-        const compilerChoice = compilerMap[lang] || 'cpython';
+        const compilerChoice = await getWandboxCompiler(lang);
 
         const response = await axios.post('https://wandbox.org/api/compile.json', {
             compiler: compilerChoice,
