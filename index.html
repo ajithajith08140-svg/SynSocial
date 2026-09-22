@@ -1015,13 +1015,16 @@ async function downloadDocument(fileUrl) {
     else if (selectedLang === 'java') pistonLang = 'java';
     else if (selectedLang === 'javascript') pistonLang = 'javascript';
 
-    try {
-      const response = await fetch(`${API_URL}/api/run-code`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ language, code, stdin })
-});
-
+   try {
+        const response = await fetch(`${API_URL}/api/run-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                language: pistonLang,
+                code: sandboxCode.value,
+                stdin: stdinInput ? stdinInput.value : ''
+            })
+        });
 
         const data = await response.json();
         if (data && data.run) {
