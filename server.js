@@ -202,55 +202,35 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
-let wandboxCompilers = [];
-
-// Fetch available compilers from Wandbox on startup
-async function loadCompilers() {
-    try {
-        const res = await axios.get('https://wandbox.org/api/list.json');
-        wandboxCompilers = res.data;
-    } catch (e) {
-        console.error("Could not fetch Wandbox compilers list");
-    }
-}
-loadCompilers();
-
 app.post('/api/run-code', async (req, res) => {
     try {
         let { language, code, stdin } = req.body;
         const lang = (language || '').toLowerCase().trim();
 
-        // If list is empty, fetch it immediately
-        if (wandboxCompilers.length === 0) {
-            try {
-                const resList = await axios.get('https://wandbox.org/api/list.json');
-                wandboxCompilers = resList.data;
-            } catch (e) {}
-        }
-
-        let compilerChoice = 'gcc-head';
-        let fileName = 'prog.c';
+        let compilerChoice = 'cpython-3.10.2';
+        let fileName = 'prog.py';
 
         if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-            const match = wandboxCompilers.find(c => c.name.includes('nodejs') || c.name.includes('node') || c.language === 'JavaScript');
-            compilerChoice = match ? match.name : 'nodejs-head';
+            compilerChoice = 'nodejs-18.15.0';
             fileName = 'prog.js';
         } else if (lang.includes('python') || lang === 'py') {
-            const match = wandboxCompilers.find(c => c.name.includes('python') || c.name.includes('cpython') || c.language === 'Python');
-            compilerChoice = match ? match.name : 'cpython-head';
+            compilerChoice = 'cpython-3.10.2';
             fileName = 'prog.py';
         } else if (lang.includes('java')) {
-            const match = wandboxCompilers.find(c => c.name.includes('openjdk') || c.name.includes('java') || c.language === 'Java');
-            compilerChoice = match ? match.name : 'openjdk-head';
+            compilerChoice = 'openjdk';
             fileName = 'Main.java';
-            code = code.replace(/public\s+class\s+[A-Za-z0-9_]+/g, 'public class Main');
+            
+            // User potta public class name-a (e.g., Test, Student) kandupidi
+            const match = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
+            if (match && match[1]) {
+                // File peraiyum antha class perlaye vachutom, so public irunthalum error varathu!
+                fileName = match[1] + '.java';
+            }
         } else if (lang.includes('cpp') || lang.includes('c++')) {
-            const match = wandboxCompilers.find(c => (c.name.includes('gcc') && c.name.includes('c++')) || c.name.includes('clang') || c.language === 'C++');
-            compilerChoice = match ? match.name : 'gcc-head';
+            compilerChoice = 'gcc-12.2.0';
             fileName = 'prog.cpp';
         } else if (lang === 'c') {
-            const match = wandboxCompilers.find(c => c.name === 'gcc-head' || c.language === 'C');
-            compilerChoice = match ? match.name : 'gcc-head';
+            compilerChoice = 'gcc-12.2.0';
             fileName = 'prog.c';
         }
 
