@@ -202,34 +202,61 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
+let cachedCompilers = null;
+
+async function getWandboxCompiler(lang) {
+    try {
+        if (!cachedCompilers) {
+            const res = await axios.get('https://wandbox.org/api/list.json');
+            cachedCompilers = res.data;
+        }
+        
+        let match = null;
+        const l = lang.toLowerCase();
+        
+        // Exact matching based on Wandbox live compiler names
+        if (l.includes('javascript') || l === 'js' || l === 'node') {
+            match = cachedCompilers.find(c => c.name.startsWith('nodejs'));
+        } else if (l.includes('python') || l === 'py') {
+            match = cachedCompilers.find(c => c.name.startsWith('cpython'));
+        } else if (l.includes('java')) {
+            match = cachedCompilers.find(c => c.name.startsWith('openjdk'));
+        } else if (l.includes('cpp') || l.includes('c++')) {
+            match = cachedCompilers.find(c => c.name.startsWith('gcc') && c.name.includes('c++')) ||
+                    cachedCompilers.find(c => c.name.startsWith('clang') && c.name.includes('cpp')) ||
+                    cachedCompilers.find(c => c.name.startsWith('gcc'));
+        } else if (l === 'c') {
+            match = cachedCompilers.find(c => c.name.startsWith('gcc'));
+        }
+        
+        return match ? match.name : null;
+    } catch (e) {
+        return null;
+    }
+}
+
 app.post('/api/run-code', async (req, res) => {
     try {
         let { language, code, stdin } = req.body;
         const lang = (language || '').toLowerCase().trim();
 
-        let compilerChoice = 'cpython';
-        let fileName = 'prog.py';
+        const compilerChoice = await getWandboxCompiler(lang);
+        if (!compilerChoice) {
+            return res.status(400).json({ success: false, message: "Unsupported language or compiler not found." });
+        }
 
+        let fileName = 'prog.py';
         if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-            compilerChoice = 'nodejs';
             fileName = 'prog.js';
-        } else if (lang.includes('python') || lang === 'py') {
-            compilerChoice = 'cpython';
+        } else if (lang.includes('python') || l === 'py') {
             fileName = 'prog.py';
-        } else if (lang.includes('java') || lang === 'openjdk') {
-            compilerChoice = 'openjdk';
+        } else if (lang.includes('java')) {
             fileName = 'Main.java';
-            
-            // User enda class name potalum, antha perlaye file name-a dynamic-ah mathum
-            const match = code.match(/public\s+class\s+([A-Za-z0-9_]+)/);
-            if (match && match[1]) {
-                fileName = match[1] + '.java';
-            }
-        } else if (lang.includes('cpp') || lang === 'c++') {
-            compilerChoice = 'gcc-head'; // gcc-head handles both C and C++ perfectly!
+            // Auto-fix public class name to Main so file name matches perfectly
+            code = code.replace(/public\s+class\s+[A-Za-z0-9_]+/g, 'public class Main');
+        } else if (lang.includes('cpp') || l === 'c++') {
             fileName = 'prog.cpp';
         } else if (lang === 'c') {
-            compilerChoice = 'gcc-head';
             fileName = 'prog.c';
         }
 
