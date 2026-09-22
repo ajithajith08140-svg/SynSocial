@@ -592,7 +592,7 @@ window.loadPosts = function() {
             const postId = post._id || post.id;
 
             const hasFile = post.docUrl || post.fileData || post.fileName || post.document;
-            const fileDownloadUrl = post.docUrl || post.fileData || post.document || '#';
+            const fileDownloadUrl = (post.docUrl || post.fileData || post.document || '#').replace('/upload/', '/upload/fl_attachment/');
             const fileNameDisplay = post.docName || post.fileName || 'Attached Document';
 
             let downloadBtnHTML = hasFile ? `
@@ -1017,14 +1017,12 @@ window.loadPosts = function() {
     else if (selectedLang === 'javascript') pistonLang = 'javascript';
 
     try {
-       const response = await fetch(`${API_URL}/run-code`, {
+       const response = await fetch(`${API_URL}/api/run-code`, {
     method: 'POST',
-    headers: { 
-        'Content-Type': 'application/json'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
         language: pistonLang,
-        code: sandboxCode.value, // Inga 'code' key kandippa irukanum
+        code: sandboxCode.value,
         input: stdinInput ? stdinInput.value : ''
     })
 });
