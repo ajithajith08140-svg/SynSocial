@@ -206,16 +206,16 @@ app.post('/api/run-code', async (req, res) => {
     try {
         const { language, code, stdin } = req.body;
 
-        // Wandbox correct compiler names
+        // Wandbox head compilers mapping
         const compilerMap = {
-            'java': 'openjdk-jdk-17.0.3+7', // illa 'openjdk-free-javasp'
-            'python': 'cpython-3.10.2',
+            'java': 'openjdk-head',
+            'python': 'cpython-head',
             'cpp': 'gcc-head',
             'c': 'gcc-head',
-            'javascript': 'nodejs-18.15.0'
+            'javascript': 'nodejs-head'
         };
 
-        const compilerChoice = compilerMap[language] || 'cpython-3.10.2';
+        const compilerChoice = compilerMap[language] || 'cpython-head';
 
         const response = await axios.post('https://wandbox.org/api/compile.json', {
             compiler: compilerChoice,
