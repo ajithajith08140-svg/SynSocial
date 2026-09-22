@@ -541,14 +541,13 @@ window.loadPosts = function() {
                 '"': '&quot;'
             }[tag] || tag));
         }
-            async function copyCode() {
-    const sandboxCode = document.getElementById('sandboxCode');
-    if (!sandboxCode || !sandboxCode.value.trim()) {
+         async function copyCode(codeText) {
+    const textToCopy = codeText || document.getElementById('sandboxCode')?.value;
+    if (!textToCopy) {
         Swal.fire({
             icon: 'info',
             title: 'Nothing to Copy',
             text: 'Code editor is empty!',
-            confirmButtonColor: '#10b981',
             background: '#0f172a',
             color: '#f8fafc'
         });
@@ -556,53 +555,23 @@ window.loadPosts = function() {
     }
 
     try {
-        await navigator.clipboard.writeText(sandboxCode.value);
-        
-        // 🌟 "Copy to Clipboard" SweetAlert Popup
+        await navigator.clipboard.writeText(textToCopy);
         Swal.fire({
             icon: 'success',
             title: 'Copied to Clipboard!',
-            text: 'Code has been successfully copied.',
             timer: 1800,
             showConfirmButton: false,
             background: '#0f172a',
             color: '#f8fafc'
         });
     } catch (err) {
-        // Fallback for older browsers
-        sandboxCode.select();
-        document.execCommand('copy');
-        
-        Swal.fire({
-            icon: 'success',
-            title: 'Copied to Clipboard!',
-            timer: 1800,
-            showConfirmButton: false,
-            background: '#0f172a',
-            color: '#f8fafc'
-        });
+        console.error('Copy failed', err);
     }
 }
 async function downloadDocument(fileUrl) {
-    try {
-        // Cloudinary url-oda 401 error bypass panna fetch panrom
-        const response = await fetch(fileUrl);
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = 'document.pdf'; // File name
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-        console.error("Download error:", err);
-        // Fallback
-        window.open(fileUrl, '_blank');
-    }
+    window.open(fileUrl, '_blank');
 }
+
         function buildPostCardHTML(post) {
             const authorName = post.author || post.username || "Anonymous";
             const postTitle = post.title || "Untitled Post";
