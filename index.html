@@ -583,6 +583,26 @@ window.loadPosts = function() {
         });
     }
 }
+async function downloadDocument(fileUrl) {
+    try {
+        // Cloudinary url-oda 401 error bypass panna fetch panrom
+        const response = await fetch(fileUrl);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'document.pdf'; // File name
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+        console.error("Download error:", err);
+        // Fallback
+        window.open(fileUrl, '_blank');
+    }
+}
         function buildPostCardHTML(post) {
             const authorName = post.author || post.username || "Anonymous";
             const postTitle = post.title || "Untitled Post";
@@ -596,10 +616,11 @@ window.loadPosts = function() {
             const fileNameDisplay = post.docName || post.fileName || 'Attached Document';
 
             let downloadBtnHTML = hasFile ? `
-                <a href="${fileDownloadUrl}" download="${fileNameDisplay}" target="_blank" class="px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/40 text-brand-400 border border-brand-500/30 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
-                    <i class="fa-solid fa-file-arrow-down"></i>
-                    <span>Download (${fileNameDisplay})</span>
-                </a>` : '';
+    <button onclick="downloadDocument('${fileDownloadUrl}')" class="px-3 py-1.5 bg-brand-600/20 hover:bg-brand-600/30 text-brand-400 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer">
+        <i class="fa-solid fa-file-arrow-down"></i>
+        <span>Download (${fileNameDisplay})</span>
+    </button>
+` : '';
 
             let linkBtnHTML = post.link ? `
                 <a href="${post.link}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
