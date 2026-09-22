@@ -207,23 +207,26 @@ app.post('/api/run-code', async (req, res) => {
         let { language, code, stdin } = req.body;
         const lang = (language || '').toLowerCase().trim();
 
-        let compilerChoice = 'cpython-head';
+        let compilerChoice = 'cpython';
         let fileName = 'prog.py';
 
-        // Strict and correct compiler mapping with correct file extensions
         if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-            compilerChoice = 'nodejs-head';
+            compilerChoice = 'nodejs';
             fileName = 'prog.js';
         } else if (lang.includes('python') || lang === 'py') {
-            compilerChoice = 'cpython-head';
+            compilerChoice = 'cpython';
             fileName = 'prog.py';
         } else if (lang.includes('java') || lang === 'openjdk') {
-            compilerChoice = 'openjdk-head';
+            compilerChoice = 'openjdk';
             fileName = 'Main.java';
-            // Auto-sanitize any public class name to 'Main' to match file name and avoid compiler errors
-            code = code.replace(/public\s+class\s+[A-Za-z0-9_]+/g, 'public class Main');
+            
+            // User enda class name potalum, antha perlaye file name-a dynamic-ah mathum
+            const match = code.match(/public\s+class\s+([A-Za-z0-9_]+)/);
+            if (match && match[1]) {
+                fileName = match[1] + '.java';
+            }
         } else if (lang.includes('cpp') || lang === 'c++') {
-            compilerChoice = 'g++-head'; // Must use g++ for iostream
+            compilerChoice = 'gcc-head'; // gcc-head handles both C and C++ perfectly!
             fileName = 'prog.cpp';
         } else if (lang === 'c') {
             compilerChoice = 'gcc-head';
