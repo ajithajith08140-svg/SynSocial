@@ -34,6 +34,7 @@ const storage = new CloudinaryStorage({
     params: {
         folder: 'synsocial_uploads',
         allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx', 'txt', 'zip'],
+        access_mode: 'public',
         resource_type: 'auto'
     }
 });
