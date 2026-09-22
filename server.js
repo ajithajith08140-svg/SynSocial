@@ -202,27 +202,36 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
-// Code Execution Endpoint
 app.post('/api/run-code', async (req, res) => {
     try {
         const { language, code, stdin } = req.body;
 
-        const versionMap = {
-            'java': '15.0.2',
-            'python': '3.10.0',
-            'cpp': '10.2.0',
-            'javascript': '18.15.0',
-            'c': '10.2.0'
+        // Wandbox compiler mapping
+        const compilerMap = {
+            'java': 'openjdk',
+            'python': 'cpython',
+            'cpp': 'gcc',
+            'c': 'gcc',
+            'javascript': 'nodejs'
         };
 
-        const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
-            language: language,
-            version: versionMap[language] || '*',
-            files: [{ content: code }],
+        const compilerChoice = compilerMap[language] || 'cpython';
+
+        const response = await axios.post('https://wandbox.org/api/compile.json', {
+            compiler: compilerChoice,
+            code: code,
             stdin: stdin || ''
         });
 
-        res.json(response.data);
+        const result = response.data;
+        
+        // Format response to match frontend expectation
+        res.json({
+            run: {
+                output: result.program_output || '',
+                stderr: result.program_error || result.compiler_error || ''
+            }
+        });
     } catch (error) {
         console.error("Code execution error:", error.response?.data || error.message);
         res.status(500).json({ success: false, message: error.response?.data?.message || error.message });
