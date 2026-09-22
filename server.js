@@ -217,10 +217,9 @@ app.post('/run-code', async (req, res) => {
         let cleanCode = code.replace(/import\s+[\w\.]+;/g, '').trim();
 
         if (/class\s+[A-Za-z0-9_$]+/.test(cleanCode)) {
-            cleanCode = cleanCode.replace(/public\s+class\s+/, 'class ');
-            cleanCode = cleanCode.replace(/class\s+[A-Za-z0-9_$]+/, 'public class Main');
-            code = `${importsStr}\n${cleanCode}`;
-        } else {
+    cleanCode = cleanCode.replace(/class\s+[A-Za-z0-9_$]+/, 'public class Main'); 
+    code = `${importsStr}\n${cleanCode}`;
+    }   else {
             code = `${importsStr}\npublic class Main {\n${cleanCode}\n}`;
         }
 
