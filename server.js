@@ -206,12 +206,12 @@ app.post('/api/run-code', async (req, res) => {
     try {
         const { language, code, stdin } = req.body;
 
-        // Wandbox compiler mapping
+        // Wandbox compiler mapping with stable versions
         const compilerMap = {
             'java': 'openjdk',
             'python': 'cpython',
-            'cpp': 'gcc',
-            'c': 'gcc',
+            'cpp': 'gcc-head',
+            'c': 'gcc-head',
             'javascript': 'nodejs'
         };
 
@@ -224,8 +224,6 @@ app.post('/api/run-code', async (req, res) => {
         });
 
         const result = response.data;
-        
-        // Format response to match frontend expectation
         res.json({
             run: {
                 output: result.program_output || '',
@@ -234,7 +232,9 @@ app.post('/api/run-code', async (req, res) => {
         });
     } catch (error) {
         console.error("Code execution error:", error.response?.data || error.message);
-        res.status(500).json({ success: false, message: error.response?.data?.message || error.message });
+        // Send exact Wandbox error to frontend for debugging
+        const errorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+        res.status(500).json({ success: false, message: "API Error: " + errorDetails });
     }
 });
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
