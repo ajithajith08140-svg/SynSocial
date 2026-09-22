@@ -222,11 +222,10 @@ app.post('/api/run-code', async (req, res) => {
             stdin: stdin || ''
         });
 
-        // Piston response-a sariyaana format-la frontend-ku anuppanum
-        res.json({ success: true, run: response.data.run });
+        res.json(response.data);
     } catch (error) {
-        console.error("Code execution error:", error.message);
-        res.status(500).json({ success: false, message: error.message || "Code execution failed" });
+        console.error("Code execution error:", error.response?.data || error.message);
+        res.status(500).json({ success: false, message: error.response?.data?.message || error.message });
     }
 });
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
