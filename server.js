@@ -202,31 +202,55 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
+let wandboxCompilers = [];
+
+// Fetch available compilers from Wandbox on startup
+async function loadCompilers() {
+    try {
+        const res = await axios.get('https://wandbox.org/api/list.json');
+        wandboxCompilers = res.data;
+    } catch (e) {
+        console.error("Could not fetch Wandbox compilers list");
+    }
+}
+loadCompilers();
+
 app.post('/api/run-code', async (req, res) => {
     try {
         let { language, code, stdin } = req.body;
         const lang = (language || '').toLowerCase().trim();
 
-        let compilerChoice = 'nodejs-18.15.0';
-        let fileName = 'prog.js';
+        // If list is empty, fetch it immediately
+        if (wandboxCompilers.length === 0) {
+            try {
+                const resList = await axios.get('https://wandbox.org/api/list.json');
+                wandboxCompilers = resList.data;
+            } catch (e) {}
+        }
 
-        // Precise compiler selection with exact version strings for Wandbox
+        let compilerChoice = 'gcc-head';
+        let fileName = 'prog.c';
+
         if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-            compilerChoice = 'nodejs-18.15.0';
+            const match = wandboxCompilers.find(c => c.name.includes('nodejs') || c.name.includes('node') || c.language === 'JavaScript');
+            compilerChoice = match ? match.name : 'nodejs-head';
             fileName = 'prog.js';
         } else if (lang.includes('python') || lang === 'py') {
-            compilerChoice = 'cpython-3.10.2';
+            const match = wandboxCompilers.find(c => c.name.includes('python') || c.name.includes('cpython') || c.language === 'Python');
+            compilerChoice = match ? match.name : 'cpython-head';
             fileName = 'prog.py';
         } else if (lang.includes('java')) {
-            compilerChoice = 'openjdk-jdk-17.0.3+7';
+            const match = wandboxCompilers.find(c => c.name.includes('openjdk') || c.name.includes('java') || c.language === 'Java');
+            compilerChoice = match ? match.name : 'openjdk-head';
             fileName = 'Main.java';
-            // User enda class name potalum athu Main-ku maathi file name-oda match aagum
             code = code.replace(/public\s+class\s+[A-Za-z0-9_]+/g, 'public class Main');
-        } else if (lang.includes('cpp') || lang === 'c++') {
-            compilerChoice = 'gcc-12.2.0';
+        } else if (lang.includes('cpp') || lang.includes('c++')) {
+            const match = wandboxCompilers.find(c => (c.name.includes('gcc') && c.name.includes('c++')) || c.name.includes('clang') || c.language === 'C++');
+            compilerChoice = match ? match.name : 'gcc-head';
             fileName = 'prog.cpp';
         } else if (lang === 'c') {
-            compilerChoice = 'gcc-12.2.0';
+            const match = wandboxCompilers.find(c => c.name === 'gcc-head' || c.language === 'C');
+            compilerChoice = match ? match.name : 'gcc-head';
             fileName = 'prog.c';
         }
 
@@ -234,8 +258,7 @@ app.post('/api/run-code', async (req, res) => {
             compiler: compilerChoice,
             code: code,
             file: fileName,
-            stdin: stdin || '',
-            options: lang.includes('cpp') || lang === 'c' ? 'std=c++20' : ''
+            stdin: stdin || ''
         });
 
         const result = response.data;
