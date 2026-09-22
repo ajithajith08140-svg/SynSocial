@@ -206,16 +206,16 @@ app.post('/api/run-code', async (req, res) => {
     try {
         const { language, code, stdin } = req.body;
 
-        // Wandbox compiler mapping with stable versions
+        // Wandbox correct compiler names
         const compilerMap = {
-            'java': 'openjdk',
-            'python': 'cpython',
+            'java': 'openjdk-jdk-17.0.3+7', // illa 'openjdk-free-javasp'
+            'python': 'cpython-3.10.2',
             'cpp': 'gcc-head',
             'c': 'gcc-head',
-            'javascript': 'nodejs'
+            'javascript': 'nodejs-18.15.0'
         };
 
-        const compilerChoice = compilerMap[language] || 'cpython';
+        const compilerChoice = compilerMap[language] || 'cpython-3.10.2';
 
         const response = await axios.post('https://wandbox.org/api/compile.json', {
             compiler: compilerChoice,
@@ -232,7 +232,6 @@ app.post('/api/run-code', async (req, res) => {
         });
     } catch (error) {
         console.error("Code execution error:", error.response?.data || error.message);
-        // Send exact Wandbox error to frontend for debugging
         const errorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
         res.status(500).json({ success: false, message: "API Error: " + errorDetails });
     }
