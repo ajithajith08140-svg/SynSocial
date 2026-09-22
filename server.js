@@ -33,12 +33,10 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'synsocial_uploads',
-        allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx', 'txt', 'zip'],
-        
-        resource_type: 'auto'
-    }
-});
-const upload = multer({ storage: storage });
+        resource_type: 'auto', // Itha direct-ah 'auto' nu string-ah potrunga!
+        public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
+    },
+});const upload = multer({ storage: storage });
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
