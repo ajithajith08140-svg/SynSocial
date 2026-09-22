@@ -35,13 +35,7 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'synsocial_uploads',
-        resource_type: 'auto', // Or 'raw' for PDFs/Docs
-        upload_preset: 'synsocial_preset',
-        format: async (req, file) => {
-            // File extension-a safe-ah maintain panrathuku
-            let ext = file.originalname.split('.').pop();
-            return ext;
-        },
+        resource_type: 'auto',
         public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
     },
 });
@@ -210,98 +204,29 @@ app.post('/api/posts/:id/comment', async (req, res) => {
 
 // Code Execution Endpoint
 app.post('/api/run-code', async (req, res) => {
-    let { code, input, language } = req.body;
-    if (!code) return res.status(400).json({ output: "Error: No code provided." });
+    try {
+        const { language, code, stdin } = req.body;
 
-    const uniqueId = Date.now();
-    let sourceFile, compileCmd, runCmd, className = 'Main';
+        const versionMap = {
+            'java': '15.0.2',
+            'python': '3.10.0',
+            'cpp': '10.2.0',
+            'javascript': '18.15.0',
+            'c': '10.2.0'
+        };
 
-    if (language === 'java') {
-        ['Main.java', 'Main.class'].forEach(f => { if (fs.existsSync(f)) fs.unlinkSync(f); });
-
-        const importMatches = code.match(/import\s+[\w\.]+;/g) || [];
-        const importsStr = importMatches.join('\n');
-
-        let cleanCode = code.replace(/import\s+[\w\.]+;/g, '').trim();
-
-        if (/class\s+[A-Za-z0-9_$]+/.test(cleanCode)) {
-    cleanCode = cleanCode.replace(/class\s+[A-Za-z0-9_$]+/, 'public class Main'); 
-    code = `${importsStr}\n${cleanCode}`;
-    }   else {
-            code = `${importsStr}\npublic class Main {\n${cleanCode}\n}`;
-        }
-
-        sourceFile = 'Main.java';
-        compileCmd = `javac Main.java`;
-        runCmd = `java Main`;
-    } else if (language === 'c') {
-        sourceFile = `temp_${uniqueId}.c`;
-        compileCmd = `gcc ${sourceFile} -o temp_${uniqueId}`;
-        runCmd = `./temp_${uniqueId}`;
-    } else if (language === 'cpp') {
-        sourceFile = `temp_${uniqueId}.cpp`;
-        compileCmd = `g++ ${sourceFile} -o temp_${uniqueId}`;
-        runCmd = `./temp_${uniqueId}`;
-    } else if (language === 'python') {
-        sourceFile = `temp_${uniqueId}.py`;
-        runCmd = `python3 ${sourceFile}`;
-    } else if (language === 'javascript') {
-        sourceFile = `temp_${uniqueId}.js`;
-        runCmd = `node ${sourceFile}`;
-    } else {
-        return res.status(400).json({ output: "Error: Unsupported language." });
-    }
-
-    fs.writeFileSync(sourceFile, code);
-
-    const executeBinary = () => {
-        const child = exec(runCmd, { timeout: 5000 }, (runErr, stdout, stderr) => {
-            if (fs.existsSync(sourceFile)) fs.unlinkSync(sourceFile);
-            if (fs.existsSync(`${className}.class`)) fs.unlinkSync(`${className}.class`);
-            const exeFile = `temp_${uniqueId}`;
-            if (fs.existsSync(exeFile)) fs.unlinkSync(exeFile);
-
-            let rawOutput = stdout || stderr || "Execution completed with no output.";
-
-            if (input && stdout) {
-                const inputLines = input.trim().split(/\r?\n/);
-                let lineIndex = 0;
-
-                const outputLines = stdout.split(/\r?\n/);
-                const formattedLines = outputLines.map(line => {
-                    if (/(:\s*|:\n|\?\s*)$/.test(line) || /(:\s*|\?\s*)/.test(line)) {
-                        if (lineIndex < inputLines.length) {
-                            return `${line}${inputLines[lineIndex++]}`;
-                        }
-                    }
-                    return line;
-                });
-
-                rawOutput = formattedLines.join('\n');
-            } else {
-                rawOutput = stdout || stderr || "Execution completed with no output.";
-            }
-
-            res.json({ output: rawOutput });
+        const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
+            language: language,
+            version: versionMap[language] || '*',
+            files: [{ content: code }],
+            stdin: stdin || ''
         });
 
-        if (input !== undefined && input !== null && input !== '') {
-            child.stdin.write(input + "\n");
-        }
-        child.stdin.end();
-    };
-
-    if (compileCmd) {
-        exec(compileCmd, (compErr, stdout, stderr) => {
-            if (compErr) {
-                if (fs.existsSync(sourceFile)) fs.unlinkSync(sourceFile);
-                return res.json({ output: stderr || compErr.message });
-            }
-            executeBinary();
-        });
-    } else {
-        executeBinary();
+        // Piston response-a sariyaana format-la frontend-ku anuppanum
+        res.json({ success: true, run: response.data.run });
+    } catch (error) {
+        console.error("Code execution error:", error.message);
+        res.status(500).json({ success: false, message: error.message || "Code execution failed" });
     }
 });
-
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
