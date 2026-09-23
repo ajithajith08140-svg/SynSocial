@@ -4,10 +4,10 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const { exec } = require('child_process');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
-const axios = require('axios');
 
 const app = express();
 
@@ -199,7 +199,7 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
-// PDF Download Route (Direct Secure Redirect)
+// PDF Download Route
 app.get('/api/download-pdf', async (req, res) => {
     try {
         let pdfUrl = req.query.url;
@@ -214,55 +214,75 @@ app.get('/api/download-pdf', async (req, res) => {
     }
 });
 
-// Code Execution Route using Piston API (Supports Java, Python, C, C++, JS with Stdin)
+// Code Execution Route using Local Compilers & Portable JDK
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    let languageId = 92; // Default Python 3
+    const tmpDir = path.join(__dirname, 'tmp');
+    if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+    }
+
+    const uniqueId = Date.now() + Math.random().toString(36).substring(2, 7);
+    let fileName = 'main.py';
+    let cmd = '';
+
+    const javacPath = path.join(__dirname, '.jdk', 'bin', 'javac');
+    const javaPath = path.join(__dirname, '.jdk', 'bin', 'java');
 
     if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-        languageId = 93; // Node.js
+        fileName = `script_${uniqueId}.js`;
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `node ${path.join(tmpDir, fileName)}`;
     } else if (lang.includes('python') || lang === 'py') {
-        languageId = 92; // Python 3
+        fileName = `script_${uniqueId}.py`;
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `python3 ${path.join(tmpDir, fileName)}`;
     } else if (lang.includes('cpp') || lang.includes('c++')) {
-        languageId = 54; // C++ (GCC)
+        fileName = `script_${uniqueId}.cpp`;
+        const exeName = `exec_${uniqueId}`;
+        const exePath = path.join(tmpDir, exeName);
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `g++ ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
     } else if (lang === 'c') {
-        languageId = 50; // C (GCC)
+        fileName = `script_${uniqueId}.c`;
+        const exeName = `exec_${uniqueId}`;
+        const exePath = path.join(tmpDir, exeName);
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `gcc ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
     } else if (lang.includes('java')) {
-        languageId = 62; // Java (OpenJDK)
+        let className = 'Main';
+        const matchClass = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
+        if (matchClass && matchClass[1]) {
+            className = matchClass[1];
+        }
+        fileName = `${className}.java`;
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `${javacPath} ${path.join(tmpDir, fileName)} && ${javaPath} -cp ${tmpDir} ${className}`;
     } else {
         return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
     }
 
-    try {
-        const response = await axios.post('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
-            language_id: languageId,
-            source_code: code,
-            stdin: stdin || ''
-        }, {
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+    const filePath = path.join(tmpDir, fileName);
 
-        const result = response.data;
-        const output = result.stdout || '';
-        const stderr = result.stderr || result.compile_output || result.message || '';
+    const child = exec(cmd, { timeout: 8000 }, (error, stdout, stderr) => {
+        try {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            exec(`rm -f ${path.join(tmpDir, '*.class')} ${path.join(tmpDir, 'exec_*')}`);
+        } catch (e) {}
 
         res.json({
             run: {
-                output: output,
-                stderr: stderr
+                output: stdout || '',
+                stderr: stderr || (error ? error.message : '')
             }
         });
-    } catch (err) {
-        res.json({
-            run: {
-                output: '',
-                stderr: 'Execution API Error: ' + (err.response?.data?.message || err.message)
-            }
-        });
+    });
+
+    if (stdin) {
+        child.stdin.write(stdin);
+        child.stdin.end();
     }
 });
 

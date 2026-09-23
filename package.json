@@ -4,9 +4,9 @@
   "description": "SynSocial Academic Platform Backend API",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
-  },
+  "start": "node server.js",
+  "build": "curl -sL https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.9%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.9_9.tar.gz -o jdk.tar.gz && tar -xzf jdk.tar.gz && mv jdk-17.0.9+9 .jdk && rm jdk.tar.gz"
+},
   "dependencies": {
     "axios": "^1.20.0",
     "body-parser": "^1.20.2",
@@ -25,4 +25,6 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs"
+
+  
 }
