@@ -12,7 +12,6 @@ const axios = require('axios');
 
 const app = express();
 
-
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -101,11 +100,10 @@ const createPostHandler = async (req, res) => {
         let docUrl = "", docName = "";
 
         if (req.file) {
-            docUrl = req.file.path; // Cloudinary secure permanent URL
+            docUrl = req.file.path; 
             docName = req.file.originalname;
         }
 
-        // Fixed: Use real author input if provided, otherwise fallback to "Student User"
         const finalAuthor = (author && author.trim() !== "" && author !== "undefined" && author !== "null") 
             ? author.trim() 
             : "Student User";
@@ -202,50 +200,7 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
-// 1. Code Runner Route with robust error catching
-// 1. PDF Download Route Fix (Avoids Cloudinary ACL deny error)
-app.get('/api/download-pdf', async (req, res) => {
-    try {
-        const pdfUrl = req.query.url;
-        if (!pdfUrl) {
-            return res.status(400).json({ success: false, message: "PDF URL not provided" });
-        }
-        // Remove fl_attachment if it causes ACL denial, and redirect directly to secure URL
-        const cleanUrl = pdfUrl.replace('/fl_attachment/', '/');
-        res.redirect(cleanUrl);
-    } catch (error) {
-        console.error("PDF download error:", error.message);
-        res.status(500).json({ success: false, message: "Could not download PDF file." });
-    }
-});
-
-// 2. Code Runner Route (Proper error details logging)
-// 1. PDF Download Route: Fixes Cloudinary ACL failure by removing restrictive flags 
-// and streaming or redirecting cleanly
-app.get('/api/download-pdf', async (req, res) => {
-    try {
-        let pdfUrl = req.query.url;
-        if (!pdfUrl) {
-            return res.status(400).json({ success: false, message: "PDF URL not provided" });
-        }
-        
-        // Remove fl_attachment flag completely to prevent Cloudinary 401 ACL deny error
-        let cleanUrl = pdfUrl.replace(/\/fl_attachment\/v/, '/v');
-        
-        // Redirect user to the clean, accessible Cloudinary file URL
-        res.redirect(cleanUrl);
-    } catch (error) {
-        console.error("PDF download error:", error.message);
-        res.status(500).json({ success: false, message: "Could not download PDF file." });
-    }
-});
-
-// 2. Code Runner Route: Using a stable public execution endpoint or fallback
-const { exec } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-
-// 1. PDF Download Route Fix (Removes Cloudinary fl_attachment to prevent ACL denial)
+// 1. PDF Download Route (Fixes Cloudinary ACL failure by cleaning the URL)
 app.get('/api/download-pdf', async (req, res) => {
     try {
         let pdfUrl = req.query.url;
@@ -260,18 +215,17 @@ app.get('/api/download-pdf', async (req, res) => {
     }
 });
 
-// 2. Bulletproof Code Execution Route (Handles Python, Java, C, C++, JS with stdin)
+// 2. Bulletproof Code Execution Route (Local Runner for Python, Java, C, C++, JS with Stdin)
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    // Create a temporary directory for execution if it doesn't exist
     const tmpDir = path.join(__dirname, 'tmp');
     if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
     }
 
-    const uniqueId = Date.now() + Math.random().toString(36.2, 7);
+    const uniqueId = Date.now() + Math.random().toString(36).substring(2, 7);
     let fileName = 'main.py';
     let cmd = '';
 
@@ -296,7 +250,6 @@ app.post('/api/run-code', async (req, res) => {
         fs.writeFileSync(path.join(tmpDir, fileName), code);
         cmd = `gcc ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
     } else if (lang.includes('java')) {
-        // Java: Handle any public class name and extract it dynamically
         let className = 'Main';
         const matchClass = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
         if (matchClass && matchClass[1]) {
@@ -311,15 +264,10 @@ app.post('/api/run-code', async (req, res) => {
 
     const filePath = path.join(tmpDir, fileName);
 
-    // Execute with stdin support and a strict 8-second timeout
     const child = exec(cmd, { timeout: 8000 }, (error, stdout, stderr) => {
-        // Clean up temporary files safely
         try {
             if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            if (lang.includes('java')) {
-                const classPath = path.join(tmpDir, '*.class');
-                exec(`rm -f ${path.join(tmpDir, '*.class')} ${path.join(tmpDir, 'exec_*')}`);
-            }
+            exec(`rm -f ${path.join(tmpDir, '*.class')} ${path.join(tmpDir, 'exec_*')}`);
         } catch (e) {}
 
         if (error && error.killed) {
@@ -334,10 +282,10 @@ app.post('/api/run-code', async (req, res) => {
         });
     });
 
-    // Send stdin if provided by the user
     if (stdin) {
         child.stdin.write(stdin);
         child.stdin.end();
     }
 });
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
