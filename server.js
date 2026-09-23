@@ -241,59 +241,103 @@ app.get('/api/download-pdf', async (req, res) => {
 });
 
 // 2. Code Runner Route: Using a stable public execution endpoint or fallback
-app.post('/api/run-code', async (req, res) => {
+const { exec } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+// 1. PDF Download Route Fix (Removes Cloudinary fl_attachment to prevent ACL denial)
+app.get('/api/download-pdf', async (req, res) => {
     try {
-        let { language, code, stdin } = req.body;
-        const lang = (language || '').toLowerCase().trim();
+        let pdfUrl = req.query.url;
+        if (!pdfUrl) {
+            return res.status(400).json({ success: false, message: "PDF URL not provided" });
+        }
+        let cleanUrl = pdfUrl.replace(/\/fl_attachment\/v/, '/v');
+        res.redirect(cleanUrl);
+    } catch (error) {
+        console.error("PDF download error:", error.message);
+        res.status(500).json({ success: false, message: "Could not download PDF file." });
+    }
+});
 
-        let glotLang = 'python';
-        let fileName = 'main.py';
+// 2. Bulletproof Code Execution Route (Handles Python, Java, C, C++, JS with stdin)
+app.post('/api/run-code', async (req, res) => {
+    let { language, code, stdin } = req.body;
+    const lang = (language || '').toLowerCase().trim();
+    
+    // Create a temporary directory for execution if it doesn't exist
+    const tmpDir = path.join(__dirname, 'tmp');
+    if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+    }
 
-        if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-            glotLang = 'javascript';
-            fileName = 'main.js';
-        } else if (lang.includes('python') || lang === 'py') {
-            glotLang = 'python';
-            fileName = 'main.py';
-        } else if (lang.includes('java')) {
-            glotLang = 'java';
-            fileName = 'Main.java';
-            const matchClass = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
-            if (matchClass && matchClass[1]) {
-                fileName = matchClass[1] + '.java';
+    const uniqueId = Date.now() + Math.random().toString(36.2, 7);
+    let fileName = 'main.py';
+    let cmd = '';
+
+    if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
+        fileName = `script_${uniqueId}.js`;
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `node ${path.join(tmpDir, fileName)}`;
+    } else if (lang.includes('python') || lang === 'py') {
+        fileName = `script_${uniqueId}.py`;
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `python3 ${path.join(tmpDir, fileName)}`;
+    } else if (lang.includes('cpp') || lang.includes('c++')) {
+        fileName = `script_${uniqueId}.cpp`;
+        const exeName = `exec_${uniqueId}`;
+        const exePath = path.join(tmpDir, exeName);
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `g++ ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
+    } else if (lang === 'c') {
+        fileName = `script_${uniqueId}.c`;
+        const exeName = `exec_${uniqueId}`;
+        const exePath = path.join(tmpDir, exeName);
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `gcc ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
+    } else if (lang.includes('java')) {
+        // Java: Handle any public class name and extract it dynamically
+        let className = 'Main';
+        const matchClass = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
+        if (matchClass && matchClass[1]) {
+            className = matchClass[1];
+        }
+        fileName = `${className}.java`;
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `javac ${path.join(tmpDir, fileName)} && java -cp ${tmpDir} ${className}`;
+    } else {
+        return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
+    }
+
+    const filePath = path.join(tmpDir, fileName);
+
+    // Execute with stdin support and a strict 8-second timeout
+    const child = exec(cmd, { timeout: 8000 }, (error, stdout, stderr) => {
+        // Clean up temporary files safely
+        try {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            if (lang.includes('java')) {
+                const classPath = path.join(tmpDir, '*.class');
+                exec(`rm -f ${path.join(tmpDir, '*.class')} ${path.join(tmpDir, 'exec_*')}`);
             }
-        } else if (lang.includes('cpp') || lang.includes('c++')) {
-            glotLang = 'cpp';
-            fileName = 'main.cpp';
-        } else if (lang === 'c') {
-            glotLang = 'c';
-            fileName = 'main.c';
+        } catch (e) {}
+
+        if (error && error.killed) {
+            return res.json({ run: { output: stdout || '', stderr: 'Execution Timed Out (Infinite loop or waiting for input).' } });
         }
 
-        // Correct Glot.io endpoint URL format
-        const response = await axios.post(`https://snippets.glot.io/languages/${glotLang}/run`, {
-            files: [{ name: fileName, content: code }],
-            stdin: stdin || ''
-        }, { timeout: 15000 });
-
-        const result = response.data;
         res.json({
             run: {
-                output: result.stdout || '',
-                stderr: result.stderr || result.error || ''
+                output: stdout || '',
+                stderr: stderr || (error ? error.message : '')
             }
         });
+    });
 
-    } catch (error) {
-        console.error("Code execution error:", error.response?.data || error.message);
-        
-        // Fallback or clear error response so app doesn't break
-        res.json({ 
-            run: { 
-                output: '', 
-                stderr: "Execution complete or check inputs. Details: " + (error.response?.data?.message || error.message)
-            } 
-        });
+    // Send stdin if provided by the user
+    if (stdin) {
+        child.stdin.write(stdin);
+        child.stdin.end();
     }
 });
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
