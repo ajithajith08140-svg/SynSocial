@@ -203,6 +203,23 @@ app.post('/api/posts/:id/comment', async (req, res) => {
 });
 
 // 1. Code Runner Route with robust error catching
+// 1. PDF Download Route Fix (Avoids Cloudinary ACL deny error)
+app.get('/api/download-pdf', async (req, res) => {
+    try {
+        const pdfUrl = req.query.url;
+        if (!pdfUrl) {
+            return res.status(400).json({ success: false, message: "PDF URL not provided" });
+        }
+        // Remove fl_attachment if it causes ACL denial, and redirect directly to secure URL
+        const cleanUrl = pdfUrl.replace('/fl_attachment/', '/');
+        res.redirect(cleanUrl);
+    } catch (error) {
+        console.error("PDF download error:", error.message);
+        res.status(500).json({ success: false, message: "Could not download PDF file." });
+    }
+});
+
+// 2. Code Runner Route (Proper error details logging)
 app.post('/api/run-code', async (req, res) => {
     try {
         let { language, code, stdin } = req.body;
@@ -232,10 +249,11 @@ app.post('/api/run-code', async (req, res) => {
             fileName = 'main.c';
         }
 
+        // Using public execution endpoint without strict token issues or handling fallback
         const response = await axios.post(`https://glot.io/api/run/${glotLang}/latest`, {
             files: [{ name: fileName, content: code }],
             stdin: stdin || ''
-        }, { timeout: 10000 }); // 10 seconds timeout to prevent hanging
+        }, { timeout: 15000 });
 
         const result = response.data;
         res.json({
@@ -246,29 +264,14 @@ app.post('/api/run-code', async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Code execution error:", error.response?.data || error.message);
-        res.status(200).json({ 
+        console.error("Code execution error details:", error.response?.data || error.message);
+        const errReason = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+        res.json({ 
             run: { 
                 output: '', 
-                stderr: "Execution Error: Server could not process the request. Please check your code or inputs." 
+                stderr: "API Error: " + errReason 
             } 
         });
-    }
-});
-
-// 2. Cloudinary / PDF Download Safe Route Handler Example
-app.get('/api/download-pdf/:id', async (req, res) => {
-    try {
-        // Ensure explicit resource_type and public ACL access
-        // If you are redirecting to Cloudinary secure URL, ensure resource_type: 'auto' was used during upload
-        const pdfUrl = req.query.url;
-        if (!pdfUrl) {
-            return res.status(400).json({ success: false, message: "PDF URL not provided" });
-        }
-        res.redirect(pdfUrl);
-    } catch (error) {
-        console.error("PDF download error:", error.message);
-        res.status(500).json({ success: false, message: "Could not download PDF file." });
     }
 });
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
