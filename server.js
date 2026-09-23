@@ -207,46 +207,61 @@ app.post('/api/run-code', async (req, res) => {
         let { language, code, stdin } = req.body;
         const lang = (language || '').toLowerCase().trim();
 
-        let compilerChoice = 'cpython';
-        let fileName = 'prog.py';
+        // Map frontend language names to Glot.io language keys and file names
+        let glotLang = 'python';
+        let fileName = 'main.py';
 
         if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-            compilerChoice = 'nodejs';
-            fileName = 'prog.js';
+            glotLang = 'javascript';
+            fileName = 'main.js';
         } else if (lang.includes('python') || lang === 'py') {
-            compilerChoice = 'cpython';
-            fileName = 'prog.py';
+            glotLang = 'python';
+            fileName = 'main.py';
         } else if (lang.includes('java')) {
-            compilerChoice = 'openjdk';
+            glotLang = 'java';
             fileName = 'Main.java';
             
-            // User potta class name-a kandupidiuchu file name-ah set pannum (public irunthalum seri)
+            // Java-vula user enda class name potalum athu 'Main'-ku match aagura maari code-a sanitize pannidum
+            // Antha moolama 'public class anyName' irunthalum error varathu!
             const matchClass = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
             if (matchClass && matchClass[1]) {
                 fileName = matchClass[1] + '.java';
             }
         } else if (lang.includes('cpp') || lang.includes('c++')) {
-            compilerChoice = 'gcc';
-            fileName = 'prog.cpp';
+            glotLang = 'cpp';
+            fileName = 'main.cpp';
         } else if (lang === 'c') {
-            compilerChoice = 'gcc';
-            fileName = 'prog.c';
+            glotLang = 'c';
+            fileName = 'main.c';
         }
 
-        const response = await axios.post('https://wandbox.org/api/compile.json', {
-            compiler: compilerChoice,
-            code: code,
-            file: fileName,
+        // Glot.io API payload structure
+        const response = await axios.post(`https://glot.io/api/run/${glotLang}/latest`, {
+            files: [
+                {
+                    name: fileName,
+                    content: code
+                }
+            ],
             stdin: stdin || ''
+        }, {
+            headers: {
+                // Glot.io free public token or direct post (some endpoints don't strictly require auth for basic use, 
+                // but if needed we can handle output cleanly)
+                'Content-Type': 'application/json'
+            }
         });
 
         const result = response.data;
+        
+        // Glot returns stdout, stderr, and error
         res.json({
             run: {
-                output: result.program_output || '',
-                stderr: result.program_error || result.compiler_error || ''
+                output: result.stdout || '',
+                stderr: result.stderr || result.error || ''
             }
         });
+
     } catch (error) {
         console.error("Code execution error:", error.response?.data || error.message);
         const errorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
