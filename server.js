@@ -219,45 +219,41 @@ app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    let runtimeLang = 'python';
-    let version = '3.10.0';
+    let languageId = 92; // Default Python 3
 
     if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-        runtimeLang = 'javascript';
-        version = '18.15.0';
+        languageId = 93; // Node.js
     } else if (lang.includes('python') || lang === 'py') {
-        runtimeLang = 'python';
-        version = '3.10.0';
+        languageId = 92; // Python 3
     } else if (lang.includes('cpp') || lang.includes('c++')) {
-        runtimeLang = 'cpp';
-        version = '10.2.0';
+        languageId = 54; // C++ (GCC)
     } else if (lang === 'c') {
-        runtimeLang = 'c';
-        version = '10.2.0';
+        languageId = 50; // C (GCC)
     } else if (lang.includes('java')) {
-        runtimeLang = 'java';
-        version = '15.0.2';
+        languageId = 62; // Java (OpenJDK)
     } else {
         return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
     }
 
     try {
-        const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
-            language: runtimeLang,
-            version: version,
-            files: [{ content: code }],
+        const response = await axios.post('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
+            language_id: languageId,
+            source_code: code,
             stdin: stdin || ''
         }, {
             headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'Synsocial-App'
+                'Content-Type': 'application/json'
             }
         });
 
+        const result = response.data;
+        const output = result.stdout || '';
+        const stderr = result.stderr || result.compile_output || result.message || '';
+
         res.json({
             run: {
-                output: response.data.run.output || '',
-                stderr: response.data.run.stderr || ''
+                output: output,
+                stderr: stderr
             }
         });
     } catch (err) {
