@@ -247,6 +247,11 @@ app.post('/api/run-code', async (req, res) => {
             version: version,
             files: [{ content: code }],
             stdin: stdin || ''
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Synsocial-App'
+            }
         });
 
         res.json({
@@ -259,7 +264,7 @@ app.post('/api/run-code', async (req, res) => {
         res.json({
             run: {
                 output: '',
-                stderr: 'Execution API Error: ' + err.message
+                stderr: 'Execution API Error: ' + (err.response?.data?.message || err.message)
             }
         });
     }
