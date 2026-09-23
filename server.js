@@ -218,15 +218,18 @@ app.get('/api/download-pdf', async (req, res) => {
 // Code Execution Route using Local Compilers & Portable JDK
 // Code Execution Route using JDoodle API (Supports Java, Python, C, C++, JS reliably on Render)
 // Code Execution Route: Native execution for Python, JS, C, C++ and Glot.io API fallback for Java
+// Code Execution Route: Native for Python/JS/C/C++ and Piston API for Java
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    // Handle Java using Glot.io free public API endpoint
+    // Handle Java using Piston's reliable public API
     if (lang.includes('java')) {
         try {
-            const response = await axios.post('https://run.glot.io/languages/java/latest', {
-                files: [{ name: 'Main.java', content: code }],
+            const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
+                language: 'java',
+                version: '15.0.2',
+                files: [{ content: code }],
                 stdin: stdin || ''
             }, {
                 headers: { 'Content-Type': 'application/json' }
@@ -234,8 +237,8 @@ app.post('/api/run-code', async (req, res) => {
             
             return res.json({
                 run: {
-                    output: response.data.stdout || '',
-                    stderr: response.data.stderr || response.data.error || ''
+                    output: response.data.run.output || '',
+                    stderr: response.data.run.stderr || ''
                 }
             });
         } catch (err) {
