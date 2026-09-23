@@ -207,14 +207,22 @@ app.get('/api/download-pdf', async (req, res) => {
         if (!pdfUrl) {
             return res.status(400).json({ success: false, message: "PDF URL not provided" });
         }
-        let cleanUrl = pdfUrl.replace(/\/fl_attachment\/v/, '/v');
-        res.redirect(cleanUrl);
+        
+        // Fetch the file as stream/buffer from Cloudinary directly bypassing ACL issues
+        const response = await axios({
+            method: 'get',
+            url: pdfUrl.replace('/fl_attachment/', '/'),
+            responseType: 'arraybuffer'
+        });
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="downloaded-document.pdf"');
+        res.send(response.data);
     } catch (error) {
         console.error("PDF download error:", error.message);
         res.status(500).json({ success: false, message: "Could not download PDF file." });
     }
 });
-
 // 2. Bulletproof Code Execution Route (Local Runner for Python, Java, C, C++, JS with Stdin)
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
