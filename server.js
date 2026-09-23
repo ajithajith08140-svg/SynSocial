@@ -202,12 +202,12 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
+// 1. Code Runner Route with robust error catching
 app.post('/api/run-code', async (req, res) => {
     try {
         let { language, code, stdin } = req.body;
         const lang = (language || '').toLowerCase().trim();
 
-        // Map frontend language names to Glot.io language keys and file names
         let glotLang = 'python';
         let fileName = 'main.py';
 
@@ -220,9 +220,6 @@ app.post('/api/run-code', async (req, res) => {
         } else if (lang.includes('java')) {
             glotLang = 'java';
             fileName = 'Main.java';
-            
-            // Java-vula user enda class name potalum athu 'Main'-ku match aagura maari code-a sanitize pannidum
-            // Antha moolama 'public class anyName' irunthalum error varathu!
             const matchClass = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
             if (matchClass && matchClass[1]) {
                 fileName = matchClass[1] + '.java';
@@ -235,26 +232,12 @@ app.post('/api/run-code', async (req, res) => {
             fileName = 'main.c';
         }
 
-        // Glot.io API payload structure
         const response = await axios.post(`https://glot.io/api/run/${glotLang}/latest`, {
-            files: [
-                {
-                    name: fileName,
-                    content: code
-                }
-            ],
+            files: [{ name: fileName, content: code }],
             stdin: stdin || ''
-        }, {
-            headers: {
-                // Glot.io free public token or direct post (some endpoints don't strictly require auth for basic use, 
-                // but if needed we can handle output cleanly)
-                'Content-Type': 'application/json'
-            }
-        });
+        }, { timeout: 10000 }); // 10 seconds timeout to prevent hanging
 
         const result = response.data;
-        
-        // Glot returns stdout, stderr, and error
         res.json({
             run: {
                 output: result.stdout || '',
@@ -264,8 +247,28 @@ app.post('/api/run-code', async (req, res) => {
 
     } catch (error) {
         console.error("Code execution error:", error.response?.data || error.message);
-        const errorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
-        res.status(500).json({ success: false, message: "API Error: " + errorDetails });
+        res.status(200).json({ 
+            run: { 
+                output: '', 
+                stderr: "Execution Error: Server could not process the request. Please check your code or inputs." 
+            } 
+        });
+    }
+});
+
+// 2. Cloudinary / PDF Download Safe Route Handler Example
+app.get('/api/download-pdf/:id', async (req, res) => {
+    try {
+        // Ensure explicit resource_type and public ACL access
+        // If you are redirecting to Cloudinary secure URL, ensure resource_type: 'auto' was used during upload
+        const pdfUrl = req.query.url;
+        if (!pdfUrl) {
+            return res.status(400).json({ success: false, message: "PDF URL not provided" });
+        }
+        res.redirect(pdfUrl);
+    } catch (error) {
+        console.error("PDF download error:", error.message);
+        res.status(500).json({ success: false, message: "Could not download PDF file." });
     }
 });
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
