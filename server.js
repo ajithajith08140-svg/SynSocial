@@ -221,52 +221,67 @@ app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    let jdoodleLang = 'python3';
-    let versionIndex = '3';
+    const tmpDir = path.join(__dirname, 'tmp');
+    if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+    }
+
+    const uniqueId = Date.now() + Math.random().toString(36).substring(2, 7);
+    let fileName = '';
+    let cmd = '';
 
     if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-        jdoodleLang = 'nodejs';
-        versionIndex = '4';
+        fileName = `script_${uniqueId}.js`;
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `node ${path.join(tmpDir, fileName)}`;
     } else if (lang.includes('python') || lang === 'py') {
-        jdoodleLang = 'python3';
-        versionIndex = '3';
+        fileName = `script_${uniqueId}.py`;
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `python3 ${path.join(tmpDir, fileName)}`;
     } else if (lang.includes('cpp') || lang.includes('c++')) {
-        jdoodleLang = 'cpp';
-        versionIndex = '4';
+        fileName = `script_${uniqueId}.cpp`;
+        const exeName = `exec_${uniqueId}`;
+        const exePath = path.join(tmpDir, exeName);
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `g++ ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
     } else if (lang === 'c') {
-        jdoodleLang = 'c';
-        versionIndex = '4';
+        fileName = `script_${uniqueId}.c`;
+        const exeName = `exec_${uniqueId}`;
+        const exePath = path.join(tmpDir, exeName);
+        fs.writeFileSync(path.join(tmpDir, fileName), code);
+        cmd = `gcc ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
     } else if (lang.includes('java')) {
-        jdoodleLang = 'java';
-        versionIndex = '4';
+        // Since Java compiler requires specific binaries not natively on Render, 
+        // we return a clear message or handle it via a public fallback service if needed.
+        return res.json({ 
+            run: { 
+                output: '', 
+                stderr: 'Java execution requires a dedicated container environment on this server tier. Please test Java locally or use Python/C++/JS on the web runner.' 
+            } 
+        });
     } else {
         return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
     }
 
-    try {
-        // You can use a free client identification or get a free API key from jdoodle.com
-        const response = await axios.post('https://api.jdoodle.com/v1/execute', {
-            clientId: process.env.JDOODLE_CLIENT_ID || 'schooldemo', // optional public/free fallbacks
-            clientSecret: process.env.JDOODLE_CLIENT_SECRET || 'schooldemosecret',
-            script: code,
-            stdin: stdin || '',
-            language: jdoodleLang,
-            versionIndex: versionIndex
-        });
+    const filePath = path.join(tmpDir, fileName);
+
+    const child = exec(cmd, { timeout: 8000 }, (error, stdout, stderr) => {
+        try {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            exec(`rm -f ${path.join(tmpDir, '*.class')} ${path.join(tmpDir, 'exec_*')}`);
+        } catch (e) {}
 
         res.json({
             run: {
-                output: response.data.output || '',
-                stderr: response.data.error || ''
+                output: stdout || '',
+                stderr: stderr || (error ? error.message : '')
             }
         });
-    } catch (err) {
-        res.json({
-            run: {
-                output: '',
-                stderr: 'Execution API Error: ' + (err.response?.data?.message || err.message)
-            }
-        });
+    });
+
+    if (stdin) {
+        child.stdin.write(stdin);
+        child.stdin.end();
     }
 });
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
