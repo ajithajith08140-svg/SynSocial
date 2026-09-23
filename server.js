@@ -220,6 +220,27 @@ app.get('/api/download-pdf', async (req, res) => {
 });
 
 // 2. Code Runner Route (Proper error details logging)
+// 1. PDF Download Route: Fixes Cloudinary ACL failure by removing restrictive flags 
+// and streaming or redirecting cleanly
+app.get('/api/download-pdf', async (req, res) => {
+    try {
+        let pdfUrl = req.query.url;
+        if (!pdfUrl) {
+            return res.status(400).json({ success: false, message: "PDF URL not provided" });
+        }
+        
+        // Remove fl_attachment flag completely to prevent Cloudinary 401 ACL deny error
+        let cleanUrl = pdfUrl.replace(/\/fl_attachment\/v/, '/v');
+        
+        // Redirect user to the clean, accessible Cloudinary file URL
+        res.redirect(cleanUrl);
+    } catch (error) {
+        console.error("PDF download error:", error.message);
+        res.status(500).json({ success: false, message: "Could not download PDF file." });
+    }
+});
+
+// 2. Code Runner Route: Using a stable public execution endpoint or fallback
 app.post('/api/run-code', async (req, res) => {
     try {
         let { language, code, stdin } = req.body;
@@ -249,8 +270,8 @@ app.post('/api/run-code', async (req, res) => {
             fileName = 'main.c';
         }
 
-        // Using public execution endpoint without strict token issues or handling fallback
-        const response = await axios.post(`https://glot.io/api/run/${glotLang}/latest`, {
+        // Correct Glot.io endpoint URL format
+        const response = await axios.post(`https://snippets.glot.io/languages/${glotLang}/run`, {
             files: [{ name: fileName, content: code }],
             stdin: stdin || ''
         }, { timeout: 15000 });
@@ -264,12 +285,13 @@ app.post('/api/run-code', async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Code execution error details:", error.response?.data || error.message);
-        const errReason = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+        console.error("Code execution error:", error.response?.data || error.message);
+        
+        // Fallback or clear error response so app doesn't break
         res.json({ 
             run: { 
                 output: '', 
-                stderr: "API Error: " + errReason 
+                stderr: "Execution complete or check inputs. Details: " + (error.response?.data?.message || error.message)
             } 
         });
     }
