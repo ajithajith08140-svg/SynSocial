@@ -4,7 +4,6 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const { exec } = require('child_process');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
@@ -200,99 +199,69 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
-// 1. PDF Download Route (Fixes Cloudinary ACL failure by cleaning the URL)
+// PDF Download Route (Direct Secure Redirect)
 app.get('/api/download-pdf', async (req, res) => {
     try {
         let pdfUrl = req.query.url;
         if (!pdfUrl) {
             return res.status(400).json({ success: false, message: "PDF URL not provided" });
         }
-        
-        // Fetch the file as stream/buffer from Cloudinary directly bypassing ACL issues
-        const response = await axios({
-            method: 'get',
-            url: pdfUrl.replace('/fl_attachment/', '/'),
-            responseType: 'arraybuffer'
-        });
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename="downloaded-document.pdf"');
-        res.send(response.data);
+        let cleanUrl = pdfUrl.replace(/^http:\/\//i, 'https://').replace('/fl_attachment/', '/');
+        return res.redirect(cleanUrl);
     } catch (error) {
         console.error("PDF download error:", error.message);
         res.status(500).json({ success: false, message: "Could not download PDF file." });
     }
 });
-// 2. Bulletproof Code Execution Route (Local Runner for Python, Java, C, C++, JS with Stdin)
+
+// Code Execution Route using Piston API (Supports Java, Python, C, C++, JS with Stdin)
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    const tmpDir = path.join(__dirname, 'tmp');
-    if (!fs.existsSync(tmpDir)) {
-        fs.mkdirSync(tmpDir, { recursive: true });
-    }
-
-    const uniqueId = Date.now() + Math.random().toString(36).substring(2, 7);
-    let fileName = 'main.py';
-    let cmd = '';
+    let runtimeLang = 'python';
+    let version = '3.10.0';
 
     if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-        fileName = `script_${uniqueId}.js`;
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `node ${path.join(tmpDir, fileName)}`;
+        runtimeLang = 'javascript';
+        version = '18.15.0';
     } else if (lang.includes('python') || lang === 'py') {
-        fileName = `script_${uniqueId}.py`;
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `python3 ${path.join(tmpDir, fileName)}`;
+        runtimeLang = 'python';
+        version = '3.10.0';
     } else if (lang.includes('cpp') || lang.includes('c++')) {
-        fileName = `script_${uniqueId}.cpp`;
-        const exeName = `exec_${uniqueId}`;
-        const exePath = path.join(tmpDir, exeName);
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `g++ ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
+        runtimeLang = 'cpp';
+        version = '10.2.0';
     } else if (lang === 'c') {
-        fileName = `script_${uniqueId}.c`;
-        const exeName = `exec_${uniqueId}`;
-        const exePath = path.join(tmpDir, exeName);
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `gcc ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
+        runtimeLang = 'c';
+        version = '10.2.0';
     } else if (lang.includes('java')) {
-        let className = 'Main';
-        const matchClass = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
-        if (matchClass && matchClass[1]) {
-            className = matchClass[1];
-        }
-        fileName = `${className}.java`;
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `javac ${path.join(tmpDir, fileName)} && java -cp ${tmpDir} ${className}`;
+        runtimeLang = 'java';
+        version = '15.0.2';
     } else {
         return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
     }
 
-    const filePath = path.join(tmpDir, fileName);
-
-    const child = exec(cmd, { timeout: 8000 }, (error, stdout, stderr) => {
-        try {
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            exec(`rm -f ${path.join(tmpDir, '*.class')} ${path.join(tmpDir, 'exec_*')}`);
-        } catch (e) {}
-
-        if (error && error.killed) {
-            return res.json({ run: { output: stdout || '', stderr: 'Execution Timed Out (Infinite loop or waiting for input).' } });
-        }
+    try {
+        const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
+            language: runtimeLang,
+            version: version,
+            files: [{ content: code }],
+            stdin: stdin || ''
+        });
 
         res.json({
             run: {
-                output: stdout || '',
-                stderr: stderr || (error ? error.message : '')
+                output: response.data.run.output || '',
+                stderr: response.data.run.stderr || ''
             }
         });
-    });
-
-    if (stdin) {
-        child.stdin.write(stdin);
-        child.stdin.end();
+    } catch (err) {
+        res.json({
+            run: {
+                output: '',
+                stderr: 'Execution API Error: ' + err.message
+            }
+        });
     }
 });
 
