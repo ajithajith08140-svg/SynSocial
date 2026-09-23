@@ -217,10 +217,38 @@ app.get('/api/download-pdf', async (req, res) => {
 
 // Code Execution Route using Local Compilers & Portable JDK
 // Code Execution Route using JDoodle API (Supports Java, Python, C, C++, JS reliably on Render)
+// Code Execution Route: Native execution for Python, JS, C, C++ and Glot.io API fallback for Java
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
+    // Handle Java using Glot.io free public API endpoint
+    if (lang.includes('java')) {
+        try {
+            const response = await axios.post('https://run.glot.io/languages/java/latest', {
+                files: [{ name: 'Main.java', content: code }],
+                stdin: stdin || ''
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            return res.json({
+                run: {
+                    output: response.data.stdout || '',
+                    stderr: response.data.stderr || response.data.error || ''
+                }
+            });
+        } catch (err) {
+            return res.json({
+                run: {
+                    output: '',
+                    stderr: 'Java Execution Error: ' + (err.response?.data?.message || err.message)
+                }
+            });
+        }
+    }
+
+    // Native execution for Python, JavaScript, C, and C++ on Render
     const tmpDir = path.join(__dirname, 'tmp');
     if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
@@ -250,15 +278,6 @@ app.post('/api/run-code', async (req, res) => {
         const exePath = path.join(tmpDir, exeName);
         fs.writeFileSync(path.join(tmpDir, fileName), code);
         cmd = `gcc ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
-    } else if (lang.includes('java')) {
-        // Since Java compiler requires specific binaries not natively on Render, 
-        // we return a clear message or handle it via a public fallback service if needed.
-        return res.json({ 
-            run: { 
-                output: '', 
-                stderr: 'Java execution requires a dedicated container environment on this server tier. Please test Java locally or use Python/C++/JS on the web runner.' 
-            } 
-        });
     } else {
         return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
     }
