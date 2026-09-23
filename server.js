@@ -215,75 +215,57 @@ app.get('/api/download-pdf', async (req, res) => {
 });
 
 // Code Execution Route using Local Compilers & Portable JDK
+// Code Execution Route using JDoodle API (Supports Java, Python, C, C++, JS reliably on Render)
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    const tmpDir = path.join(__dirname, 'tmp');
-    if (!fs.existsSync(tmpDir)) {
-        fs.mkdirSync(tmpDir, { recursive: true });
-    }
-
-    const uniqueId = Date.now() + Math.random().toString(36).substring(2, 7);
-    let fileName = 'main.py';
-    let cmd = '';
-
-    const javacPath = path.join(__dirname, '.jdk', 'bin', 'javac');
-    const javaPath = path.join(__dirname, '.jdk', 'bin', 'java');
+    let jdoodleLang = 'python3';
+    let versionIndex = '3';
 
     if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-        fileName = `script_${uniqueId}.js`;
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `node ${path.join(tmpDir, fileName)}`;
+        jdoodleLang = 'nodejs';
+        versionIndex = '4';
     } else if (lang.includes('python') || lang === 'py') {
-        fileName = `script_${uniqueId}.py`;
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `python3 ${path.join(tmpDir, fileName)}`;
+        jdoodleLang = 'python3';
+        versionIndex = '3';
     } else if (lang.includes('cpp') || lang.includes('c++')) {
-        fileName = `script_${uniqueId}.cpp`;
-        const exeName = `exec_${uniqueId}`;
-        const exePath = path.join(tmpDir, exeName);
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `g++ ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
+        jdoodleLang = 'cpp';
+        versionIndex = '4';
     } else if (lang === 'c') {
-        fileName = `script_${uniqueId}.c`;
-        const exeName = `exec_${uniqueId}`;
-        const exePath = path.join(tmpDir, exeName);
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `gcc ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
+        jdoodleLang = 'c';
+        versionIndex = '4';
     } else if (lang.includes('java')) {
-        let className = 'Main';
-        const matchClass = code.match(/(?:public\s+)?class\s+([A-Za-z0-9_]+)/);
-        if (matchClass && matchClass[1]) {
-            className = matchClass[1];
-        }
-        fileName = `${className}.java`;
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `${javacPath} ${path.join(tmpDir, fileName)} && ${javaPath} -cp ${tmpDir} ${className}`;
+        jdoodleLang = 'java';
+        versionIndex = '4';
     } else {
         return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
     }
 
-    const filePath = path.join(tmpDir, fileName);
-
-    const child = exec(cmd, { timeout: 8000 }, (error, stdout, stderr) => {
-        try {
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            exec(`rm -f ${path.join(tmpDir, '*.class')} ${path.join(tmpDir, 'exec_*')}`);
-        } catch (e) {}
+    try {
+        // You can use a free client identification or get a free API key from jdoodle.com
+        const response = await axios.post('https://api.jdoodle.com/v1/execute', {
+            clientId: process.env.JDOODLE_CLIENT_ID || 'schooldemo', // optional public/free fallbacks
+            clientSecret: process.env.JDOODLE_CLIENT_SECRET || 'schooldemosecret',
+            script: code,
+            stdin: stdin || '',
+            language: jdoodleLang,
+            versionIndex: versionIndex
+        });
 
         res.json({
             run: {
-                output: stdout || '',
-                stderr: stderr || (error ? error.message : '')
+                output: response.data.output || '',
+                stderr: response.data.error || ''
             }
         });
-    });
-
-    if (stdin) {
-        child.stdin.write(stdin);
-        child.stdin.end();
+    } catch (err) {
+        res.json({
+            run: {
+                output: '',
+                stderr: 'Execution API Error: ' + (err.response?.data?.message || err.message)
+            }
+        });
     }
 });
-
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
