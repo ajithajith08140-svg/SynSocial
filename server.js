@@ -67,13 +67,14 @@ const Post = mongoose.model('Post', postSchema);
 app.get('/', (req, res) => res.send("Synsocial API Server is running!"));
 
 // Get All Posts (Excluding heavy binary data for list view, attaching clean download URL)
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || 'https://synsocial.onrender.com';
 const getPostsHandler = async (req, res) => {
     try {
         const posts = await Post.find().sort({ createdAt: -1 }).select('-docData');
         const formattedPosts = posts.map(post => {
             const obj = post.toObject();
             if (obj.docName) {
-                obj.docUrl = `/api/posts/document/${post._id}`;
+                obj.docUrl = `${RENDER_URL}/api/posts/document/${post._id}`;
             }
             return obj;
         });
@@ -122,7 +123,7 @@ const createPostHandler = async (req, res) => {
         
         const responseObj = savedPost.toObject();
         if (responseObj.docName) {
-            responseObj.docUrl = `/api/posts/document/${savedPost._id}`;
+            responseObj.docUrl = `${RENDER_URL}/api/posts/document/${savedPost._id}`;
             delete responseObj.docData;
         }
 
