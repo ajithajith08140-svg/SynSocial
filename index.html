@@ -691,6 +691,14 @@ function copyCodeSnippet(buttonElement) {
         console.error("Failed to copy text: ", err);
     });
 }
+function highlightCodeComments(codeText) {
+    if (!codeText) return '';
+    // Escape HTML first to prevent injection
+    const escaped = escapeHTML(codeText);
+    
+    // Replace single-line comments starting with // with a colored span
+    return escaped.replace(/(\/\/[^\n]*)/g, '<span class="text-slate-500 italic">$1</span>');
+}
         function buildPostCardHTML(post) {
             const authorName = post.author || post.username || "Anonymous";
             const postTitle = post.title || "Untitled Post";
@@ -721,7 +729,7 @@ function copyCodeSnippet(buttonElement) {
         <button onclick="copyCodeSnippet(this)" class="absolute top-2 right-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] px-2 py-1 rounded transition border border-slate-700">
             Copy
         </button>
-        <pre class="code-font text-xs text-emerald-400 whitespace-pre-wrap break-all sm:whitespace-pre">${escapeHTML(post.code || post.codeSnippet)}</pre>
+        <pre class="code-font text-xs text-emerald-400 whitespace-pre-wrap break-all sm:whitespace-pre">${highlightCodeComments(post.code || post.codeSnippet)}</pre>
     </div>
 ` : '';
 
