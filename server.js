@@ -252,6 +252,7 @@ app.post('/api/run-code', async (req, res) => {
         languageId = 50; // C (GCC)
     } else if (lang.includes('java')) {
         languageId = 62; // Java (OpenJDK)
+        code = code.replace(/public\s+class\s+[A-Za-z0-9_]+/g, 'public class Main');
     } else {
         return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
     }
@@ -271,12 +272,12 @@ app.post('/api/run-code', async (req, res) => {
         let output = result.stdout || '';
         const stderr = result.stderr || result.compile_output || result.message || '';
 
-        // 🌟 INGA THAAN ANTHA SMART BACKEND LOGIC-A ADD PANNANUM 🌟
+        
         if (stdin && stdin.trim() !== '' && output.includes(':')) {
             const inputLines = stdin.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
             let lineIndex = 0;
             
-            // Prompts (e.g., "Enter your name: ") kooda stdin values-a match panni weave panrom
+            
             output = output.replace(/([^:\n]+\s*:\s*)/g, (match) => {
                 if (lineIndex < inputLines.length) {
                     const val = inputLines[lineIndex];
