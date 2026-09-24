@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 // ==========================================
 // 1. MONGODB CONNECTION & DOCUMENT SCHEMA
 // ==========================================
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/myAppDatabase';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority';
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
