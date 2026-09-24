@@ -690,7 +690,7 @@ function copyCodeSnippet(buttonElement) {
 
         async function fetchPosts() {
             try {
-                const res = await fetch(`${API_URL}/api/posts`);
+                const res = await fetch(`https://synsocial.onrender.com/api/posts`);
                 fetchedPosts = await res.json();
                 renderFeed();
                 updateMetrics();
@@ -750,7 +750,7 @@ function copyCodeSnippet(buttonElement) {
             }
 
             try {
-                const response = await fetch(`${API_URL}/api/posts`, {
+                const response = await fetch(`https://synsocial.onrender.com/api/posts`, {
                     method: 'POST',
                     body: formData // FormData use panrappo 'Content-Type' header manual-ah thara koodathu!
                 });
@@ -787,7 +787,7 @@ function copyCodeSnippet(buttonElement) {
         }
         async function handleUpvote(postId) {
             try {
-                const response = await fetch(`${API_URL}/api/posts/upvote/${postId}`, {
+                const response = await fetch(`https://synsocial.onrender.com/api/posts/upvote/${postId}`, {
                     method: 'POST'
                 });
                 if (response.ok) {
@@ -801,7 +801,7 @@ function copyCodeSnippet(buttonElement) {
 
         async function handleBookmark(postId) {
             try {
-                const res = await fetch(`${API_URL}/api/posts/bookmark/${postId}`, { method: 'POST' });
+                const res = await fetch(`https://synsocial.onrender.com/api/posts/bookmark/${postId}`, { method: 'POST' });
                 const data = await res.json();
                 if (res.ok && data.success) {
                     showToast(data.isBookmarked ? 'Saved to Bookmarks!' : 'Removed from Bookmarks', '🔖');
@@ -817,7 +817,7 @@ function copyCodeSnippet(buttonElement) {
     if (userPin === null) return;
 
     try {
-        const res = await fetch(`${API_URL}/api/posts/${postId}`, {
+        const res = await fetch(`https://synsocial.onrender.com/api/posts/${postId}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pin: userPin.trim() })
@@ -848,7 +848,7 @@ function copyCodeSnippet(buttonElement) {
             if (!text) return;
 
             try {
-                const res = await fetch(`${API_URL}/api/posts/${postId}/comment`, {
+                const res = await fetch(`https://synsocial.onrender.com/api/posts/${postId}/comment`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text, author: userProfile.name })
@@ -1031,7 +1031,7 @@ function copyCodeSnippet(buttonElement) {
     else if (selectedLang === 'javascript') pistonLang = 'javascript';
 
    try {
-        const response = await fetch(`${API_URL}/api/run-code`, {
+        const response = await fetch(`https://synsocial.onrender.com/api/run-code`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
