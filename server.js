@@ -4,8 +4,6 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
 const axios = require('axios');
 
@@ -22,22 +20,8 @@ app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Cloudinary Configuration
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'synsocial_uploads',
-        resource_type: 'auto',
-        public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
-    },
-});
-const upload = multer({ storage: storage });
+// Multer setup using memoryStorage (Files are stored temporarily in RAM and saved directly into MongoDB as Binary Buffer)
+const upload = multer({ storage: multer.memoryStorage() });
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
@@ -54,6 +38,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
+// Post Schema with direct MongoDB binary file storage (Supports up to 16MB per file)
 const postSchema = new mongoose.Schema({
     title: String,
     author: String,
@@ -63,8 +48,9 @@ const postSchema = new mongoose.Schema({
     content: String,
     link: String,
     code: String,
-    docUrl: String,
     docName: String,
+    docContentType: String,
+    docData: Buffer, // Binary file buffer stored directly in MongoDB
     upvotes: { type: Number, default: 0 },
     isBookmarked: { type: Boolean, default: false },
     comments: [
@@ -80,11 +66,18 @@ const Post = mongoose.model('Post', postSchema);
 
 app.get('/', (req, res) => res.send("Synsocial API Server is running!"));
 
-// Get All Posts
+// Get All Posts (Excluding heavy binary data for list view, attaching clean download URL)
 const getPostsHandler = async (req, res) => {
     try {
-        const posts = await Post.find().sort({ createdAt: -1 });
-        res.json(posts);
+        const posts = await Post.find().sort({ createdAt: -1 }).select('-docData');
+        const formattedPosts = posts.map(post => {
+            const obj = post.toObject();
+            if (obj.docName) {
+                obj.docUrl = `/api/posts/document/${post._id}`;
+            }
+            return obj;
+        });
+        res.json(formattedPosts);
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -92,15 +85,19 @@ const getPostsHandler = async (req, res) => {
 app.get('/api/posts', getPostsHandler);
 app.get('/posts', getPostsHandler);
 
-// Create Post Handler
+// Create Post Handler (Stores uploaded file buffer directly in MongoDB)
 const createPostHandler = async (req, res) => {
     try {
         const { title, author, tag, pin, pinHint, content, description, link, code } = req.body;
-        let docUrl = "", docName = "";
+        
+        let docName = "";
+        let docContentType = "";
+        let docData = null;
 
         if (req.file) {
-            docUrl = req.file.path; 
             docName = req.file.originalname;
+            docContentType = req.file.mimetype;
+            docData = req.file.buffer;
         }
 
         const finalAuthor = (author && author.trim() !== "" && author !== "undefined" && author !== "null") 
@@ -116,12 +113,20 @@ const createPostHandler = async (req, res) => {
             content: content || description || "",
             link: link || "",
             code: code || "",
-            docUrl,
-            docName
+            docName,
+            docContentType,
+            docData
         });
 
         const savedPost = await newPost.save();
-        res.status(201).json({ success: true, post: savedPost });
+        
+        const responseObj = savedPost.toObject();
+        if (responseObj.docName) {
+            responseObj.docUrl = `/api/posts/document/${savedPost._id}`;
+            delete responseObj.docData;
+        }
+
+        res.status(201).json({ success: true, post: responseObj });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -130,6 +135,35 @@ const createPostHandler = async (req, res) => {
 app.post('/api/posts', upload.single('document'), createPostHandler);
 app.post('/posts', upload.single('document'), createPostHandler);
 app.post('/api/posts/create', upload.single('document'), createPostHandler);
+
+// Retrieve / Download Document Route directly from MongoDB
+app.get('/api/posts/document/:id', async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post || !post.docData) {
+            return res.status(404).json({ success: false, message: "Document not found in database" });
+        }
+
+        res.setHeader('Content-Type', post.docContentType || 'application/octet-stream');
+        res.setHeader('Content-Disposition', `attachment; filename="${post.docName || 'document'}"`);
+        return res.send(post.docData);
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Backward compatibility route if frontend calls /api/download-pdf
+app.get('/api/download-pdf', async (req, res) => {
+    try {
+        const postId = req.query.id;
+        if (!postId) {
+            return res.status(400).json({ success: false, message: "Post ID not provided" });
+        }
+        return res.redirect(`/api/posts/document/${postId}`);
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
 // Upvote Post
 app.post('/api/posts/upvote/:id', async (req, res) => {
@@ -156,7 +190,7 @@ app.post('/api/posts/bookmark/:id', async (req, res) => {
     }
 });
 
-// Delete Post with PIN Verification & Hint Return
+// Delete Post with PIN Verification
 app.delete('/api/posts/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -199,41 +233,7 @@ app.post('/api/posts/:id/comment', async (req, res) => {
     }
 });
 
-// PDF Download Route (Direct Secure Redirect)
-// Robust Document Download Route (Forces direct download instead of opening in browser tab)
-// Robust Document Download Route (Strips fl_attachment and forces server-side download)
-app.get('/api/download-pdf', async (req, res) => {
-    try {
-        let fileUrl = req.query.url;
-        if (!fileUrl) {
-            return res.status(400).json({ success: false, message: "File URL not provided" });
-        }
-
-        // Fix URL: Ensure HTTPS and REMOVE 'fl_attachment' which causes 401 ACL failure
-        let cleanUrl = fileUrl.replace(/^http:\/\//i, 'https://').replace(/\/fl_attachment\//g, '/');
-
-        // Fetch file data from Cloudinary using the clean URL
-        const response = await axios.get(cleanUrl, { responseType: 'arraybuffer' });
-        
-        // Extract filename from URL
-        const urlParts = cleanUrl.split('/');
-        let filename = urlParts[urlParts.length - 1].split('?')[0];
-        if (!filename || filename.trim() === '') {
-            filename = 'downloaded-document';
-        }
-        // Decode URI component in case filename has spaces or special chars like %20
-        filename = decodeURIComponent(filename);
-
-        // Force browser to download the file
-        res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        return res.send(response.data);
-    } catch (error) {
-        console.error("Document download error:", error.message);
-        res.status(500).json({ success: false, message: "Could not download file from server: " + error.message });
-    }
-});
-// Code Execution Route using Piston API (Supports Java, Python, C, C++, JS with Stdin)
+// Code Execution Route using Judge0 (Supports Java, Python, C, C++, JS with Stdin)
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
