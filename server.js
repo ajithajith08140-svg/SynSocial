@@ -231,7 +231,7 @@ app.post('/api/run-code', async (req, res) => {
             }, {
                 headers: {
                     'content-type': 'application/json',
-                    'X-RapidAPI-Key': process.env.RAPIDAPI_KEY || 'YOUR_RAPIDAPI_KEY_HERE',
+                    'X-RapidAPI-Key': process.env.RAPIDAPI_KEY || '6804d2cabcmsh548f668f2a9125bp13fd6ajsn3caa240cac58',
                     'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
                 }
             });
