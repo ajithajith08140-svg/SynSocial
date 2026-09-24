@@ -4,181 +4,266 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const { exec } = require('child_process');
-const axios = require('axios');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
+const axios = require('axios');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.options('*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ==========================================
-// 1. MONGODB CONNECTION & DOCUMENT SCHEMA
-// ==========================================
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority';
-
-mongoose.connect(MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log('Connected to MongoDB successfully!');
-}).catch(err => {
-    console.error('MongoDB connection error:', err.message);
+// Cloudinary Configuration
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Document Schema for storing files directly in MongoDB (Up to 16MB per file)
-const documentSchema = new mongoose.Schema({
-    filename: String,
-    contentType: String, // e.g., 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    data: Buffer,        // Binary buffer data
-    createdAt: { type: Date, default: Date.now }
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'synsocial_uploads',
+        resource_type: 'auto',
+        public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
+    },
 });
-const Document = mongoose.model('Document', documentSchema);
+const upload = multer({ storage: storage });
 
-// Multer setup using memoryStorage (keeps file in RAM temporarily to save directly to MongoDB)
-const upload = multer({ storage: multer.memoryStorage() });
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
 
+mongoose.connect(MONGO_URI)
+    .then(() => console.log("MongoDB Connected Successfully!"))
+    .catch(err => console.error("MongoDB Connection Error:", err));
 
-// ==========================================
-// 2. DOCUMENT UPLOAD & RETRIEVAL ROUTES (MongoDB)
-// ==========================================
+const userSchema = new mongoose.Schema({
+    name: { type: String, default: "Student User" },
+    course: String,
+    bio: String
+}, { timestamps: true });
 
-// Upload Route
-app.post('/api/upload-doc', upload.single('document'), async (req, res) => {
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+const postSchema = new mongoose.Schema({
+    title: String,
+    author: String,
+    tag: String,
+    pin: String,
+    pinHint: String,
+    content: String,
+    link: String,
+    code: String,
+    docUrl: String,
+    docName: String,
+    upvotes: { type: Number, default: 0 },
+    isBookmarked: { type: Boolean, default: false },
+    comments: [
+        {
+            text: String,
+            author: String,
+            createdAt: { type: Date, default: Date.now }
+        }
+    ]
+}, { timestamps: true });
+
+const Post = mongoose.model('Post', postSchema);
+
+app.get('/', (req, res) => res.send("Synsocial API Server is running!"));
+
+// Get All Posts
+const getPostsHandler = async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'No file uploaded' });
+        const posts = await Post.find().sort({ createdAt: -1 });
+        res.json(posts);
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+app.get('/api/posts', getPostsHandler);
+app.get('/posts', getPostsHandler);
+
+// Create Post Handler
+const createPostHandler = async (req, res) => {
+    try {
+        const { title, author, tag, pin, pinHint, content, description, link, code } = req.body;
+        let docUrl = "", docName = "";
+
+        if (req.file) {
+            docUrl = req.file.path; 
+            docName = req.file.originalname;
         }
 
-        const newDoc = new Document({
-            filename: req.file.originalname,
-            contentType: req.file.mimetype,
-            data: req.file.buffer
+        const finalAuthor = (author && author.trim() !== "" && author !== "undefined" && author !== "null") 
+            ? author.trim() 
+            : "Student User";
+
+        const newPost = new Post({
+            title: title || "Untitled Post",
+            author: finalAuthor,
+            tag: tag || "General",
+            pin: pin ? String(pin).trim() : "",
+            pinHint: pinHint || "",
+            content: content || description || "",
+            link: link || "",
+            code: code || "",
+            docUrl,
+            docName
         });
 
-        await newDoc.save();
-        res.json({ 
-            message: 'Document uploaded successfully to MongoDB!', 
-            fileId: newDoc._id,
-            filename: newDoc.filename 
-        });
+        const savedPost = await newPost.save();
+        res.status(201).json({ success: true, post: savedPost });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+app.post('/api/posts', upload.single('document'), createPostHandler);
+app.post('/posts', upload.single('document'), createPostHandler);
+app.post('/api/posts/create', upload.single('document'), createPostHandler);
+
+// Upvote Post
+app.post('/api/posts/upvote/:id', async (req, res) => {
+    try {
+        const post = await Post.findByIdAndUpdate(req.params.id, { $inc: { upvotes: 1 } }, { new: true });
+        if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+        res.json({ success: true, upvotes: post.upvotes });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// Retrieve / View / Download Route
-app.get('/api/get-doc/:id', async (req, res) => {
+// Bookmark Post
+app.post('/api/posts/bookmark/:id', async (req, res) => {
     try {
-        const doc = await Document.findById(req.params.id);
-        if (!doc) {
-            return res.status(404).json({ error: 'Document not found in database' });
-        }
-
-        res.setHeader('Content-Type', doc.contentType);
-        res.setHeader('Content-Disposition', `inline; filename="${doc.filename}"`);
-        res.send(doc.data);
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+        
+        post.isBookmarked = !post.isBookmarked;
+        await post.save();
+        res.json({ success: true, isBookmarked: post.isBookmarked });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 
+// Delete Post with PIN Verification & Hint Return
+app.delete('/api/posts/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { pin } = req.body;
 
-// ==========================================
-// 3. CODE EXECUTION ROUTE (JS, Python, C, C++ & Java)
-// ==========================================
+        const post = await Post.findById(id);
+
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post not found' });
+        }
+
+        if (post.pin && post.pin.trim() !== '' && post.pin !== pin) {
+            return res.status(400).json({
+                success: false,
+                message: 'Incorrect PIN!',
+                hint: post.pinHint || 'No hint provided for this post'
+            });
+        }
+
+        await Post.findByIdAndDelete(id);
+        res.json({ success: true, message: 'Post deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Add Comment to Post
+app.post('/api/posts/:id/comment', async (req, res) => {
+    try {
+        const { text, author } = req.body;
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+        const commentAuthor = (author && author.trim() !== "" && author !== "undefined") ? author.trim() : "Student User";
+        post.comments.push({ text: text.trim(), author: commentAuthor });
+        await post.save();
+        res.json({ success: true, comments: post.comments });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// PDF Download Route (Direct Secure Redirect)
+app.get('/api/download-pdf', async (req, res) => {
+    try {
+        let pdfUrl = req.query.url;
+        if (!pdfUrl) {
+            return res.status(400).json({ success: false, message: "PDF URL not provided" });
+        }
+        let cleanUrl = pdfUrl.replace(/^http:\/\//i, 'https://').replace('/fl_attachment/', '/');
+        return res.redirect(cleanUrl);
+    } catch (error) {
+        console.error("PDF download error:", error.message);
+        res.status(500).json({ success: false, message: "Could not download PDF file." });
+    }
+});
+
+// Code Execution Route using Piston API (Supports Java, Python, C, C++, JS with Stdin)
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    // Handle Java using public execution endpoint (No API key or subscription needed)
-    if (lang.includes('java')) {
-        try {
-            const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
-                language: 'java',
-                version: '*',
-                files: [{ content: code }],
-                stdin: stdin || ''
-            }, {
-                headers: { 'Content-Type': 'application/json' },
-                timeout: 10000
-            });
-            
-            return res.json({
-                run: {
-                    output: response.data.run.output || '',
-                    stderr: response.data.run.stderr || ''
-                }
-            });
-        } catch (err) {
-            return res.json({
-                run: {
-                    output: '',
-                    stderr: 'Java Execution Notice: Public execution servers are busy. Please try again or test locally.'
-                }
-            });
-        }
-    }
-
-    // Native execution for Python, JavaScript, C, and C++ on Render
-    const tmpDir = path.join(__dirname, 'tmp');
-    if (!fs.existsSync(tmpDir)) {
-        fs.mkdirSync(tmpDir, { recursive: true });
-    }
-
-    const uniqueId = Date.now() + Math.random().toString(36).substring(2, 7);
-    let fileName = '';
-    let cmd = '';
+    let languageId = 92; // Default Python 3
 
     if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
-        fileName = `script_${uniqueId}.js`;
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `node ${path.join(tmpDir, fileName)}`;
+        languageId = 93; // Node.js
     } else if (lang.includes('python') || lang === 'py') {
-        fileName = `script_${uniqueId}.py`;
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `python3 ${path.join(tmpDir, fileName)}`;
+        languageId = 92; // Python 3
     } else if (lang.includes('cpp') || lang.includes('c++')) {
-        fileName = `script_${uniqueId}.cpp`;
-        const exeName = `exec_${uniqueId}`;
-        const exePath = path.join(tmpDir, exeName);
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `g++ ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
+        languageId = 54; // C++ (GCC)
     } else if (lang === 'c') {
-        fileName = `script_${uniqueId}.c`;
-        const exeName = `exec_${uniqueId}`;
-        const exePath = path.join(tmpDir, exeName);
-        fs.writeFileSync(path.join(tmpDir, fileName), code);
-        cmd = `gcc ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
+        languageId = 50; // C (GCC)
+    } else if (lang.includes('java')) {
+        languageId = 62; // Java (OpenJDK)
     } else {
         return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
     }
 
-    const filePath = path.join(tmpDir, fileName);
+    try {
+        const response = await axios.post('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
+            language_id: languageId,
+            source_code: code,
+            stdin: stdin || ''
+        }, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
 
-    const child = exec(cmd, { timeout: 8000 }, (error, stdout, stderr) => {
-        try {
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            exec(`rm -f ${path.join(tmpDir, '*.class')} ${path.join(tmpDir, 'exec_*')}`);
-        } catch (e) {}
+        const result = response.data;
+        const output = result.stdout || '';
+        const stderr = result.stderr || result.compile_output || result.message || '';
 
         res.json({
             run: {
-                output: stdout || '',
-                stderr: stderr || (error ? error.message : '')
+                output: output,
+                stderr: stderr
             }
         });
-    });
-
-    if (stdin) {
-        child.stdin.write(stdin);
-        child.stdin.end();
+    } catch (err) {
+        res.json({
+            run: {
+                output: '',
+                stderr: 'Execution API Error: ' + (err.response?.data?.message || err.message)
+            }
+        });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
