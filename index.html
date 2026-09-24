@@ -63,6 +63,66 @@ pre code, .code-font {
 .hljs-comment, code span.comment, .code-comment {
     color: #94a3b8 !important;
     font-style: italic !important;
+
+}
+/* Light mode fixes for post cards and text */
+html.light .glass-panel, 
+html.light .bg-slate-900, 
+html.light .bg-slate-900\/70 {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+html.light p.text-slate-300, 
+html.light p.text-slate-400 {
+    color: #334155 !important;
+}
+
+html.light .bg-slate-950 {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+}
+html.light pre#outputBox {
+    background-color: #0f172a !important;
+    color: #38bdf8 !important;
+    border-color: #cbd5e1 !important;
+}
+/* Light theme comprehensive fixes for buttons, inputs, modals and interactive elements */
+html.light button,
+html.light .btn,
+html.light input,
+html.light select,
+html.light textarea {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Specific fix for primary/brand buttons to remain visible */
+html.light button.bg-brand-600,
+html.light .bg-brand-600,
+html.light button[type="submit"],
+html.light .bg-purple-600,
+html.light .bg-indigo-600 {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+/* Modal and dropdown fixes in light theme */
+html.light .modal-content,
+html.light div[id*="modal"],
+html.light div[class*="dropdown"] {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Code copy button contrast fix */
+html.light pre button,
+html.light button.copy-btn {
+    background-color: #e2e8f0 !important;
+    color: #1e293b !important;
 }
     </style>
 </head>
@@ -645,10 +705,10 @@ function copyCodeSnippet(buttonElement) {
 ` : '';
 
             let linkBtnHTML = post.link ? `
-                <a href="${post.link}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
-                    <i class="fa-solid fa-link"></i>
-                    <span>Open Reference Link</span>
-                </a>` : '';
+    <a href="${post.link}" target="_blank" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all">
+        <i class="fa-solid fa-link text-brand-500 dark:text-brand-400"></i>
+        <span>Open Reference Link</span>
+    </a>` : '';
 
             let codeSnippetHTML = (post.code || post.codeSnippet) ? `
     <div class="relative bg-slate-900 rounded-lg p-3 my-2 border border-slate-800">
