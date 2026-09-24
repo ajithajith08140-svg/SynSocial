@@ -216,41 +216,36 @@ app.get('/api/download-pdf', async (req, res) => {
 });
 
 // Code Execution Route: Stable Native Execution for JS, Python, C, C++
+// Code Execution Route: Native for JS/Python/C/C++ and Free Public Compiler API for Java
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    // Handle Java using Judge0 API (Reliable & Free Tier)
+    // Handle Java using a free public execution endpoint (No API Key Required!)
     if (lang.includes('java')) {
         try {
-            // Submit code to Judge0
-            const response = await axios.post('https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true', {
-                source_code: code,
-                language_id: 62, // ID for Java (OpenJDK 13.0.1)
+            // Using a reliable alternative open compiler service
+            const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
+                language: 'java',
+                version: '*',
+                files: [{ content: code }],
                 stdin: stdin || ''
             }, {
-                headers: {
-                    'content-type': 'application/json',
-                    'X-RapidAPI-Key': process.env.RAPIDAPI_KEY || '6804d2cabcmsh548f668f2a9125bp13fd6ajsn3caa240cac58',
-                    'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
-                }
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 10000
             });
-            
-            const result = response.data;
-            const output = result.stdout || '';
-            const stderr = result.stderr || result.compile_output || (result.status ? result.status.description : '');
             
             return res.json({
                 run: {
-                    output: output,
-                    stderr: stderr
+                    output: response.data.run.output || '',
+                    stderr: response.data.run.stderr || ''
                 }
             });
         } catch (err) {
             return res.json({
                 run: {
                     output: '',
-                    stderr: 'Java Execution Error: Please add your free RAPIDAPI_KEY in Render environment variables. (' + (err.response?.data?.message || err.message) + ')'
+                    stderr: 'Java Execution Notice: Public execution servers are busy or blocked. Please test your Java code locally or use JavaScript/Python on the web runner.'
                 }
             });
         }
