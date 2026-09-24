@@ -34,7 +34,7 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'synsocial_uploads',
-        resource_type: 'auto',
+        resource_type: 'raw',
         public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
     },
 });
