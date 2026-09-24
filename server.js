@@ -201,6 +201,7 @@ app.post('/api/posts/:id/comment', async (req, res) => {
 
 // PDF Download Route (Direct Secure Redirect)
 // Robust Document Download Route (Forces direct download instead of opening in browser tab)
+// Robust Document Download Route (Strips fl_attachment and forces server-side download)
 app.get('/api/download-pdf', async (req, res) => {
     try {
         let fileUrl = req.query.url;
@@ -208,18 +209,20 @@ app.get('/api/download-pdf', async (req, res) => {
             return res.status(400).json({ success: false, message: "File URL not provided" });
         }
 
-        // Ensure HTTPS
-        fileUrl = fileUrl.replace(/^http:\/\//i, 'https://');
+        // Fix URL: Ensure HTTPS and REMOVE 'fl_attachment' which causes 401 ACL failure
+        let cleanUrl = fileUrl.replace(/^http:\/\//i, 'https://').replace(/\/fl_attachment\//g, '/');
 
-        // Fetch file data from Cloudinary server-side
-        const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+        // Fetch file data from Cloudinary using the clean URL
+        const response = await axios.get(cleanUrl, { responseType: 'arraybuffer' });
         
         // Extract filename from URL
-        const urlParts = fileUrl.split('/');
+        const urlParts = cleanUrl.split('/');
         let filename = urlParts[urlParts.length - 1].split('?')[0];
         if (!filename || filename.trim() === '') {
             filename = 'downloaded-document';
         }
+        // Decode URI component in case filename has spaces or special chars like %20
+        filename = decodeURIComponent(filename);
 
         // Force browser to download the file
         res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
@@ -227,7 +230,7 @@ app.get('/api/download-pdf', async (req, res) => {
         return res.send(response.data);
     } catch (error) {
         console.error("Document download error:", error.message);
-        res.status(500).json({ success: false, message: "Could not download file from server." });
+        res.status(500).json({ success: false, message: "Could not download file from server: " + error.message });
     }
 });
 // Code Execution Route using Piston API (Supports Java, Python, C, C++, JS with Stdin)
