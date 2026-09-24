@@ -220,6 +220,43 @@ app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
+    // Handle Java using Judge0 API (Reliable & Free Tier)
+    if (lang.includes('java')) {
+        try {
+            // Submit code to Judge0
+            const response = await axios.post('https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true', {
+                source_code: code,
+                language_id: 62, // ID for Java (OpenJDK 13.0.1)
+                stdin: stdin || ''
+            }, {
+                headers: {
+                    'content-type': 'application/json',
+                    'X-RapidAPI-Key': process.env.RAPIDAPI_KEY || 'YOUR_RAPIDAPI_KEY_HERE',
+                    'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
+                }
+            });
+            
+            const result = response.data;
+            const output = result.stdout || '';
+            const stderr = result.stderr || result.compile_output || (result.status ? result.status.description : '');
+            
+            return res.json({
+                run: {
+                    output: output,
+                    stderr: stderr
+                }
+            });
+        } catch (err) {
+            return res.json({
+                run: {
+                    output: '',
+                    stderr: 'Java Execution Error: Please add your free RAPIDAPI_KEY in Render environment variables. (' + (err.response?.data?.message || err.message) + ')'
+                }
+            });
+        }
+    }
+
+    // Native execution for Python, JavaScript, C, and C++ on Render
     const tmpDir = path.join(__dirname, 'tmp');
     if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
@@ -229,42 +266,26 @@ app.post('/api/run-code', async (req, res) => {
     let fileName = '';
     let cmd = '';
 
-    // JavaScript / Node.js
     if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
         fileName = `script_${uniqueId}.js`;
         fs.writeFileSync(path.join(tmpDir, fileName), code);
         cmd = `node ${path.join(tmpDir, fileName)}`;
-    } 
-    // Python
-    else if (lang.includes('python') || lang === 'py') {
+    } else if (lang.includes('python') || lang === 'py') {
         fileName = `script_${uniqueId}.py`;
         fs.writeFileSync(path.join(tmpDir, fileName), code);
         cmd = `python3 ${path.join(tmpDir, fileName)}`;
-    } 
-    // C++
-    else if (lang.includes('cpp') || lang.includes('c++')) {
+    } else if (lang.includes('cpp') || lang.includes('c++')) {
         fileName = `script_${uniqueId}.cpp`;
         const exeName = `exec_${uniqueId}`;
         const exePath = path.join(tmpDir, exeName);
         fs.writeFileSync(path.join(tmpDir, fileName), code);
         cmd = `g++ ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
-    } 
-    // C
-    else if (lang === 'c') {
+    } else if (lang === 'c') {
         fileName = `script_${uniqueId}.c`;
         const exeName = `exec_${uniqueId}`;
         const exePath = path.join(tmpDir, exeName);
         fs.writeFileSync(path.join(tmpDir, fileName), code);
         cmd = `gcc ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
-    } 
-    // Java (Handled gracefully so it never crashes your server)
-    else if (lang.includes('java')) {
-        return res.json({
-            run: {
-                output: '',
-                stderr: 'Java web execution is currently disabled due to API restrictions. Please use JavaScript, Python, or C++ on the web runner!'
-            }
-        });
     } else {
         return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
     }
