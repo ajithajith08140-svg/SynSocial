@@ -215,43 +215,11 @@ app.get('/api/download-pdf', async (req, res) => {
     }
 });
 
-// Code Execution Route using Local Compilers & Portable JDK
-// Code Execution Route using JDoodle API (Supports Java, Python, C, C++, JS reliably on Render)
-// Code Execution Route: Native execution for Python, JS, C, C++ and Glot.io API fallback for Java
-// Code Execution Route: Native for Python/JS/C/C++ and Piston API for Java
+// Code Execution Route: Stable Native Execution for JS, Python, C, C++
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    // Handle Java using Piston's reliable public API
-    if (lang.includes('java')) {
-        try {
-            const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
-                language: 'java',
-                version: '15.0.2',
-                files: [{ content: code }],
-                stdin: stdin || ''
-            }, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            
-            return res.json({
-                run: {
-                    output: response.data.run.output || '',
-                    stderr: response.data.run.stderr || ''
-                }
-            });
-        } catch (err) {
-            return res.json({
-                run: {
-                    output: '',
-                    stderr: 'Java Execution Error: ' + (err.response?.data?.message || err.message)
-                }
-            });
-        }
-    }
-
-    // Native execution for Python, JavaScript, C, and C++ on Render
     const tmpDir = path.join(__dirname, 'tmp');
     if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
@@ -261,26 +229,42 @@ app.post('/api/run-code', async (req, res) => {
     let fileName = '';
     let cmd = '';
 
+    // JavaScript / Node.js
     if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
         fileName = `script_${uniqueId}.js`;
         fs.writeFileSync(path.join(tmpDir, fileName), code);
         cmd = `node ${path.join(tmpDir, fileName)}`;
-    } else if (lang.includes('python') || lang === 'py') {
+    } 
+    // Python
+    else if (lang.includes('python') || lang === 'py') {
         fileName = `script_${uniqueId}.py`;
         fs.writeFileSync(path.join(tmpDir, fileName), code);
         cmd = `python3 ${path.join(tmpDir, fileName)}`;
-    } else if (lang.includes('cpp') || lang.includes('c++')) {
+    } 
+    // C++
+    else if (lang.includes('cpp') || lang.includes('c++')) {
         fileName = `script_${uniqueId}.cpp`;
         const exeName = `exec_${uniqueId}`;
         const exePath = path.join(tmpDir, exeName);
         fs.writeFileSync(path.join(tmpDir, fileName), code);
         cmd = `g++ ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
-    } else if (lang === 'c') {
+    } 
+    // C
+    else if (lang === 'c') {
         fileName = `script_${uniqueId}.c`;
         const exeName = `exec_${uniqueId}`;
         const exePath = path.join(tmpDir, exeName);
         fs.writeFileSync(path.join(tmpDir, fileName), code);
         cmd = `gcc ${path.join(tmpDir, fileName)} -o ${exePath} && ${exePath}`;
+    } 
+    // Java (Handled gracefully so it never crashes your server)
+    else if (lang.includes('java')) {
+        return res.json({
+            run: {
+                output: '',
+                stderr: 'Java web execution is currently disabled due to API restrictions. Please use JavaScript, Python, or C++ on the web runner!'
+            }
+        });
     } else {
         return res.json({ run: { output: '', stderr: 'Unsupported language selected.' } });
     }
