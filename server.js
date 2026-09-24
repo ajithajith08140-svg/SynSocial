@@ -244,6 +244,16 @@ app.post('/api/run-code', async (req, res) => {
 
     if (lang.includes('javascript') || lang === 'js' || lang === 'node') {
         languageId = 93; // Node.js
+        const promptShim = `
+        const fs = require('fs');
+        const _inputLines = fs.readFileSync(0, 'utf-8').split(/\\r?\\n/);
+        let _lineIdx = 0;
+        function prompt(msg) {
+            if (msg) process.stdout.write(msg);
+            return _inputLines[_lineIdx++] || '';
+        }
+        `;
+        code = promptShim + '\n' + code;
     } else if (lang.includes('python') || lang === 'py') {
         languageId = 92; // Python 3
     } else if (lang.includes('cpp') || lang.includes('c++')) {
