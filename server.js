@@ -200,20 +200,36 @@ app.post('/api/posts/:id/comment', async (req, res) => {
 });
 
 // PDF Download Route (Direct Secure Redirect)
+// Robust Document Download Route (Forces direct download instead of opening in browser tab)
 app.get('/api/download-pdf', async (req, res) => {
     try {
-        let pdfUrl = req.query.url;
-        if (!pdfUrl) {
-            return res.status(400).json({ success: false, message: "PDF URL not provided" });
+        let fileUrl = req.query.url;
+        if (!fileUrl) {
+            return res.status(400).json({ success: false, message: "File URL not provided" });
         }
-        let cleanUrl = pdfUrl.replace(/^http:\/\//i, 'https://').replace('/fl_attachment/', '/');
-        return res.redirect(cleanUrl);
+
+        // Ensure HTTPS
+        fileUrl = fileUrl.replace(/^http:\/\//i, 'https://');
+
+        // Fetch file data from Cloudinary server-side
+        const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+        
+        // Extract filename from URL
+        const urlParts = fileUrl.split('/');
+        let filename = urlParts[urlParts.length - 1].split('?')[0];
+        if (!filename || filename.trim() === '') {
+            filename = 'downloaded-document';
+        }
+
+        // Force browser to download the file
+        res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        return res.send(response.data);
     } catch (error) {
-        console.error("PDF download error:", error.message);
-        res.status(500).json({ success: false, message: "Could not download PDF file." });
+        console.error("Document download error:", error.message);
+        res.status(500).json({ success: false, message: "Could not download file from server." });
     }
 });
-
 // Code Execution Route using Piston API (Supports Java, Python, C, C++, JS with Stdin)
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
