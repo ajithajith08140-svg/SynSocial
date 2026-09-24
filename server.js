@@ -4,227 +4,98 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const axios = require('axios');
 const { exec } = require('child_process');
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
 
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-app.options('*', cors());
-
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Cloudinary Configuration
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
+// ==========================================
+// 1. MONGODB CONNECTION & DOCUMENT SCHEMA
+// ==========================================
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/myAppDatabase';
+
+mongoose.connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => {
+    console.log('Connected to MongoDB successfully!');
+}).catch(err => {
+    console.error('MongoDB connection error:', err.message);
 });
 
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'synsocial_uploads',
-        resource_type: 'raw',
-        public_id: (req, file) => Date.now() + '-' + file.originalname.split('.')[0],
-    },
+// Document Schema for storing files directly in MongoDB (Up to 16MB per file)
+const documentSchema = new mongoose.Schema({
+    filename: String,
+    contentType: String, // e.g., 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    data: Buffer,        // Binary buffer data
+    createdAt: { type: Date, default: Date.now }
 });
-const upload = multer({ storage: storage });
+const Document = mongoose.model('Document', documentSchema);
 
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://RayeesaF:RayeesaF@cluster0.y50j1a9.mongodb.net/synsocial?retryWrites=true&w=majority";
+// Multer setup using memoryStorage (keeps file in RAM temporarily to save directly to MongoDB)
+const upload = multer({ storage: multer.memoryStorage() });
 
-mongoose.connect(MONGO_URI)
-    .then(() => console.log("MongoDB Connected Successfully!"))
-    .catch(err => console.error("MongoDB Connection Error:", err));
 
-const userSchema = new mongoose.Schema({
-    name: { type: String, default: "Student User" },
-    course: String,
-    bio: String
-}, { timestamps: true });
+// ==========================================
+// 2. DOCUMENT UPLOAD & RETRIEVAL ROUTES (MongoDB)
+// ==========================================
 
-const User = mongoose.models.User || mongoose.model('User', userSchema);
-
-const postSchema = new mongoose.Schema({
-    title: String,
-    author: String,
-    tag: String,
-    pin: String,
-    pinHint: String,
-    content: String,
-    link: String,
-    code: String,
-    docUrl: String,
-    docName: String,
-    upvotes: { type: Number, default: 0 },
-    isBookmarked: { type: Boolean, default: false },
-    comments: [
-        {
-            text: String,
-            author: String,
-            createdAt: { type: Date, default: Date.now }
-        }
-    ]
-}, { timestamps: true });
-
-const Post = mongoose.model('Post', postSchema);
-
-app.get('/', (req, res) => res.send("Synsocial API Server is running!"));
-
-// Get All Posts
-const getPostsHandler = async (req, res) => {
+// Upload Route
+app.post('/api/upload-doc', upload.single('document'), async (req, res) => {
     try {
-        const posts = await Post.find().sort({ createdAt: -1 });
-        res.json(posts);
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-};
-app.get('/api/posts', getPostsHandler);
-app.get('/posts', getPostsHandler);
-
-// Create Post Handler
-const createPostHandler = async (req, res) => {
-    try {
-        const { title, author, tag, pin, pinHint, content, description, link, code } = req.body;
-        let docUrl = "", docName = "";
-
-        if (req.file) {
-            docUrl = req.file.path; 
-            docName = req.file.originalname;
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        const finalAuthor = (author && author.trim() !== "" && author !== "undefined" && author !== "null") 
-            ? author.trim() 
-            : "Student User";
-
-        const newPost = new Post({
-            title: title || "Untitled Post",
-            author: finalAuthor,
-            tag: tag || "General",
-            pin: pin ? String(pin).trim() : "",
-            pinHint: pinHint || "",
-            content: content || description || "",
-            link: link || "",
-            code: code || "",
-            docUrl,
-            docName
+        const newDoc = new Document({
+            filename: req.file.originalname,
+            contentType: req.file.mimetype,
+            data: req.file.buffer
         });
 
-        const savedPost = await newPost.save();
-        res.status(201).json({ success: true, post: savedPost });
+        await newDoc.save();
+        res.json({ 
+            message: 'Document uploaded successfully to MongoDB!', 
+            fileId: newDoc._id,
+            filename: newDoc.filename 
+        });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-};
-
-app.post('/api/posts', upload.single('document'), createPostHandler);
-app.post('/posts', upload.single('document'), createPostHandler);
-app.post('/api/posts/create', upload.single('document'), createPostHandler);
-
-// Upvote Post
-app.post('/api/posts/upvote/:id', async (req, res) => {
-    try {
-        const post = await Post.findByIdAndUpdate(req.params.id, { $inc: { upvotes: 1 } }, { new: true });
-        if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
-        res.json({ success: true, upvotes: post.upvotes });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Bookmark Post
-app.post('/api/posts/bookmark/:id', async (req, res) => {
+// Retrieve / View / Download Route
+app.get('/api/get-doc/:id', async (req, res) => {
     try {
-        const post = await Post.findById(req.params.id);
-        if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
-        
-        post.isBookmarked = !post.isBookmarked;
-        await post.save();
-        res.json({ success: true, isBookmarked: post.isBookmarked });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-// Delete Post with PIN Verification & Hint Return
-app.delete('/api/posts/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { pin } = req.body;
-
-        const post = await Post.findById(id);
-
-        if (!post) {
-            return res.status(404).json({ success: false, message: 'Post not found' });
+        const doc = await Document.findById(req.params.id);
+        if (!doc) {
+            return res.status(404).json({ error: 'Document not found in database' });
         }
 
-        if (post.pin && post.pin.trim() !== '' && post.pin !== pin) {
-            return res.status(400).json({
-                success: false,
-                message: 'Incorrect PIN!',
-                hint: post.pinHint || 'No hint provided for this post'
-            });
-        }
-
-        await Post.findByIdAndDelete(id);
-        res.json({ success: true, message: 'Post deleted successfully' });
+        res.setHeader('Content-Type', doc.contentType);
+        res.setHeader('Content-Disposition', `inline; filename="${doc.filename}"`);
+        res.send(doc.data);
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
 
-// Add Comment to Post
-app.post('/api/posts/:id/comment', async (req, res) => {
-    try {
-        const { text, author } = req.body;
-        const post = await Post.findById(req.params.id);
-        if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
 
-        const commentAuthor = (author && author.trim() !== "" && author !== "undefined") ? author.trim() : "Student User";
-        post.comments.push({ text: text.trim(), author: commentAuthor });
-        await post.save();
-        res.json({ success: true, comments: post.comments });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// PDF Download Route
-app.get('/api/download-pdf', async (req, res) => {
-    try {
-        let pdfUrl = req.query.url;
-        if (!pdfUrl) {
-            return res.status(400).json({ success: false, message: "PDF URL not provided" });
-        }
-        let cleanUrl = pdfUrl.replace(/^http:\/\//i, 'https://').replace('/fl_attachment/', '/');
-        return res.redirect(cleanUrl);
-    } catch (error) {
-        console.error("PDF download error:", error.message);
-        res.status(500).json({ success: false, message: "Could not download PDF file." });
-    }
-});
-
-// Code Execution Route: Stable Native Execution for JS, Python, C, C++
-// Code Execution Route: Native for JS/Python/C/C++ and Free Public Compiler API for Java
+// ==========================================
+// 3. CODE EXECUTION ROUTE (JS, Python, C, C++ & Java)
+// ==========================================
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
     
-    // Handle Java using a free public execution endpoint (No API Key Required!)
+    // Handle Java using public execution endpoint (No API key or subscription needed)
     if (lang.includes('java')) {
         try {
-            // Using a reliable alternative open compiler service
             const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
                 language: 'java',
                 version: '*',
@@ -245,7 +116,7 @@ app.post('/api/run-code', async (req, res) => {
             return res.json({
                 run: {
                     output: '',
-                    stderr: 'Java Execution Notice: Public execution servers are busy or blocked. Please test your Java code locally or use JavaScript/Python on the web runner.'
+                    stderr: 'Java Execution Notice: Public execution servers are busy. Please try again or test locally.'
                 }
             });
         }
@@ -306,4 +177,8 @@ app.post('/api/run-code', async (req, res) => {
         child.stdin.end();
     }
 });
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
