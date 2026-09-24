@@ -235,6 +235,7 @@ app.post('/api/posts/:id/comment', async (req, res) => {
 });
 
 // Code Execution Route using Judge0 (Supports Java, Python, C, C++, JS with Stdin)
+// Code Execution Route using Judge0 (Supports Java, Python, C, C++, JS with Stdin)
 app.post('/api/run-code', async (req, res) => {
     let { language, code, stdin } = req.body;
     const lang = (language || '').toLowerCase().trim();
@@ -267,8 +268,24 @@ app.post('/api/run-code', async (req, res) => {
         });
 
         const result = response.data;
-        const output = result.stdout || '';
+        let output = result.stdout || '';
         const stderr = result.stderr || result.compile_output || result.message || '';
+
+        // 🌟 INGA THAAN ANTHA SMART BACKEND LOGIC-A ADD PANNANUM 🌟
+        if (stdin && stdin.trim() !== '' && output.includes(':')) {
+            const inputLines = stdin.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            let lineIndex = 0;
+            
+            // Prompts (e.g., "Enter your name: ") kooda stdin values-a match panni weave panrom
+            output = output.replace(/([^:\n]+\s*:\s*)/g, (match) => {
+                if (lineIndex < inputLines.length) {
+                    const val = inputLines[lineIndex];
+                    lineIndex++;
+                    return match + val + '\n';
+                }
+                return match;
+            });
+        }
 
         res.json({
             run: {
@@ -285,5 +302,4 @@ app.post('/api/run-code', async (req, res) => {
         });
     }
 });
-
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
