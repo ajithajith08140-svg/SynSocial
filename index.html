@@ -693,11 +693,10 @@ function copyCodeSnippet(buttonElement) {
 }
 function highlightCodeComments(codeText) {
     if (!codeText) return '';
-    // Escape HTML first to prevent injection
     const escaped = escapeHTML(codeText);
     
-    // Replace single-line comments starting with // with a colored span
-    return escaped.replace(/(\/\/[^\n]*)/g, '<span class="text-slate-500 italic">$1</span>');
+    // This regex correctly targets single-line comments whether they start at the beginning of a line or after code (inline)
+    return escaped.replace(/(\/\/.+)$/gm, '<span class="text-slate-500 italic">$1</span>');
 }
         function buildPostCardHTML(post) {
             const authorName = post.author || post.username || "Anonymous";
@@ -1004,7 +1003,7 @@ function highlightCodeComments(codeText) {
             vaultContainer.innerHTML = posts.length ? posts.map(p => `
                 <div class="glass-panel p-4 rounded-xl space-y-2 border border-slate-800">
                     <h4 class="font-bold text-sm text-slate-100">${p.title}</h4>
-                    <pre class="code-font text-xs text-emerald-400 bg-slate-950 p-2 rounded border border-slate-800 overflow-x-auto">${escapeHTML(p.code)}</pre>
+                    <pre class="code-font text-xs text-emerald-400 bg-slate-950 p-2 rounded border border-slate-800 overflow-x-auto">${highlightCodeComments(p.code)}</pre>
                 </div>
             `).join('') : `<div class="text-xs text-slate-400 text-center py-4">No code snippets found!</div>`;
         }
